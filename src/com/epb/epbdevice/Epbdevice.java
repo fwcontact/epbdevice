@@ -50,32 +50,4 @@ public class Epbdevice {
         } finally {
         }
     }
-
-//    private void runAppWait(String sCommand) {
-//        Process child = null;
-//        try {
-//            child = Runtime.getRuntime().exec(sCommand);
-//            InputStream in = child.getInputStream();
-//            int c;
-//            while ((c = in.read()) != -1) {
-//                char cc = (char) c;
-//                System.out.print(cc);//如果你不需要看输出，这行可以注销掉
-//
-//            }
-//            in.close();
-//            try {
-//                child.waitFor();
-//            } catch (InterruptedException ex) {
-//                System.out.println("runAppWait error!" + ex.getMessage());
-//            }
-//        } catch (IOException ex) {
-//            System.out.println("runAppWait error!" + ex.getMessage());
-//        } finally {
-//            try {
-//                child.destroy();
-//            } catch (Exception ex) {
-//                System.out.println("runAppWait error!" + ex.getMessage());
-//            }
-//        }
-//    }
 }
