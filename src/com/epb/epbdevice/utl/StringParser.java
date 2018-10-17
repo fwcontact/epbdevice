@@ -43,7 +43,7 @@ public class StringParser {
         }
     }
 
-    //c#°æ±¾ÖĞµÄ½ØÈ¡º¯Êı
+    //c#ç‰ˆæœ¬ä¸­çš„æˆªå–å‡½æ•°
     public static String getSubString(String input, int length) {
         try {
             String subString = input;
@@ -51,18 +51,18 @@ public class StringParser {
             int stringLengthChinese = getStringLengthChinese(input);
             int stringLength = input.length();
 
-            //Èç¹û×Ö·û´®²»¹»³¤
+            //å¦‚æœå­—ç¬¦ä¸²ä¸å¤Ÿé•¿
             if (stringLengthChinese <= length) {
                 return input;
             }
 
-            //Èç¹ûÌ«³¤
-            //Èç¹ûÃ»ÓĞºº×Ö
+            //å¦‚æœå¤ªé•¿
+            //å¦‚æœæ²¡æœ‰æ±‰å­—
             if (stringLengthChinese == stringLength) {
                 return input.substring(0, length - 1);
             }
 
-            //Èç¹ûÓĞºº×ÖµÄ£¬ÏÈ½ØÈ¡
+            //å¦‚æœæœ‰æ±‰å­—çš„ï¼Œå…ˆæˆªå–
 //            while (CharToByteConverter.getDefault().convertAll(subString.toCharArray()).length > length) {
             while (getStringLengthChinese(subString) > length) {
                 subString = subString.substring(0, subString.length() - 1);
@@ -73,9 +73,9 @@ public class StringParser {
         }
     }
 
-    //¶ÔÆë
+    //å¯¹é½
     //pAlign  = C L R
-    //ÔİÊ±Ò»ÂÉ½Ø¶Ï
+    //æš‚æ—¶ä¸€å¾‹æˆªæ–­
     public static String setStringAlignment(String input, String align, int length, String breakFlg, String emptyFlg) {
         try {
             String subString = input;
@@ -85,17 +85,17 @@ public class StringParser {
 //            int stringLengthChinese = CharToByteConverter.getDefault().convertAll(subString.toCharArray()).length;
             int stringLengthChinese = getStringLengthChinese(subString);
 
-            //Èç¹û×Ö·û´®¹»³¤
+            //å¦‚æœå­—ç¬¦ä¸²å¤Ÿé•¿
             if (stringLengthChinese >= length) {
-                //Èç¹û¹ı³¤£¬Ò»ÂÉ½Ø¶Ï
+                //å¦‚æœè¿‡é•¿ï¼Œä¸€å¾‹æˆªæ–­
                 subString = splitString(input, length, EMPTY);
-                //½ØÈ¡ºó£¬ÓĞ¿ÉÄÜ¶àÒ»¸ö¿Õ¸ñ
+                //æˆªå–åï¼Œæœ‰å¯èƒ½å¤šä¸€ä¸ªç©ºæ ¼
 //                stringLengthChinese = CharToByteConverter.getDefault().convertAll(subString.toCharArray()).length;
                 stringLengthChinese = getStringLengthChinese(subString);
             }
 
             if (CENTER.equals(align)) {
-                //Èç¹û²»¹»³¤
+                //å¦‚æœä¸å¤Ÿé•¿
                 //subString = alignCenter(subString, length);
                 leftLength = (length - stringLengthChinese) / 2;
                 rightLength = length - leftLength - stringLengthChinese;
@@ -104,14 +104,13 @@ public class StringParser {
                 }
             } else if (LEFT.equals(align)) {
                 //subString = alignLeft(subString, length);
-                //Èç¹û²»¹»³¤
                 rightLength = length - stringLengthChinese;
                 if (YES.equals(emptyFlg)) {
                     subString = subString + getWhiteString(rightLength);
                 }
             } else if (RIGHT.equals(align)) {
                 //subString = alignRight(subString, length);
-                //Èç¹û²»¹»³¤
+                //å¦‚æœä¸å¤Ÿé•¿
                 leftLength = length - stringLengthChinese;
                 if (YES.equals(emptyFlg)) {
                     subString = getWhiteString(leftLength) + subString;
@@ -130,9 +129,9 @@ public class StringParser {
 //            int stringLengthChinese = CharToByteConverter.getDefault().convertAll(subString.toCharArray()).length;
             int stringLengthChinese = getStringLengthChinese(subString);
 
-            //Èç¹û×Ö·û´®¹»³¤
+            //å¦‚æœå­—ç¬¦ä¸²å¤Ÿé•¿
             if (stringLengthChinese >= length) {
-                //Èç¹û¹ı³¤£¬Ò»ÂÉ½Ø¶Ï
+                //å¦‚æœè¿‡é•¿ï¼Œä¸€å¾‹æˆªæ–­
                 subString = splitString(input, length, EMPTY);
                 return input.replaceFirst(subString, EMPTY);
             }
@@ -203,34 +202,34 @@ public class StringParser {
     }
 
     /**
-     *
-     * ×Ö·û´®°´×Ö½Ú½ØÈ¡
-     *
-     * @param str Ô­×Ö·û
-     *
-     * @param len ½ØÈ¡³¤¶È
-     *
+
+     * å­—ç¬¦ä¸²æŒ‰å­—èŠ‚æˆªå–
+
+     * @param str åŸå­—ç¬¦
+
+     * @param len æˆªå–é•¿åº¦
+
      * @return String
-     *
-     *
+
+
      */
     public static String splitString(String str, int len) {
         return splitString(str, len, "...");
     }
 
     /**
-     *
-     * ×Ö·û´®°´×Ö½Ú½ØÈ¡
-     *
-     * @param str Ô­×Ö·û
-     *
-     * @param len ½ØÈ¡³¤¶È
-     *
-     * @param elide Ê¡ÂÔ·û
-     *
+
+     * å­—ç¬¦ä¸²æŒ‰å­—èŠ‚æˆªå–
+
+     * @param str åŸå­—ç¬¦
+
+     * @param len æˆªå–é•¿åº¦
+
+     * @param elide çœç•¥ç¬¦
+
      * @return String
-     *
-     *
+
+
      */
     public static String splitString(String str, int len, String elide) {
 
