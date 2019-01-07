@@ -10,7 +10,7 @@ public class Epbdevice {
     public static final String MSG = "msg";
     public static final String RETURN_OK = "OK";
     
-    public static void initBat(final String intiFilePathName) {  //D:\\EPBrowser\\EPB\\init.bat
+    public synchronized static void initBat(final String intiFilePathName) {  //D:\\EPBrowser\\EPB\\init.bat
         try {
             int osType = new Epbdevice().getOsType();
             if (osType == 0) {//windows
@@ -23,7 +23,7 @@ public class Epbdevice {
         }
     }
     
-    public static Map<String, String> printFile(final Connection conn, final String actionType, final String shopId, final String recKey, final String userId) {
+    public synchronized static Map<String, String> printFile(final Connection conn, final String actionType, final String shopId, final String recKey, final String userId) {
         return Epbprinter.printFile(conn, actionType, shopId, recKey, userId);
     }
     
@@ -94,7 +94,17 @@ public class Epbdevice {
 
             Connection conn = DriverManager.getConnection(url, user, pwd);
             System.out.println("conection is ok");
-            printFile(conn, driver, pwd, user, user);
+            String actionType = "ORDER";  // ORDER OR KOT OR RECEIPT
+            String shopId = "SHOP001";    // SHOP ID
+            String recKey = "123";        // OPENTABLE.rec_key OR KOTMAS.rec_key
+            String userId = "Admin";      // Waitier OR Cashier
+            final Map<String, String> returnMap = Epbdevice.printFile(conn, actionType, shopId, recKey, userId);
+            if (Epbdevice.RETURN_OK.equals(returnMap.get(Epbdevice.MSG_ID))) {
+                // printer OK
+            } else {
+                // error
+                System.out.println(returnMap.get(Epbdevice.MSG));
+            }
         } catch (Throwable thr) {
             System.out.println("thr:" + thr.getMessage());
         }
