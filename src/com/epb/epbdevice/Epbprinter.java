@@ -2,6 +2,7 @@ package com.epb.epbdevice;
 
 import com.epb.epbdevice.beans.PrintPool;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -28,35 +29,54 @@ class Epbprinter {
             }
             
             List<PrintPool> printerPrintPoolList = new ArrayList<PrintPool>();
-            boolean opened = false;
+//            boolean opened;
             String printPort;
-            for (PrintPool pp : printPoolList) {
-                if (PRINTER_LINE.compareTo(pp.getLineNo()) == 0) {
-                    if (printerPrintPoolList != null && !printerPrintPoolList.isEmpty()) {
+            PrintPool pp;
+            int size = printPoolList.size();
+            for (int index = 0; index < size; index++) {
+                pp = printPoolList.get(index);
+                if (PRINTER_LINE.compareTo(pp.getLineNo()) != 0) {
+                    printerPrintPoolList.add(pp);
+                }
+                if (PRINTER_LINE.compareTo(pp.getLineNo()) == 0 || index == size - 1) {
+                    if (!printerPrintPoolList.isEmpty()) {
                         printPort = printerPrintPoolList.get(0).getPrintPort();
                         if (printPort != null 
                                 && (printPort.toUpperCase().startsWith("COM") || printPort.toUpperCase().startsWith("LPT") || !Epbnetprinter.checkNetPort(printPort))) { 
-                            opened = Epbcomprinter.OpenEpbprinter(printPort);
-                            if (opened) {
-                                Epbcomprinter.printPosReceipt(printPoolList);
-                                Epbcomprinter.closePrinter();
-                            } else {
+//                            opened = Epbcomprinter.OpenEpbprinter(printPort);
+//                            if (opened) {
+//                                Epbcomprinter.printPosReceipt(printPoolList);
+//                                Epbcomprinter.closePrinter();
+//                            } else {
+//                                returnMap.put(Epbdevice.MSG_ID, "error");
+//                                returnMap.put(Epbdevice.MSG, "Failed to open printer port" + "->" + printPort);
+//                                return returnMap;
+//                            }     
+                            final String returnMsg = Epbcomprinter.printPosReceipt(printPort, printerPrintPoolList);
+                            if (!EMPTY.equals(returnMsg)) {
                                 returnMap.put(Epbdevice.MSG_ID, "error");
-                                returnMap.put(Epbdevice.MSG, "Failed to open printer port" + "->" + printPort);
+                                returnMap.put(Epbdevice.MSG, returnMsg);
                                 return returnMap;
-                            }                         
+                            }
                         } else {
-                            opened = Epbnetprinter.openEpbNetPrinter(printPort);
-                            if (opened) {
-                                Epbnetprinter.printPosReceipt(printPoolList);
-                                Epbnetprinter.closeNetPrinter();
-                            } else {
+//                            opened = Epbnetprinter.openEpbNetPrinter(printPort);
+//                            if (opened) {
+//                                Epbnetprinter.printPosReceipt(printPoolList);
+//                                Epbnetprinter.closeNetPrinter();
+//                            } else {
+//                                returnMap.put(Epbdevice.MSG_ID, "error");
+//                                returnMap.put(Epbdevice.MSG, "Failed to open net printer port" + "->" + printPort);
+//                                return returnMap;
+//                            }
+                            final String returnMsg = Epbnetprinter.printPosReceipt(printPort, printerPrintPoolList);
+                            if (!EMPTY.equals(returnMsg)) {
                                 returnMap.put(Epbdevice.MSG_ID, "error");
-                                returnMap.put(Epbdevice.MSG, "Failed to open net printer port" + "->" + printPort);
+                                returnMap.put(Epbdevice.MSG, returnMsg);
                                 return returnMap;
                             }
                         }
                     }
+                    printerPrintPoolList.clear();
                 }
             }
             
@@ -80,7 +100,7 @@ class Epbprinter {
             }
 
             //调用函数
-            CallableStatement stmt = (CallableStatement ) conn.prepareCall("call get_pos_print_array(?,?,?,?,?,?,?)");
+            CallableStatement stmt = (CallableStatement ) conn.prepareCall("call EP_BISTRO.get_pos_print_file(?,?,?,?,?,?,?)");
             stmt.registerOutParameter(1, java.sql.Types.VARCHAR);
             stmt.registerOutParameter(2, java.sql.Types.VARCHAR);
             stmt.setString(3, actionType);
@@ -105,32 +125,36 @@ class Epbprinter {
                     printPool = new PrintPool();
                     for (int i = 1; i <= columnCount; i++) {
                         String columnName = metaData.getColumnLabel(i);
-                        String value = rs.getString(columnName);
+                        Object value = rs.getObject(columnName);
                         // PRINT_PORT, LINE_NO, ORDER_NO, PRINT_COMMAND, CONST1, CONST2, FORMAT, LENGTH, ALIGN, BREAK_FLG, FILL_BLANK_FLG, VAL
                         if ("PRINT_PORT".equals(columnName.toUpperCase())) {
-                            printPool.setPrintPort(value);
+                            printPool.setPrintPort((String) value);
                         } else if ("LINE_NO".equals(columnName.toUpperCase())) {
-                            printPool.setLineNo(new BigDecimal(value));
+                            printPool.setLineNo(value instanceof BigDecimal ? (BigDecimal) value : new BigDecimal(value + EMPTY));
                         } else if ("ORDER_NO".equals(columnName.toUpperCase())) {
-                            printPool.setOrderNo(new BigDecimal(value).toBigInteger());
+                            printPool.setOrderNo(value instanceof BigInteger ? (BigInteger) value 
+                                    : value == null ? null
+                                    : new BigDecimal(value + EMPTY).toBigInteger());
                         } else if ("PRINT_COMMAND".equals(columnName.toUpperCase())) {
-                            printPool.setPrintCommand(value);
+                            printPool.setPrintCommand((String) value);
                         } else if ("CONST1".equals(columnName.toUpperCase())) {
-                            printPool.setConst1(value);
+                            printPool.setConst1((String) value);
                         } else if ("CONST2".equals(columnName.toUpperCase())) {
-                            printPool.setConst2(value);
+                            printPool.setConst2((String) value);
                         } else if ("FORMAT".equals(columnName.toUpperCase())) {
-                            printPool.setFormat(value);
+                            printPool.setFormat((String) value);
                         } else if ("LENGTH".equals(columnName.toUpperCase())) {
-                            printPool.setLength(new BigDecimal(value).toBigInteger());
+                            printPool.setLength(value instanceof BigInteger ? (BigInteger) value 
+                                    : value == null ? null
+                                    : new BigDecimal(value + EMPTY).toBigInteger());
                         } else if ("ALIGN".equals(columnName.toUpperCase())) {
-                            printPool.setAlign(value);
+                            printPool.setAlign((String) value);
                         } else if ("BREAK_FLG".equals(columnName.toUpperCase())) {
-                            printPool.setBreakFlg(value);
+                            printPool.setBreakFlg((String) value);
                         } else if ("FILL_BLANK_FLG".equals(columnName.toUpperCase())) {
-                            printPool.setFillBlankFlg(value);
+                            printPool.setFillBlankFlg((String) value);
                         } else if ("VAL".equals(columnName.toUpperCase())) {
-                            printPool.setVal(value);
+                            printPool.setVal((String) value);
                         }
                     }
                     list.add(printPool);

@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class Epbnetprinter {
+public class Epbnetprinter {
     private static final String EMPTY = "";
 //    private static final String COM = "COM";
 //    private static final String LPT = "LPT";
@@ -32,8 +32,16 @@ class Epbnetprinter {
     private static final String COMMAND_BARCODEF128_115200 = "bf128_115200";
     private static final String COMMAND_HIDE_IF_NUMBER_IS_ZERO = "hnz";  // for number
     private static final String COMMAND_HIDE_IF_STRING_IS_EMPTY = "hse";  // for string
-    private static Socket client;
-    private static PrintWriter socketWriter;
+    private Socket client;
+    private PrintWriter socketWriter;
+    
+    public static String printPosReceipt(final String ipAddr, final List<PrintPool> printPoolList) {
+        return new Epbnetprinter().doPrintPosReceipt(ipAddr, printPoolList);
+    }
+    
+    public static String printText(final String ipAddr, final String text) {
+        return new Epbnetprinter().doPrintText(ipAddr, text);
+    }
     
     public static boolean checkNetPort(final String ip) {
         try {
@@ -49,8 +57,34 @@ class Epbnetprinter {
             return false;
         }
     }
-
-    public static boolean openEpbNetPrinter(final String ip) {
+    
+    //
+    // private
+    //
+    
+    private String doPrintPosReceipt(final String ipAddr, final List<PrintPool> printPoolList) {
+        boolean opened = doOpenEpbNetPrinter(ipAddr);
+        if (opened) {
+            doPrintPosReceipt(printPoolList);
+            doCloseNetPrinter();
+            return EMPTY;
+        } else {
+            return "Failed to open net printer port" + "->" + ipAddr;
+        }
+    }
+    
+    private String doPrintText(final String ipAddr, final String text) {
+        boolean opened = doOpenEpbNetPrinter(ipAddr);
+        if (opened) {
+            doPrintText(text);
+            doCloseNetPrinter();
+            return EMPTY;
+        } else {
+            return "Failed to open net printer port" + "->" + ipAddr;
+        }
+    }
+    
+    private boolean doOpenEpbNetPrinter(final String ip) {
         try {
             if (client == null) {
                 client = new java.net.Socket();
@@ -80,7 +114,7 @@ class Epbnetprinter {
         }
     }
     
-    public static void printPosReceipt(final List<PrintPool> printPoolList) {
+    private void doPrintPosReceipt(final List<PrintPool> printPoolList) {
         try {
             String output;
             int position;
@@ -223,7 +257,7 @@ class Epbnetprinter {
         }
     }
 
-    public static void printText(final String lineText) {
+    private void doPrintText(final String lineText) {
         try {
             if (socketWriter == null) {
                 // do nothing
@@ -237,7 +271,7 @@ class Epbnetprinter {
         }
     }
     
-    public static void printCmd(final String printerCmd) {
+    private void doPrintCmd(final String printerCmd) {
         try {
             if (socketWriter == null) {
                 // do nothing
@@ -256,11 +290,11 @@ class Epbnetprinter {
         }
     }
     
-    public static void cutPaper() {
-        printCmd(CUT_PAPER_DEFAULT_CMD);
-    }
+//    private void cutPaper() {
+//        printCmd(CUT_PAPER_DEFAULT_CMD);
+//    }
 
-    public static void closeNetPrinter() {
+    private void doCloseNetPrinter() {
         try {
             if (client == null) {
                 // do nothing

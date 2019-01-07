@@ -28,9 +28,25 @@ class Epbcomprinter {
     private static final String COMMAND_HIDE_IF_NUMBER_IS_ZERO = "hnz";  // for number
     private static final String COMMAND_HIDE_IF_STRING_IS_EMPTY = "hse";  // for string
     private static final byte[] CTL_LF = ("\r\n").getBytes();          // Print and line feed
-    private static FileOutputStream ioPrint;
+    private FileOutputStream ioPrint;
+    
+    public static String printPosReceipt(final String printPort, final List<PrintPool> printPoolList) {
+        return new Epbcomprinter().doPrintPosReceipt(printPort, printPoolList);
+    }
+    
+    public static void openDrawer(final String serialParallelPort, final String openCashDrawerCmd) {
+        new Epbcomprinter().doOpenDrawer(serialParallelPort, openCashDrawerCmd);
+    }
+    
+    public static void cutPaper() {
+        new Epbcomprinter().doCutPaper();
+    }
 
-    public static boolean OpenEpbprinter(final String serialParallelPort) {
+    //
+    // private
+    //
+    
+    private boolean doOpenEpbprinter(final String serialParallelPort) {
         try {
             if (ioPrint == null) {
                 ioPrint = new FileOutputStream(serialParallelPort);
@@ -199,7 +215,18 @@ class Epbcomprinter {
 //        }
 //    }
     
-    public static void printPosReceipt(final List<PrintPool> printPoolList) {
+    private String doPrintPosReceipt(final String printPort, final List<PrintPool> printPoolList) {
+        boolean opened = doOpenEpbprinter(printPort);
+        if (opened) {
+            doPrintPosReceipt(printPoolList);
+            doClosePrinter();
+            return EMPTY;
+        } else {
+            return "Failed to open printer port" + "->" + printPort;
+        }
+    }
+    
+    private void doPrintPosReceipt(final List<PrintPool> printPoolList) {
         try {
             String output;
             int position;
@@ -339,7 +366,7 @@ class Epbcomprinter {
         }
     }
 
-    public static void printText(final String lineText) {
+    private void doPrintText(final String lineText) {
         try {
             if (ioPrint == null) {
                 // do nothing
@@ -354,7 +381,7 @@ class Epbcomprinter {
         }
     }
 
-    public static void printCmd(final String printerCmd) {
+    private void doPrintCmd(final String printerCmd) {
         try {
             if (ioPrint == null) {
                 // do nothing
@@ -374,7 +401,7 @@ class Epbcomprinter {
         }
     }
 
-    public static void closePrinter() {
+    private void doClosePrinter() {
         try {
             if (ioPrint == null) {
                 // do nothing
@@ -388,8 +415,8 @@ class Epbcomprinter {
         }
     }
 
-    public static void cutPaper() {
-        printCmd(CUT_PAPER_DEFAULT_CMD);
+    private void doCutPaper() {
+        doPrintCmd(CUT_PAPER_DEFAULT_CMD);
     }
 
 //	    public static void openDrawer() {
@@ -401,7 +428,7 @@ class Epbcomprinter {
      * @param openCashDrawerCmd open cash drawer command, default
      * 27,112,0,48,255
      */
-    public static void openDrawer(final String serialParallelPort, final String openCashDrawerCmd) {
+    private void doOpenDrawer(final String serialParallelPort, final String openCashDrawerCmd) {
         try {
             // openCashDrawerCmd default 27,112,0,48,255
             if (serialParallelPort.toUpperCase().startsWith(COM) || serialParallelPort.toUpperCase().startsWith(LPT)) {

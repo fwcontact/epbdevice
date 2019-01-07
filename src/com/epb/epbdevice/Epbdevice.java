@@ -2,6 +2,7 @@ package com.epb.epbdevice;
 
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.Map;
 
 public class Epbdevice {
@@ -58,6 +59,44 @@ public class Epbdevice {
         } catch (Exception ex) {
             System.out.println("runAppNoWait error!" + ex.getMessage());
         } finally {
+        }
+    }
+    
+    //
+    // test
+    //
+    
+    public static void main(String args[]) {
+//        Epbnetprinter.openEpbNetPrinter("192.168.1.68");
+//        Epbnetprinter.printText("test 1");
+//        Epbnetprinter.printText("test 2");
+//        Epbnetprinter.printText("test 3");        
+//        Epbnetprinter.closeNetPrinter();
+//        Epbnetprinter.openEpbNetPrinter("192.168.1.68");
+//        Epbnetprinter.printText("test 4"); 
+//        Epbnetprinter.printText("test 5"); 
+//        Epbnetprinter.printText("test 6"); 
+//        Epbnetprinter.printText("test 7"); 
+//        Epbnetprinter.printText("test 8"); 
+//        Epbnetprinter.printText("test 9");        
+//        Epbnetprinter.closeNetPrinter();  
+//        Epbnetprinter.printText("192.168.1.68", "text1");
+//        Epbnetprinter.printText("192.168.1.68", "text2");
+//        Epbnetprinter.printText("192.168.1.68", "text3");
+//        Epbnetprinter.printText("192.168.1.68", "text4");
+        try {
+            String driver = "oracle.jdbc.driver.OracleDriver"; 
+            String url = "jdbc:oracle:thin:@192.168.1.11:1521:orcl";
+            String user = "EPBSH";
+            String pwd = "EPBSH";
+            Class.forName(driver);
+            System.out.println("driver is ok");
+
+            Connection conn = DriverManager.getConnection(url, user, pwd);
+            System.out.println("conection is ok");
+            printFile(conn, driver, pwd, user, user);
+        } catch (Throwable thr) {
+            System.out.println("thr:" + thr.getMessage());
         }
     }
 }
