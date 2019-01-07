@@ -1,9 +1,15 @@
 package com.epb.epbdevice;
 
 import java.io.InputStream;
+import java.sql.Connection;
+import java.util.Map;
 
 public class Epbdevice {
-	public static void initBat(final String intiFilePathName) {  //D:\\EPBrowser\\EPB\\init.bat
+    public static final String MSG_ID = "msgId";
+    public static final String MSG = "msg";
+    public static final String RETURN_OK = "OK";
+    
+    public static void initBat(final String intiFilePathName) {  //D:\\EPBrowser\\EPB\\init.bat
         try {
             int osType = new Epbdevice().getOsType();
             if (osType == 0) {//windows
@@ -14,6 +20,10 @@ public class Epbdevice {
         } catch (Exception ex) {
             System.out.println("Initial print parameter error!" + ex.getMessage());
         }
+    }
+    
+    public static Map<String, String> printFile(final Connection conn, final String actionType, final String shopId, final String recKey, final String userId) {
+        return Epbprinter.printFile(conn, actionType, shopId, recKey, userId);
     }
     
     //

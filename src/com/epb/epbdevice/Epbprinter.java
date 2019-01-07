@@ -1,129 +1,154 @@
 package com.epb.epbdevice;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
+import com.epb.epbdevice.beans.PrintPool;
+import java.math.BigDecimal;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import com.epb.epbdevice.utl.StringParser;
-
-public class Epbprinter {
-//	    private static final String EMPTY = "";
-
-    private static final String COM = "COM";
-    private static final String LPT = "LPT";
-    private static final String CUT_PAPER_DEFAULT_CMD = "27,105";
-    private static final String OPEN_DRAWER_DEFAULT_CMD = "27,112,0,48,255";
-    private static final byte[] CTL_LF = ("\r\n").getBytes();          // Print and line feed
-    private static FileOutputStream ioPrint;
-
-    public static boolean OpenEpbprinter(final String serialParallelPort) {
+class Epbprinter {    
+    
+    private static final String EMPTY = "";
+    private static final BigDecimal PRINTER_LINE = new BigDecimal("-1");
+    
+    public static Map<String, String> printFile(final Connection conn, final String actionType, final String shopId, final String recKey, final String userId) {
+        final Map<String, String> returnMap = new HashMap<String, String>();
         try {
-            if (ioPrint == null) {
-                ioPrint = new FileOutputStream(serialParallelPort);
-                return true;
+            List<PrintPool> printPoolList = getPrintPoolList(conn, actionType, shopId, recKey, userId);
+            if (printPoolList == null || printPoolList.isEmpty()) {
+                returnMap.put(Epbdevice.MSG_ID, "error");
+                returnMap.put(Epbdevice.MSG, "Failed to call procedure");
+                return returnMap;
             }
-            return true;
-        } catch (IOException ex) {
-            ioPrint = null;
-            System.out.println("com.epb.epbdevice.Epbprinter.Epbprinter()" + ":" + ex.getMessage());
-            return false;
-        }
-    }
-
-    public static void printText(final String lineText) {
-        try {
-            if (ioPrint == null) {
-                // do nothing
-                System.out.println("please open printer first");
-                return;
-            }
-            ioPrint.write(lineText.getBytes());
-            ioPrint.write(CTL_LF);
-        } catch (IOException ex) {
-//            ioPrint = null;
-            System.out.println("com.epb.epbdevice.Epbprinter.printText()" + ":" + ex.getMessage());
-        }
-    }
-
-    public static void printCmd(final String printerCmd) {
-        try {
-            if (ioPrint == null) {
-                // do nothing
-                System.out.println("please open printer first");
-                return;
-            }
-            if (printerCmd == null || printerCmd.trim().length() == 0) {
-                // do nothing
-                return;
-            }
-
-            final String commandSpilt = StringParser.getSplitString(printerCmd);
-            ioPrint.write(commandSpilt.getBytes());
-        } catch (IOException ex) {
-//            ioPrint = null;
-            System.out.println("com.epb.epbdevice.Epbprinter.printCmd()" + ":" + ex.getMessage());
-        }
-    }
-
-    public static void closePrinter() {
-        try {
-            if (ioPrint == null) {
-                // do nothing
-                return;
-            }
-            ioPrint.flush();
-            ioPrint.close();
-        } catch (IOException ex) {
-            ioPrint = null;
-            System.out.println("com.epb.epbdevice.Epbprinter.closePrinter()" + ":" + ex.getMessage());
-        }
-    }
-
-    public static void cutPaper() {
-        printCmd(CUT_PAPER_DEFAULT_CMD);
-    }
-
-//	    public static void openDrawer() {
-//	        printCmd(OPEN_DRAWER_DEFAULT_CMD);
-//	    }
-    /**
-     * @param serialParallelPort cash drawer serialParallelPort as same as
-     * printer serialParallelPort
-     * @param openCashDrawerCmd open cash drawer command, default
-     * 27,112,0,48,255
-     */
-    public static void openDrawer(final String serialParallelPort, final String openCashDrawerCmd) {
-        try {
-            // openCashDrawerCmd default 27,112,0,48,255
-            if (serialParallelPort.toUpperCase().startsWith(COM) || serialParallelPort.toUpperCase().startsWith(LPT)) {
-                if (ioPrint == null) {
-                    FileOutputStream drawerIoPrint;
-                    drawerIoPrint = null;
-                    try {
-                        drawerIoPrint = new FileOutputStream(serialParallelPort);
-                        final String commandSpilt = StringParser.getSplitString(
-                                openCashDrawerCmd == null || openCashDrawerCmd.trim().length() == 0
-                                ? OPEN_DRAWER_DEFAULT_CMD
-                                : openCashDrawerCmd);
-                        drawerIoPrint.write(commandSpilt.getBytes());
-                    } catch (IOException ex) {
-                        drawerIoPrint = null;
-                    } finally {
-                        if (drawerIoPrint != null) {
-                            drawerIoPrint.close();
+            
+            List<PrintPool> printerPrintPoolList = new ArrayList<PrintPool>();
+            boolean opened = false;
+            String printPort;
+            for (PrintPool pp : printPoolList) {
+                if (PRINTER_LINE.compareTo(pp.getLineNo()) == 0) {
+                    if (printerPrintPoolList != null && !printerPrintPoolList.isEmpty()) {
+                        printPort = printerPrintPoolList.get(0).getPrintPort();
+                        if (printPort != null 
+                                && (printPort.toUpperCase().startsWith("COM") || printPort.toUpperCase().startsWith("LPT") || !Epbnetprinter.checkNetPort(printPort))) { 
+                            opened = Epbcomprinter.OpenEpbprinter(printPort);
+                            if (opened) {
+                                Epbcomprinter.printPosReceipt(printPoolList);
+                                Epbcomprinter.closePrinter();
+                            } else {
+                                returnMap.put(Epbdevice.MSG_ID, "error");
+                                returnMap.put(Epbdevice.MSG, "Failed to open printer port" + "->" + printPort);
+                                return returnMap;
+                            }                         
+                        } else {
+                            opened = Epbnetprinter.openEpbNetPrinter(printPort);
+                            if (opened) {
+                                Epbnetprinter.printPosReceipt(printPoolList);
+                                Epbnetprinter.closeNetPrinter();
+                            } else {
+                                returnMap.put(Epbdevice.MSG_ID, "error");
+                                returnMap.put(Epbdevice.MSG, "Failed to open net printer port" + "->" + printPort);
+                                return returnMap;
+                            }
                         }
                     }
-                } else {
-                    final String commandSpilt = StringParser.getSplitString(
-                            openCashDrawerCmd == null || openCashDrawerCmd.trim().length() == 0
-                            ? OPEN_DRAWER_DEFAULT_CMD
-                            : openCashDrawerCmd);
-                    ioPrint.write(commandSpilt.getBytes());
                 }
-            } else {
-                // DO NOTHING
             }
-        } catch (IOException ex) {
-            System.out.println("com.epb.epbdevice.Epbprinter.openDrawer()" + ":" + ex.getMessage());
+            
+            returnMap.put(Epbdevice.MSG_ID, Epbdevice.RETURN_OK);
+            returnMap.put(Epbdevice.MSG, EMPTY);
+            return returnMap;
+        } catch (Throwable thr) {
+            returnMap.put(Epbdevice.MSG_ID, "unhandle exception");
+            returnMap.put(Epbdevice.MSG, thr.getMessage());
+            return returnMap;
+        }
+    }
+    
+    private static List<PrintPool> getPrintPoolList(final Connection conn, final String actionType, final String shopId, final String recKey, final String userId) {
+        final List<PrintPool> list = new ArrayList<PrintPool>();
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            if (conn == null) {
+                return list;
+            }
+
+            //调用函数
+            CallableStatement stmt = (CallableStatement ) conn.prepareCall("call get_pos_print_array(?,?,?,?,?,?,?)");
+            stmt.registerOutParameter(1, java.sql.Types.VARCHAR);
+            stmt.registerOutParameter(2, java.sql.Types.VARCHAR);
+            stmt.setString(3, actionType);
+            stmt.setString(4, shopId);
+            stmt.setString(5, recKey);
+            stmt.setString(6, userId);
+            stmt.registerOutParameter(7, java.sql.Types.VARCHAR); // printKey
+            stmt.execute();
+            String strRtn = stmt.getString(1);
+            String strRtnPrintKey = stmt.getString(7);
+            if (strRtn.equals("OK")) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("SELECT * FROM POS_PRINTER_FILE WHERE REC_KEY_REF = '");
+                sb.append(strRtnPrintKey);
+                sb.append("'ORDER BY PRINT_PORT, LINE_NO, ORDER_NO ASC");
+                pstmt = conn.prepareStatement(sb.toString());
+                rs = pstmt.executeQuery();
+                ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
+                int columnCount = metaData.getColumnCount();
+                PrintPool printPool;
+                while (rs.next()) {
+                    printPool = new PrintPool();
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnLabel(i);
+                        String value = rs.getString(columnName);
+                        // PRINT_PORT, LINE_NO, ORDER_NO, PRINT_COMMAND, CONST1, CONST2, FORMAT, LENGTH, ALIGN, BREAK_FLG, FILL_BLANK_FLG, VAL
+                        if ("PRINT_PORT".equals(columnName.toUpperCase())) {
+                            printPool.setPrintPort(value);
+                        } else if ("LINE_NO".equals(columnName.toUpperCase())) {
+                            printPool.setLineNo(new BigDecimal(value));
+                        } else if ("ORDER_NO".equals(columnName.toUpperCase())) {
+                            printPool.setOrderNo(new BigDecimal(value).toBigInteger());
+                        } else if ("PRINT_COMMAND".equals(columnName.toUpperCase())) {
+                            printPool.setPrintCommand(value);
+                        } else if ("CONST1".equals(columnName.toUpperCase())) {
+                            printPool.setConst1(value);
+                        } else if ("CONST2".equals(columnName.toUpperCase())) {
+                            printPool.setConst2(value);
+                        } else if ("FORMAT".equals(columnName.toUpperCase())) {
+                            printPool.setFormat(value);
+                        } else if ("LENGTH".equals(columnName.toUpperCase())) {
+                            printPool.setLength(new BigDecimal(value).toBigInteger());
+                        } else if ("ALIGN".equals(columnName.toUpperCase())) {
+                            printPool.setAlign(value);
+                        } else if ("BREAK_FLG".equals(columnName.toUpperCase())) {
+                            printPool.setBreakFlg(value);
+                        } else if ("FILL_BLANK_FLG".equals(columnName.toUpperCase())) {
+                            printPool.setFillBlankFlg(value);
+                        } else if ("VAL".equals(columnName.toUpperCase())) {
+                            printPool.setVal(value);
+                        }
+                    }
+                    list.add(printPool);
+                }
+            }
+            return list;
+        } catch (Exception e) {
+            return list;
+        } finally {
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (Throwable thr) {
+            }
         }
     }
 }
