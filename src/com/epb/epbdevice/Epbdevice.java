@@ -9,6 +9,7 @@ public class Epbdevice {
     public static final String MSG_ID = "msgId";
     public static final String MSG = "msg";
     public static final String RETURN_OK = "OK";
+//    private static final Log LOG = LogFactory.getLog(Epbescpos.class);
     
     public synchronized static void initBat(final String intiFilePathName) {  //D:\\EPBrowser\\EPB\\init.bat
         try {
@@ -23,8 +24,8 @@ public class Epbdevice {
         }
     }
     
-    public synchronized static Map<String, String> printFile(final Connection conn, final String actionType, final String shopId, final String recKey, final String userId) {
-        return Epbprinter.printFile(conn, actionType, shopId, recKey, userId);
+    public synchronized static Map<String, String> printFile(final Connection conn, final String recKey, final String userId) {
+        return Epbprinter.printFile(conn, recKey, userId);
     }
     
     //
@@ -94,11 +95,9 @@ public class Epbdevice {
 
             Connection conn = DriverManager.getConnection(url, user, pwd);
             System.out.println("conection is ok");
-            String actionType = "ORDER";  // ORDER OR KOT OR RECEIPT
-            String shopId = "SHOP001";    // SHOP ID
-            String recKey = "123";        // OPENTABLE.rec_key OR KOTMAS.rec_key
+            String recKey = "123";        // PRINTMAS.rec_key
             String userId = "Admin";      // Waitier OR Cashier
-            final Map<String, String> returnMap = Epbdevice.printFile(conn, actionType, shopId, recKey, userId);
+            final Map<String, String> returnMap = Epbdevice.printFile(conn, recKey, userId);
             if (Epbdevice.RETURN_OK.equals(returnMap.get(Epbdevice.MSG_ID))) {
                 // printer OK
             } else {

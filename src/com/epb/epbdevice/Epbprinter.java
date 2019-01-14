@@ -17,11 +17,14 @@ class Epbprinter {
     
     private static final String EMPTY = "";
     private static final BigDecimal PRINTER_LINE = new BigDecimal("-1");
+    private static final String OK = "OK";
+    private static final String COM = "COM";
+    private static final String LPT = "LPT";
     
-    public static Map<String, String> printFile(final Connection conn, final String actionType, final String shopId, final String recKey, final String userId) {
+    public static Map<String, String> printFile(final Connection conn, final String recKey, final String userId) {
         final Map<String, String> returnMap = new HashMap<String, String>();
         try {
-            List<PrintPool> printPoolList = getPrintPoolList(conn, actionType, shopId, recKey, userId);
+            List<PrintPool> printPoolList = getPrintPoolList(conn, recKey, userId);
             if (printPoolList == null || printPoolList.isEmpty()) {
                 returnMap.put(Epbdevice.MSG_ID, "error");
                 returnMap.put(Epbdevice.MSG, "Failed to call procedure");
@@ -42,7 +45,7 @@ class Epbprinter {
                     if (!printerPrintPoolList.isEmpty()) {
                         printPort = printerPrintPoolList.get(0).getPrintPort();
                         if (printPort != null 
-                                && (printPort.toUpperCase().startsWith("COM") || printPort.toUpperCase().startsWith("LPT") || !Epbnetprinter.checkNetPort(printPort))) { 
+                                && (printPort.toUpperCase().startsWith(COM) || printPort.toUpperCase().startsWith(LPT) || !Epbnetprinter.checkNetPort(printPort))) { 
 //                            opened = Epbcomprinter.OpenEpbprinter(printPort);
 //                            if (opened) {
 //                                Epbcomprinter.printPosReceipt(printPoolList);
@@ -90,7 +93,7 @@ class Epbprinter {
         }
     }
     
-    private static List<PrintPool> getPrintPoolList(final Connection conn, final String actionType, final String shopId, final String recKey, final String userId) {
+    private static List<PrintPool> getPrintPoolList(final Connection conn, final String recKey, final String userId) {
         final List<PrintPool> list = new ArrayList<PrintPool>();
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -100,21 +103,17 @@ class Epbprinter {
             }
 
             //调用函数
-            CallableStatement stmt = (CallableStatement ) conn.prepareCall("call EP_BISTRO.get_pos_print_file(?,?,?,?,?,?,?)");
+            CallableStatement stmt = (CallableStatement ) conn.prepareCall("call EP_BISTRO.get_pos_print_file(?,?,?,?)");
             stmt.registerOutParameter(1, java.sql.Types.VARCHAR);
             stmt.registerOutParameter(2, java.sql.Types.VARCHAR);
-            stmt.setString(3, actionType);
-            stmt.setString(4, shopId);
-            stmt.setString(5, recKey);
-            stmt.setString(6, userId);
-            stmt.registerOutParameter(7, java.sql.Types.VARCHAR); // printKey
+            stmt.setString(3, recKey);
+            stmt.setString(4, userId);
             stmt.execute();
             String strRtn = stmt.getString(1);
-            String strRtnPrintKey = stmt.getString(7);
-            if (strRtn.equals("OK")) {
+            if (OK.equals(strRtn)) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("SELECT * FROM POS_PRINTER_FILE WHERE REC_KEY_REF = '");
-                sb.append(strRtnPrintKey);
+                sb.append(recKey);
                 sb.append("'ORDER BY PRINT_PORT, LINE_NO, ORDER_NO ASC");
                 pstmt = conn.prepareStatement(sb.toString());
                 rs = pstmt.executeQuery();

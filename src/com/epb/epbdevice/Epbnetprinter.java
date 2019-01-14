@@ -63,13 +63,17 @@ public class Epbnetprinter {
     //
     
     private String doPrintPosReceipt(final String ipAddr, final List<PrintPool> printPoolList) {
-        boolean opened = doOpenEpbNetPrinter(ipAddr);
-        if (opened) {
-            doPrintPosReceipt(printPoolList);
-            doCloseNetPrinter();
-            return EMPTY;
-        } else {
-            return "Failed to open net printer port" + "->" + ipAddr;
+        try {
+            boolean opened = doOpenEpbNetPrinter(ipAddr);
+            if (opened) {
+                doPrintPosReceipt(printPoolList);
+                doCloseNetPrinter();
+                return EMPTY;
+            } else {
+                return "Failed to open net printer port" + "->" + ipAddr;
+            }
+        } catch (Throwable thr) {
+            return "Failed to print receipt" + "->" + thr.getMessage();
         }
     }
     

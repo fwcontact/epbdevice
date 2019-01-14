@@ -55,7 +55,7 @@ class Epbcomprinter {
             return true;
         } catch (IOException ex) {
             ioPrint = null;
-            System.out.println("com.epb.epbdevice.Epbprinter.Epbprinter()" + ":" + ex.getMessage());
+//            System.out.println("com.epb.epbdevice.Epbprinter.Epbprinter()" + ":" + ex.getMessage());
             return false;
         }
     }
@@ -216,13 +216,17 @@ class Epbcomprinter {
 //    }
     
     private String doPrintPosReceipt(final String printPort, final List<PrintPool> printPoolList) {
-        boolean opened = doOpenEpbprinter(printPort);
-        if (opened) {
-            doPrintPosReceipt(printPoolList);
-            doClosePrinter();
-            return EMPTY;
-        } else {
-            return "Failed to open printer port" + "->" + printPort;
+        try {
+            boolean opened = doOpenEpbprinter(printPort);
+            if (opened) {
+                doPrintPosReceipt(printPoolList);
+                doClosePrinter();
+                return EMPTY;
+            } else {
+                return "Failed to open printer port" + "->" + printPort;
+            }
+        } catch (Throwable thr) {
+            return "Failed to print receipt" + "->" + thr.getMessage();
         }
     }
     
