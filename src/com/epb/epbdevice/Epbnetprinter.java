@@ -28,10 +28,6 @@ public class Epbnetprinter {
     private static final String COMMAND_IMAGE115200 = "pi115200";
     private static final String COMMAND_BARCODE128 = "b128";
     private static final String COMMAND_BARCODE128_115200 = "b128_115200";
-    private static final String COMMAND_BARCODEF128 = "bf128";
-    private static final String COMMAND_BARCODEF128_115200 = "bf128_115200";
-    private static final String COMMAND_HIDE_IF_NUMBER_IS_ZERO = "hnz";  // for number
-    private static final String COMMAND_HIDE_IF_STRING_IS_EMPTY = "hse";  // for string
     private Socket client;
     private PrintWriter socketWriter;
     
