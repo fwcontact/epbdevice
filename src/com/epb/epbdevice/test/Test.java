@@ -1,10 +1,12 @@
 package com.epb.epbdevice.test;
 
 import com.epb.epbdevice.Epbdevice;
+import com.epb.epbdevice.Epbnetprinter;
 import com.epb.epbdevice.beans.PrintPool;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -192,7 +194,7 @@ public class Test {
 //        }
 //    }
 //
-//    public static void main(String args[]) {
+    public static void main(String args[]) {
 //        if (1 == 1) {
 //            testPrintBardcode();
 //            return;
@@ -238,5 +240,89 @@ public class Test {
 ////                Epbnetprinter.closeNetPrinter();
 ////            }
 ////        }
-//    }
+        
+        String printPort = "192.168.1.68";
+//        BigDecimal recKeyRef = new BigDecimal(1088);
+        List<PrintPool> printerPrintPoolList = new ArrayList<PrintPool>();
+        PrintPool printPool;
+        printPool = new PrintPool();
+//        printPool.setPrintPort(printPort);
+//        printPool.setLineNo(new BigDecimal(-1));
+//        printerPrintPoolList.add(printPool);
+//        printPool = new PrintPool();
+        printPool.setPrintPort(printPort);
+        printPool.setLineNo(BigDecimal.ONE);
+        printPool.setOrderNo(BigInteger.ONE);
+        printPool.setLength(new BigDecimal(40).toBigInteger());
+        printPool.setConst1("Culina Kitchen");
+        printPool.setAlign("C");
+        printPool.setFillBlankFlg("Y");
+        printPool.setBreakFlg("Y");
+        printerPrintPoolList.add(printPool);
+        printPool = new PrintPool();
+        printPool.setPrintPort(printPort);
+        printPool.setLineNo(new BigDecimal(2));
+        printPool.setOrderNo(BigInteger.ONE);
+        printPool.setLength(new BigDecimal(20).toBigInteger());
+        printPool.setConst1("line NO");
+        printPool.setAlign("C");
+        printPool.setFillBlankFlg("Y");
+        printPool.setBreakFlg("Y");
+        printerPrintPoolList.add(printPool);        
+        printPool = new PrintPool();
+        printPool.setPrintPort(printPort);
+        printPool.setLineNo(new BigDecimal(2));
+        printPool.setOrderNo(new BigDecimal(2).toBigInteger());
+        printPool.setLength(new BigDecimal(20).toBigInteger());
+        printPool.setConst1("Stk ID");
+        printPool.setAlign("C");
+        printPool.setFillBlankFlg("Y");
+        printPool.setBreakFlg("Y");
+        printerPrintPoolList.add(printPool);
+        
+        printPool = new PrintPool();
+        printPool.setPrintPort(printPort);
+        printPool.setLineNo(new BigDecimal(3));
+        printPool.setOrderNo(BigInteger.ONE);
+        printPool.setLength(new BigDecimal(20).toBigInteger());
+        printPool.setVal("1");
+        printPool.setAlign("L");
+        printPool.setFillBlankFlg("Y");
+        printPool.setBreakFlg("Y");
+        printerPrintPoolList.add(printPool);
+        printPool = new PrintPool();
+        printPool.setPrintPort(printPort);
+        printPool.setLineNo(new BigDecimal(3));
+        printPool.setOrderNo(BigInteger.ONE);
+        printPool.setLength(new BigDecimal(20).toBigInteger());
+        printPool.setVal("LHL001");
+        printPool.setAlign("C");
+        printPool.setFillBlankFlg("Y");
+        printPool.setBreakFlg("Y");
+        printerPrintPoolList.add(printPool);
+        
+        printPool = new PrintPool();
+        printPool.setPrintPort(printPort);
+        printPool.setLineNo(new BigDecimal(4));
+        printPool.setOrderNo(BigInteger.ONE);
+        printPool.setLength(new BigDecimal(20).toBigInteger());
+        printPool.setVal("2");
+        printPool.setAlign("L");
+        printPool.setFillBlankFlg("Y");
+        printPool.setBreakFlg("Y");
+        printerPrintPoolList.add(printPool);
+        printPool = new PrintPool();
+        printPool.setPrintPort(printPort);
+        printPool.setLineNo(new BigDecimal(4));
+        printPool.setOrderNo(BigInteger.ONE);
+        printPool.setLength(new BigDecimal(20).toBigInteger());
+        printPool.setVal("LHL002");
+        printPool.setAlign("C");
+        printPool.setFillBlankFlg("Y");
+        printPool.setBreakFlg("Y");
+        printerPrintPoolList.add(printPool);
+        
+        final String returnMsg = Epbnetprinter.printPosReceipt(printPort, printerPrintPoolList);
+        System.out.println("returnMsg:" + returnMsg);
+    }
 }

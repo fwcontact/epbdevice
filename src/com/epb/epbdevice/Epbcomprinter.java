@@ -334,11 +334,12 @@ class Epbcomprinter {
                         }
                     }
 
-                    if ((!(const1 == null || EMPTY.equals(const1)) || !(const2 == null || EMPTY.equals(const2)))
+                    if ((const1 == null || EMPTY.equals(const1)) 
+                            && (const2 == null || EMPTY.equals(const2))
                             && (output == null || EMPTY.equals(output))) {
                         output = EMPTY;
                     } else {
-                        output = const1 + output + const2;
+                        output = (const1 == null ? EMPTY : const1) + (output == null ? EMPTY : output) + (const2 == null ? EMPTY : output);
                     }
 
                     //如果有Command命令，没有内容，不需要补空格
