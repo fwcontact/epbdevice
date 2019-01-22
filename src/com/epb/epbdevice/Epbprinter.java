@@ -14,22 +14,32 @@ import java.util.List;
 import java.util.Map;
 
 class Epbprinter {    
+    private static final String MSG_ID = "msgId";
+    private static final String MSG = "msg";
+    private static final String PRINT_LIST = "printList";
+    private static final String OK = "OK";
     
     private static final String EMPTY = "";
     private static final BigDecimal PRINTER_LINE = new BigDecimal("-1");
-    private static final String OK = "OK";
     private static final String COM = "COM";
     private static final String LPT = "LPT";
     
     public static Map<String, String> printFile(final Connection conn, final String recKey, final String userId) {
         final Map<String, String> returnMap = new HashMap<String, String>();
         try {
-            List<PrintPool> printPoolList = getPrintPoolList(conn, recKey, userId);
+            final Map<String, Object> printMap = getPrintPoolList(conn, recKey, userId);
+//            List<PrintPool> printPoolList = getPrintPoolList(conn, recKey, userId);
+            if (!OK.equals(printMap.get(MSG_ID))) {
+                returnMap.put(Epbdevice.MSG_ID, (String) printMap.get(MSG_ID));
+                returnMap.put(Epbdevice.MSG, (String) printMap.get(MSG));
+            }
+            List<PrintPool> printPoolList = (List<PrintPool>) printMap.get(PRINT_LIST);
             if (printPoolList == null || printPoolList.isEmpty()) {
                 returnMap.put(Epbdevice.MSG_ID, "error");
                 returnMap.put(Epbdevice.MSG, "Failed to call procedure");
                 return returnMap;
             }
+            String printEncoding = EMPTY;
             
             List<PrintPool> printerPrintPoolList = new ArrayList<PrintPool>();
 //            boolean opened;
@@ -40,6 +50,8 @@ class Epbprinter {
                 pp = printPoolList.get(index);
                 if (PRINTER_LINE.compareTo(pp.getLineNo()) != 0) {
                     printerPrintPoolList.add(pp);
+                } else {
+                    printEncoding = pp.getVal();
                 }
                 if (PRINTER_LINE.compareTo(pp.getLineNo()) == 0 || index == size - 1) {
                     if (!printerPrintPoolList.isEmpty()) {
@@ -71,7 +83,7 @@ class Epbprinter {
 //                                returnMap.put(Epbdevice.MSG, "Failed to open net printer port" + "->" + printPort);
 //                                return returnMap;
 //                            }
-                            final String returnMsg = Epbnetprinter.printPosReceipt(printPort, printerPrintPoolList);
+                            final String returnMsg = Epbnetprinter.printPosReceipt(printPort, printerPrintPoolList, printEncoding);
                             if (!EMPTY.equals(returnMsg)) {
                                 returnMap.put(Epbdevice.MSG_ID, "error");
                                 returnMap.put(Epbdevice.MSG, returnMsg);
@@ -93,13 +105,16 @@ class Epbprinter {
         }
     }
     
-    private static List<PrintPool> getPrintPoolList(final Connection conn, final String recKey, final String userId) {
+    private static Map<String, Object> getPrintPoolList(final Connection conn, final String recKey, final String userId) {
         final List<PrintPool> list = new ArrayList<PrintPool>();
         PreparedStatement pstmt = null;
         ResultSet rs = null;
+        final Map<String, Object> returnMap = new HashMap<String, Object>();
         try {
             if (conn == null) {
-                return list;
+                returnMap.put(MSG_ID, "failed");
+                returnMap.put(MSG, "Connnection is null");
+                return returnMap;
             }
 
             //调用函数
@@ -110,6 +125,7 @@ class Epbprinter {
             stmt.setString(4, userId);
             stmt.execute();
             String strRtn = stmt.getString(1);
+            String strMsg = stmt.getString(2);
             if (OK.equals(strRtn)) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("SELECT * FROM POS_PRINTER_FILE WHERE REC_KEY_REF = '");
@@ -158,10 +174,19 @@ class Epbprinter {
                     }
                     list.add(printPool);
                 }
+                returnMap.put(MSG_ID, OK);
+                returnMap.put(MSG, EMPTY);
+                returnMap.put(PRINT_LIST, list);
+                return returnMap;
+            } else {
+                returnMap.put(MSG_ID, strRtn);
+                returnMap.put(MSG, strMsg);
+                return returnMap;
             }
-            return list;
         } catch (Exception e) {
-            return list;
+            returnMap.put(MSG_ID, "failed");
+            returnMap.put(MSG, e.getMessage());
+            return returnMap;
         } finally {
             try {
                 if (pstmt != null) {
@@ -171,6 +196,7 @@ class Epbprinter {
                     rs.close();
                 }
             } catch (Throwable thr) {
+                // DO NOTHING
             }
         }
     }

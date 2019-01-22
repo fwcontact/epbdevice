@@ -3,21 +3,17 @@ package com.epb.epbdevice.test;
 import com.epb.epbdevice.Epbdevice;
 import com.epb.epbdevice.Epbnetprinter;
 import com.epb.epbdevice.beans.PrintPool;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.List;
-import oracle.jdbc.OracleCallableStatement;
-import oracle.jdbc.OracleTypes;
+import java.util.Locale;
+import java.util.Map;
 
 public class Test {
 //    
@@ -194,9 +190,146 @@ public class Test {
 //        }
 //    }
 //
+    
+        public static List<PrintPool> getTestPrintPool(BigDecimal recKey) {
+        final List<PrintPool> list = new ArrayList<PrintPool>();
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        Connection conn = null;
+        try {
+            String driver = "oracle.jdbc.driver.OracleDriver"; 
+//            String url = "jdbc:oracle:thin:@192.168.1.11:1521:orcl";
+            String url = "jdbc:oracle:thin:@localhost:1523:XE";
+            String user = "EPBSH";
+//            String pwd = "EPBSH";
+            String pwd = "EPB9209";
+            String EMPTY = "";
+            Class.forName(driver);
+            System.out.println("driver is ok");
+
+            conn = DriverManager.getConnection(url, user, pwd);
+
+            System.out.println("conection is ok");
+
+             StringBuilder sb = new StringBuilder();
+                sb.append("SELECT * FROM POS_PRINTER_FILE WHERE REC_KEY_REF = '");
+                sb.append(recKey);
+                sb.append("'ORDER BY PRINT_PORT, LINE_NO, ORDER_NO ASC");
+                pstmt = conn.prepareStatement(sb.toString());
+                rs = pstmt.executeQuery();
+                ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
+                int columnCount = metaData.getColumnCount();
+                PrintPool printPool;
+                while (rs.next()) {
+                    printPool = new PrintPool();
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnLabel(i);
+                        Object value = rs.getObject(columnName);
+                        // PRINT_PORT, LINE_NO, ORDER_NO, PRINT_COMMAND, CONST1, CONST2, FORMAT, LENGTH, ALIGN, BREAK_FLG, FILL_BLANK_FLG, VAL
+                        if ("PRINT_PORT".equals(columnName.toUpperCase())) {
+                            printPool.setPrintPort((String) value);
+                        } else if ("LINE_NO".equals(columnName.toUpperCase())) {
+                            printPool.setLineNo(value instanceof BigDecimal ? (BigDecimal) value : new BigDecimal(value + EMPTY));
+                        } else if ("ORDER_NO".equals(columnName.toUpperCase())) {
+                            printPool.setOrderNo(value instanceof BigInteger ? (BigInteger) value 
+                                    : value == null ? null
+                                    : new BigDecimal(value + EMPTY).toBigInteger());
+                        } else if ("PRINT_COMMAND".equals(columnName.toUpperCase())) {
+                            printPool.setPrintCommand((String) value);
+                        } else if ("CONST1".equals(columnName.toUpperCase())) {
+                            printPool.setConst1((String) value);
+                        } else if ("CONST2".equals(columnName.toUpperCase())) {
+                            printPool.setConst2((String) value);
+                        } else if ("FORMAT".equals(columnName.toUpperCase())) {
+                            printPool.setFormat((String) value);
+                        } else if ("LENGTH".equals(columnName.toUpperCase())) {
+                            printPool.setLength(value instanceof BigInteger ? (BigInteger) value 
+                                    : value == null ? null
+                                    : new BigDecimal(value + EMPTY).toBigInteger());
+                        } else if ("ALIGN".equals(columnName.toUpperCase())) {
+                            printPool.setAlign((String) value);
+                        } else if ("BREAK_FLG".equals(columnName.toUpperCase())) {
+                            printPool.setBreakFlg((String) value);
+                        } else if ("FILL_BLANK_FLG".equals(columnName.toUpperCase())) {
+                            printPool.setFillBlankFlg((String) value);
+                        } else if ("VAL".equals(columnName.toUpperCase())) {
+                            //System.out.println((String) value);
+                            System.out.println(rs.getString(columnName));
+                            printPool.setVal((String) value);
+                        }
+                    }
+                    list.add(printPool);
+                }
+            return list;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return list;
+        } finally {
+            if (conn != null) {
+                try {
+                conn.close();
+                } catch (Throwable thr) {
+                    
+                }
+            }
+        }
+    }
+        
+        public static void test() {
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        Connection conn = null;
+        try {
+            String driver = "oracle.jdbc.driver.OracleDriver"; 
+//            String url = "jdbc:oracle:thin:@192.168.1.11:1521:orcl";
+            String url = "jdbc:oracle:thin:@localhost:1523:XE";
+            String user = "EPBSH";
+//            String pwd = "EPBSH";
+            String pwd = "EPB9209";
+            String EMPTY = "";
+            Class.forName(driver);
+            System.out.println("driver is ok");
+
+            conn = DriverManager.getConnection(url, user, pwd);
+
+            System.out.println("conection is ok");
+
+             StringBuilder sb = new StringBuilder();
+                sb.append("SELECT NAME FROM STKMAS WHERE STK_ID = '");
+                sb.append("STK024");
+                sb.append("'ORDER BY STK_ID ASC");
+                pstmt = conn.prepareStatement(sb.toString());
+                rs = pstmt.executeQuery();
+                ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
+                int columnCount = metaData.getColumnCount();
+                while (rs.next()) {
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnLabel(i);
+                        Object value = rs.getObject(columnName);
+                        // PRINT_PORT, LINE_NO, ORDER_NO, PRINT_COMMAND, CONST1, CONST2, FORMAT, LENGTH, ALIGN, BREAK_FLG, FILL_BLANK_FLG, VAL
+                        if ("NAME".equals(columnName.toUpperCase())) {
+                            //System.out.println((String) value);
+                            System.out.println(rs.getString(columnName));
+                        }
+                    }
+                }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try {
+                conn.close();
+                } catch (Throwable thr) {
+                    
+                }
+            }
+        }
+    }
+    
     public static void main(String args[]) {
 //        if (1 == 1) {
-//            testPrintBardcode();
+//            String encoding = System.getProperty("file.encoding");  
+//            System.out.println("----encoding:" + encoding);
 //            return;
 //        }
 //        final List<PrintPool> list = getTestPrintPool();
@@ -243,86 +376,117 @@ public class Test {
         
         String printPort = "192.168.1.68";
 //        BigDecimal recKeyRef = new BigDecimal(1088);
-        List<PrintPool> printerPrintPoolList = new ArrayList<PrintPool>();
-        PrintPool printPool;
-        printPool = new PrintPool();
+//        List<PrintPool> printerPrintPoolList = new ArrayList<PrintPool>();
+//        PrintPool printPool;
+//        printPool = new PrintPool();
+////        printPool.setPrintPort(printPort);
+////        printPool.setLineNo(new BigDecimal(-1));
+////        printerPrintPoolList.add(printPool);
+////        printPool = new PrintPool();
 //        printPool.setPrintPort(printPort);
-//        printPool.setLineNo(new BigDecimal(-1));
+//        printPool.setLineNo(BigDecimal.ONE);
+//        printPool.setOrderNo(BigInteger.ONE);
+//        printPool.setLength(new BigDecimal(40).toBigInteger());
+//        printPool.setConst1("Culina Kitchen");
+//        printPool.setAlign("C");
+//        printPool.setFillBlankFlg("Y");
+//        printPool.setBreakFlg("Y");
 //        printerPrintPoolList.add(printPool);
 //        printPool = new PrintPool();
-        printPool.setPrintPort(printPort);
-        printPool.setLineNo(BigDecimal.ONE);
-        printPool.setOrderNo(BigInteger.ONE);
-        printPool.setLength(new BigDecimal(40).toBigInteger());
-        printPool.setConst1("Culina Kitchen");
-        printPool.setAlign("C");
-        printPool.setFillBlankFlg("Y");
-        printPool.setBreakFlg("Y");
-        printerPrintPoolList.add(printPool);
-        printPool = new PrintPool();
-        printPool.setPrintPort(printPort);
-        printPool.setLineNo(new BigDecimal(2));
-        printPool.setOrderNo(BigInteger.ONE);
-        printPool.setLength(new BigDecimal(20).toBigInteger());
-        printPool.setConst1("line NO");
-        printPool.setAlign("C");
-        printPool.setFillBlankFlg("Y");
-        printPool.setBreakFlg("Y");
-        printerPrintPoolList.add(printPool);        
-        printPool = new PrintPool();
-        printPool.setPrintPort(printPort);
-        printPool.setLineNo(new BigDecimal(2));
-        printPool.setOrderNo(new BigDecimal(2).toBigInteger());
-        printPool.setLength(new BigDecimal(20).toBigInteger());
-        printPool.setConst1("Stk ID");
-        printPool.setAlign("C");
-        printPool.setFillBlankFlg("Y");
-        printPool.setBreakFlg("Y");
-        printerPrintPoolList.add(printPool);
+//        printPool.setPrintPort(printPort);
+//        printPool.setLineNo(new BigDecimal(2));
+//        printPool.setOrderNo(BigInteger.ONE);
+//        printPool.setLength(new BigDecimal(20).toBigInteger());
+//        printPool.setConst1("line NO");
+//        printPool.setAlign("C");
+//        printPool.setFillBlankFlg("Y");
+//        printPool.setBreakFlg("Y");
+//        printerPrintPoolList.add(printPool);        
+//        printPool = new PrintPool();
+//        printPool.setPrintPort(printPort);
+//        printPool.setLineNo(new BigDecimal(2));
+//        printPool.setOrderNo(new BigDecimal(2).toBigInteger());
+//        printPool.setLength(new BigDecimal(20).toBigInteger());
+//        printPool.setConst1("Stk ID");
+//        printPool.setAlign("C");
+//        printPool.setFillBlankFlg("Y");
+//        printPool.setBreakFlg("Y");
+//        printerPrintPoolList.add(printPool);
+//        
+//        printPool = new PrintPool();
+//        printPool.setPrintPort(printPort);
+//        printPool.setLineNo(new BigDecimal(3));
+//        printPool.setOrderNo(BigInteger.ONE);
+//        printPool.setLength(new BigDecimal(20).toBigInteger());
+//        printPool.setVal("1");
+//        printPool.setAlign("L");
+//        printPool.setFillBlankFlg("Y");
+//        printPool.setBreakFlg("Y");
+//        printerPrintPoolList.add(printPool);
+//        printPool = new PrintPool();
+//        printPool.setPrintPort(printPort);
+//        printPool.setLineNo(new BigDecimal(3));
+//        printPool.setOrderNo(BigInteger.ONE);
+//        printPool.setLength(new BigDecimal(20).toBigInteger());
+//        printPool.setVal("LHL001");
+//        printPool.setAlign("C");
+//        printPool.setFillBlankFlg("Y");
+//        printPool.setBreakFlg("Y");
+//        printerPrintPoolList.add(printPool);
+//        
+//        printPool = new PrintPool();
+//        printPool.setPrintPort(printPort);
+//        printPool.setLineNo(new BigDecimal(4));
+//        printPool.setOrderNo(BigInteger.ONE);
+//        printPool.setLength(new BigDecimal(20).toBigInteger());
+//        printPool.setVal("2");
+//        printPool.setAlign("L");
+//        printPool.setFillBlankFlg("Y");
+//        printPool.setBreakFlg("Y");
+//        printerPrintPoolList.add(printPool);
+//        printPool = new PrintPool();
+//        printPool.setPrintPort(printPort);
+//        printPool.setLineNo(new BigDecimal(4));
+//        printPool.setOrderNo(BigInteger.ONE);
+//        printPool.setLength(new BigDecimal(20).toBigInteger());
+//        printPool.setVal("LHL002");
+//        printPool.setAlign("C");
+//        printPool.setFillBlankFlg("Y");
+//        printPool.setBreakFlg("Y");
+//        printerPrintPoolList.add(printPool);
         
-        printPool = new PrintPool();
-        printPool.setPrintPort(printPort);
-        printPool.setLineNo(new BigDecimal(3));
-        printPool.setOrderNo(BigInteger.ONE);
-        printPool.setLength(new BigDecimal(20).toBigInteger());
-        printPool.setVal("1");
-        printPool.setAlign("L");
-        printPool.setFillBlankFlg("Y");
-        printPool.setBreakFlg("Y");
-        printerPrintPoolList.add(printPool);
-        printPool = new PrintPool();
-        printPool.setPrintPort(printPort);
-        printPool.setLineNo(new BigDecimal(3));
-        printPool.setOrderNo(BigInteger.ONE);
-        printPool.setLength(new BigDecimal(20).toBigInteger());
-        printPool.setVal("LHL001");
-        printPool.setAlign("C");
-        printPool.setFillBlankFlg("Y");
-        printPool.setBreakFlg("Y");
-        printerPrintPoolList.add(printPool);
+//        final List<PrintPool> printerPrintPoolList = getTestPrintPool(BigDecimal.ONE);
+        test();
+        if (1 == 1) {
+            return;
+        }
+//        Locale.setDefault(Locale.PRC);
+//        final String returnMsg = Epbnetprinter.printPosReceipt(printPort, printerPrintPoolList, printerPrintPoolList.get(0).getVal());
+//        System.out.println("returnMsg:" + returnMsg);
         
-        printPool = new PrintPool();
-        printPool.setPrintPort(printPort);
-        printPool.setLineNo(new BigDecimal(4));
-        printPool.setOrderNo(BigInteger.ONE);
-        printPool.setLength(new BigDecimal(20).toBigInteger());
-        printPool.setVal("2");
-        printPool.setAlign("L");
-        printPool.setFillBlankFlg("Y");
-        printPool.setBreakFlg("Y");
-        printerPrintPoolList.add(printPool);
-        printPool = new PrintPool();
-        printPool.setPrintPort(printPort);
-        printPool.setLineNo(new BigDecimal(4));
-        printPool.setOrderNo(BigInteger.ONE);
-        printPool.setLength(new BigDecimal(20).toBigInteger());
-        printPool.setVal("LHL002");
-        printPool.setAlign("C");
-        printPool.setFillBlankFlg("Y");
-        printPool.setBreakFlg("Y");
-        printerPrintPoolList.add(printPool);
-        
-        final String returnMsg = Epbnetprinter.printPosReceipt(printPort, printerPrintPoolList);
-        System.out.println("returnMsg:" + returnMsg);
+        Connection conn = null;
+        try {
+            String driver = "oracle.jdbc.driver.OracleDriver";
+            String url = "jdbc:oracle:thin:@192.168.1.11:1521:orcl";
+            String user = "EPBSH";
+            String pwd = "EPBSH";
+            Class.forName(driver);
+            System.out.println("driver is ok");
+
+            conn = DriverManager.getConnection(url, user, pwd);
+            final Map<String, String> map = Epbdevice.printFile(conn, "1", "Admin");
+            for (String key : map.keySet()) {
+                System.out.println("key:" + map.get(key));
+            }
+        } catch (Throwable thr) {
+            System.out.println(thr.getMessage());
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Throwable thr2) {
+                }
+            }
+        }
     }
 }

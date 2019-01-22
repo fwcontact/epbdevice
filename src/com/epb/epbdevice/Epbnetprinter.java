@@ -4,7 +4,7 @@ import com.epb.epbdevice.beans.PrintPool;
 import com.epb.epbdevice.utl.Epbescpos;
 import com.epb.epbdevice.utl.StringParser;
 import java.io.IOException;
-
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.net.InetSocketAddress;
@@ -31,8 +31,8 @@ public class Epbnetprinter {
     private Socket client;
     private PrintWriter socketWriter;
     
-    public static String printPosReceipt(final String ipAddr, final List<PrintPool> printPoolList) {
-        return new Epbnetprinter().doPrintPosReceipt(ipAddr, printPoolList);
+    public static String printPosReceipt(final String ipAddr, final List<PrintPool> printPoolList, final String encoding) {
+        return new Epbnetprinter().doPrintPosReceipt(ipAddr, printPoolList, encoding);
     }
     
     public static String printText(final String ipAddr, final String text) {
@@ -58,9 +58,9 @@ public class Epbnetprinter {
     // private
     //
     
-    private String doPrintPosReceipt(final String ipAddr, final List<PrintPool> printPoolList) {
+    private String doPrintPosReceipt(final String ipAddr, final List<PrintPool> printPoolList, final String encoding) {
         try {
-            boolean opened = doOpenEpbNetPrinter(ipAddr);
+            boolean opened = doOpenEpbNetPrinter(ipAddr, encoding);
             if (opened) {
                 doPrintPosReceipt(printPoolList);
                 doCloseNetPrinter();
@@ -74,7 +74,7 @@ public class Epbnetprinter {
     }
     
     private String doPrintText(final String ipAddr, final String text) {
-        boolean opened = doOpenEpbNetPrinter(ipAddr);
+        boolean opened = doOpenEpbNetPrinter(ipAddr, null);
         if (opened) {
             doPrintText(text);
             doCloseNetPrinter();
@@ -84,12 +84,19 @@ public class Epbnetprinter {
         }
     }
     
-    private boolean doOpenEpbNetPrinter(final String ip) {
+    private boolean doOpenEpbNetPrinter(final String ip, final String encoding) {
         try {
             if (client == null) {
                 client = new java.net.Socket();
                 client.connect(new InetSocketAddress(ip, 9100), 1000); // 创建一个 socket
-                socketWriter = new PrintWriter(client.getOutputStream());// 创建输入输出数据流
+                final String defaultEncoding = System.getProperty("file.encoding");
+//                socketWriter = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), encoding), true);// 创建输入输出数据流
+//                socketWriter = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), "GBK"), true);
+                socketWriter = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), encoding == null || encoding.length() == 0 ? defaultEncoding : encoding), true);// 创建输入输出数据流
+//                socketWriter.println("defaultEncoding:" + defaultEncoding);// 打印完毕自动走纸
+//                socketWriter.flush();
+//                System.out.println("encoding:" + encoding);// 打印完毕自动走纸
+//                socketWriter.flush();
             }
             return true;
         } catch (IOException ex) {
@@ -247,7 +254,7 @@ public class Epbnetprinter {
                     if (line == null || line.length() == 0) {
                         socketWriter.flush();
                     } else {
-                        socketWriter.println((line));// 打印完毕自动走纸
+                        socketWriter.println(line);// 打印完毕自动走纸
                         socketWriter.flush();
                     }
                 }
@@ -272,24 +279,24 @@ public class Epbnetprinter {
         }
     }
     
-    private void doPrintCmd(final String printerCmd) {
-        try {
-            if (socketWriter == null) {
-                // do nothing
-                System.out.println("please open net printer first");
-                return;
-            }
-            if (printerCmd == null || printerCmd.trim().length() == 0) {
-                // do nothing
-                return;
-            }
-
-            final String commandSpilt = StringParser.getSplitString(printerCmd);
-            socketWriter.write(commandSpilt);
-        } catch (Throwable ex) {
-            System.out.println("com.epb.epbdevice.Epbnetprinter.printCmd()" + ":" + ex.getMessage());
-        }
-    }
+//    private void doPrintCmd(final String printerCmd) {
+//        try {
+//            if (socketWriter == null) {
+//                // do nothing
+//                System.out.println("please open net printer first");
+//                return;
+//            }
+//            if (printerCmd == null || printerCmd.trim().length() == 0) {
+//                // do nothing
+//                return;
+//            }
+//
+//            final String commandSpilt = StringParser.getSplitString(printerCmd);
+//            socketWriter.write(commandSpilt);
+//        } catch (Throwable ex) {
+//            System.out.println("com.epb.epbdevice.Epbnetprinter.printCmd()" + ":" + ex.getMessage());
+//        }
+//    }
     
 //    private void cutPaper() {
 //        printCmd(CUT_PAPER_DEFAULT_CMD);

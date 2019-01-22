@@ -9,7 +9,7 @@ public class StringParser {
     private static final String YES = "Y";
     private static final String RIGHT = "R";
     private static final String CENTER = "C";
-    private static final String LEFT = "R";
+    private static final String LEFT = "L";
     
     private int currentPosition;
     private int maxPosition;
