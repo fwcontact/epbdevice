@@ -327,11 +327,12 @@ public class Test {
     }
     
     public static void main(String args[]) {
-//        if (1 == 1) {
+        if (1 == 1) {
 //            String encoding = System.getProperty("file.encoding");  
 //            System.out.println("----encoding:" + encoding);
-//            return;
-//        }
+            Epbdevice.printFile(null, null, null);
+            return;
+        }
 //        final List<PrintPool> list = getTestPrintPool();
 //        if (list == null || list.isEmpty()) {
 //            return;
