@@ -25,6 +25,7 @@ public class PrintPool implements Serializable {
     private String fillBlankFlg;
     private String val;
     private String printPort;
+    private BigInteger printSeq;
     
     private static final String EMPTY = "";
 
@@ -42,6 +43,7 @@ public class PrintPool implements Serializable {
         this.fillBlankFlg = EMPTY;
         this.val = EMPTY;
         this.printPort = EMPTY;
+        this.printSeq = null;
     }
 
     public BigDecimal getLineNo() {
@@ -138,6 +140,14 @@ public class PrintPool implements Serializable {
 
     public void setPrintPort(String printPort) {
         this.printPort = printPort;
+    }
+
+    public BigInteger getPrintSeq() {
+        return printSeq;
+    }
+
+    public void setPrintSeq(BigInteger printSeq) {
+        this.printSeq = printSeq;
     }
     
 }

@@ -130,7 +130,7 @@ class Epbprinter {
                 StringBuilder sb = new StringBuilder();
                 sb.append("SELECT * FROM POS_PRINTER_FILE WHERE REC_KEY_REF = '");
                 sb.append(recKey);
-                sb.append("'ORDER BY PRINT_PORT, LINE_NO, ORDER_NO ASC");
+                sb.append("' ORDER BY PRINT_SEQ, PRINT_PORT, LINE_NO, ORDER_NO ASC");
                 pstmt = conn.prepareStatement(sb.toString());
                 rs = pstmt.executeQuery();
                 ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
