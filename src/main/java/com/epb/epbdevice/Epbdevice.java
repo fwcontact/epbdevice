@@ -1,5 +1,6 @@
 package com.epb.epbdevice;
 
+import com.epb.epbdevice.utl.CommonUtility;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
@@ -28,7 +29,7 @@ public class Epbdevice {
     
     public synchronized static Map<String, String> printFile(final Connection conn, final String recKey, final String userId) {
         // log version
-        printVersion();
+        CommonUtility.printVersion();
         
         return Epbprinter.printFile(conn, recKey, userId);
     }
@@ -65,17 +66,6 @@ public class Epbdevice {
         } catch (Exception ex) {
             System.out.println("runAppNoWait error!" + ex.getMessage());
         } finally {
-        }
-    }
-    
-    private static void printVersion() {
-        try {
-            Properties propertis = new Properties();
-            propertis.load(Epbdevice.class.getResourceAsStream("/META-INF/maven/com.epb/epbdevice/pom.properties"));
-            System.out.println("epbdevice " + propertis.getProperty("version"));
-            propertis.clear();
-        } catch (IOException thr) {
-            System.out.println("com.epb.epbdevice.Epbdevice.printVersion():" + thr.getMessage());
         }
     }
     
