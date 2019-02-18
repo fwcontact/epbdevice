@@ -70,7 +70,7 @@ public class Epbmemberson {
     public static Map<String, String> getVip(final Connection conn,
             final BigDecimal opentableRecKey,
             final String vipId, final String cardNumber, final String nric, final String vipName,
-            final String vipHoneCountryCode, final String vipPhone, final String emailAddress) {
+            final String vipPhoneCountryCode, final String vipPhone, final String emailAddress) {
         final Map<String, String> returnMap = new HashMap<>();
         // log version        
         CommonUtility.printVersion();
@@ -207,7 +207,7 @@ public class Epbmemberson {
 //            BigDecimal posO2oRedeemRatio = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
             BigDecimal fromRate = retMap.containsKey(Epbmemberson.RETURN_FROM_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_FROM_RATE) : null;
             BigDecimal toRate = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
-            retMap = searchVip(posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName, vipHoneCountryCode, vipPhone, emailAddress);
+            retMap = searchVip(posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName, vipPhoneCountryCode, vipPhone, emailAddress);
             if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
                 returnMap.put(MSG, (String) retMap.get(MSG));
