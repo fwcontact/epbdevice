@@ -34,7 +34,7 @@ public class Epbmemberson {
     private static final String ACTIVE = "ACTIVE";
     public static final String MSG_ID = "msgId";
     public static final String MSG = "msg";
-    public static final String OK = "OK";
+    public static final String RETURN_OK = "OK";
     public static final String FAIL = "FAIL";    
     public static final String RETURN_CUSTOMER_MAP = "CUSTOMERMAP";
     public static final String RETURN_CUSTOMER_NUMBER = "CustomerNumber";
@@ -68,7 +68,7 @@ public class Epbmemberson {
             final String customerNumber, final String cardNumber, final String nric, final String name,
             final String mobileNumberCountryCode, final String mobileNumber, final String emailAddress) {
         final Map<String, String> returnMap = new HashMap<>();
-        // log version
+        // log version        
         CommonUtility.printVersion();
         
         PreparedStatement pstmt = null;
@@ -170,14 +170,16 @@ public class Epbmemberson {
             // call memberson API
             posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
             Map<String, Object> retMap = Epbmemberson.getRedeemPointsConversionRate(posO2oUrl, posO2oAuth, posO2oAccessToken, homeCurrId);
-            if (!Epbmemberson.OK.equals(retMap.get(MSG_ID))) {
+            if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
                 returnMap.put(MSG, (String) retMap.get(MSG));
                 return returnMap;
             }
-            BigDecimal posO2oRedeemRatio = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
+//            BigDecimal posO2oRedeemRatio = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
+            BigDecimal fromRate = retMap.containsKey(Epbmemberson.RETURN_FROM_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_FROM_RATE) : null;
+            BigDecimal toRate = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
             retMap = searchVip(posO2oUrl, posO2oAuth, posO2oAccessToken, customerNumber, cardNumber, nric, name, mobileNumberCountryCode, mobileNumber, emailAddress);
-            if (!Epbmemberson.OK.equals(retMap.get(MSG_ID))) {
+            if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
                 returnMap.put(MSG, (String) retMap.get(MSG));
                 return returnMap;
@@ -187,7 +189,7 @@ public class Epbmemberson {
             String retName = customerMap.get(Epbmemberson.RETURN_NAME);
             String retMobile = customerMap.get(Epbmemberson.RETURN_MOBILE_NUMBER);
             retMap = getVipSummary(posO2oUrl, posO2oAuth, posO2oAccessToken, retCustomerNumber);
-            if (!Epbmemberson.OK.equals(retMap.get(MSG_ID))) {
+            if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
                 returnMap.put(MSG, (String) retMap.get(MSG));
                 return returnMap;
@@ -198,7 +200,7 @@ public class Epbmemberson {
                     : new BigDecimal((String) retMap.get(Epbmemberson.RETURN_BALANCE));
             String memberNo = (String) retMap.get(Epbmemberson.RETURN_MEMBER_NO);
             retMap = getMemberDiscounts(posO2oUrl, posO2oAuth, posO2oAccessToken, memberNo, shopId);
-            if (!Epbmemberson.OK.equals(retMap.get(MSG_ID))) {
+            if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
                 returnMap.put(MSG, (String) retMap.get(MSG));
                 return returnMap;
@@ -214,11 +216,11 @@ public class Epbmemberson {
             pstmt = conn.prepareStatement(sql);
             pstmt.setObject(1, retCustomerNumber);
             pstmt.setObject(2, retName);
-            pstmt.setObject(3, mobileNumber);
+            pstmt.setObject(3, retMobile);
             pstmt.setObject(4, classId);
             pstmt.setObject(5, vipDisc);
             pstmt.setObject(6, cumPts);
-            pstmt.setObject(7, posO2oRedeemRatio == null ? null : posO2oRedeemRatio.setScale(6, RoundingMode.HALF_UP));
+            pstmt.setObject(7, fromRate == null || fromRate.compareTo(BigDecimal.ZERO) <= 0 ? BigDecimal.ZERO : cumPts.divide(fromRate).multiply(toRate).setScale(2, RoundingMode.DOWN));
             pstmt.setObject(8, recKey);
             boolean done = pstmt.execute();
             if (!done) {
@@ -270,8 +272,8 @@ public class Epbmemberson {
             jsonBody.put("Password", userPassword);
             System.out.println(jsonBody.toString());
             final Map<String, String> callMap = HttpUtil.callHttpMethod(callHttpUrl, callAuth, null, HttpUtil.POST_METHOD, jsonBody.toString());
-            if (Epbmemberson.OK.equals(callMap.get(MSG_ID))) {
-                returnMap.put(MSG_ID, OK);
+            if (Epbmemberson.RETURN_OK.equals(callMap.get(MSG_ID))) {
+                returnMap.put(MSG_ID, RETURN_OK);
                 returnMap.put(MSG, callMap.get(MSG));
             } else {
                 returnMap.put(MSG_ID, callMap.get(MSG_ID));
@@ -343,8 +345,8 @@ public class Epbmemberson {
             jsonBody.put("IsEmailAddressWildcardSearch", (emailAddress != null && !EMPTY.equals(emailAddress)));
 //            System.out.println(jsonBody.toString());
             Map<String, String> callMap = HttpUtil.callHttpMethod(callHttpUrl, callAuth, token, HttpUtil.POST_METHOD, jsonBody.toString());
-            if (OK.equals(callMap.get(MSG_ID))) {
-                returnMap.put(MSG_ID, OK);
+            if (RETURN_OK.equals(callMap.get(MSG_ID))) {
+                returnMap.put(MSG_ID, RETURN_OK);
                 returnMap.put(MSG, callMap.get(MSG));
             } else {
                 returnMap.put(MSG_ID, callMap.get(MSG_ID));
@@ -405,6 +407,9 @@ public class Epbmemberson {
                         returnMap.put(RETURN_CUSTOMER_MAP, customerMap);
                     }
                 }
+            } else {
+                returnMap.put(MSG_ID, FAIL);
+                returnMap.put(MSG, "Invalid VIP");
             }
             
             return returnMap;
@@ -429,8 +434,8 @@ public class Epbmemberson {
 //            Map<String, String> callMap = getToken(baseurl, "EPBPOS", "8tS20hX1D45S", callAuth);
 //            String token2 = callMap.get(HttpUtil.MSG);
             Map<String, String> callMap = HttpUtil.callHttpGetMethod(callHttpUrl, callAuth, token);
-            if (OK.equals(callMap.get(MSG_ID))) {
-                returnMap.put(MSG_ID, OK);
+            if (RETURN_OK.equals(callMap.get(MSG_ID))) {
+                returnMap.put(MSG_ID, RETURN_OK);
                 returnMap.put(MSG, callMap.get(MSG));
             } else {
                 returnMap.put(MSG_ID, callMap.get(MSG_ID));
@@ -492,6 +497,9 @@ public class Epbmemberson {
                         }                        
                     }
                 }
+            } else {
+                returnMap.put(MSG_ID, FAIL);
+                returnMap.put(MSG, "Invalid VIP");
             }
 //            System.out.println("msgId:" + returnMap.get(HttpUtil.MSG_ID));
 //            System.out.println("msg:" + returnMap.get(HttpUtil.MSG));
@@ -514,8 +522,8 @@ public class Epbmemberson {
 //            Map<String, String> callMap = getToken(baseurl, "EPBPOS", "8tS20hX1D45S", callAuth);
 //            String token2 = callMap.get(HttpUtil.MSG);
             Map<String, String> callMap = HttpUtil.callHttpGetMethod(callHttpUrl, callAuth, token);
-            if (OK.equals(callMap.get(MSG_ID))) {
-                returnMap.put(MSG_ID, OK);
+            if (RETURN_OK.equals(callMap.get(MSG_ID))) {
+                returnMap.put(MSG_ID, RETURN_OK);
                 returnMap.put(MSG, callMap.get(MSG));
             } else {
                 returnMap.put(MSG_ID, callMap.get(MSG_ID));
@@ -536,9 +544,10 @@ public class Epbmemberson {
                         if (homeCurrId.equals(toCurrency)) {
                             double fromRate = dataObject.getDouble(RETURN_FROM_RATE);
                             double toRate = dataObject.getDouble(RETURN_TO_RATE);
-                            BigDecimal toRateB = new BigDecimal(fromRate/toRate);
-                            System.out.println("toRateB:" + toRateB);
-                            returnMap.put(RETURN_TO_RATE, toRateB);                          
+//                            BigDecimal toRateB = new BigDecimal(fromRate/toRate);
+//                            System.out.println("toRateB:" + toRateB);
+                            returnMap.put(RETURN_FROM_RATE, new BigDecimal(fromRate));  
+                            returnMap.put(RETURN_TO_RATE, new BigDecimal(toRate));                           
                             break;
                         }
                     }
@@ -566,8 +575,8 @@ public class Epbmemberson {
 
 //            System.out.println(jsonBody.toString());
             Map<String, String> callMap = HttpUtil.callHttpMethod(callHttpUrl, callAuth, token, HttpUtil.POST_METHOD, jsonBody.toString());
-            if (OK.equals(callMap.get(MSG_ID))) {
-                returnMap.put(MSG_ID, OK);
+            if (RETURN_OK.equals(callMap.get(MSG_ID))) {
+                returnMap.put(MSG_ID, RETURN_OK);
                 returnMap.put(MSG, callMap.get(MSG));
             } else {
                 returnMap.put(MSG_ID, callMap.get(MSG_ID));
@@ -678,7 +687,13 @@ public class Epbmemberson {
             Connection conn = DriverManager.getConnection(url, user, pwd);
             
             
-            getVip(conn, BigDecimal.ZERO, "HQ", "SGD", "01523935", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
+            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "HQ", "SGD", "01523935", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
+            if (Epbmemberson.RETURN_OK.equals(returnMap.get(Epbmemberson.MSG_ID))) {
+                // printer OK
+            } else {
+                // error
+                System.out.println(returnMap.get(Epbmemberson.MSG));
+            }
             
         } catch (ClassNotFoundException | SQLException ex) {
             System.out.println(ex);

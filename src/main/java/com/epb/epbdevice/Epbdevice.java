@@ -104,11 +104,11 @@ public class Epbdevice {
             String recKey = "123";        // PRINTMAS.rec_key
             String userId = "Admin";      // Waitier OR Cashier
             final Map<String, String> returnMap = Epbdevice.printFile(conn, recKey, userId);
-            if (Epbdevice.RETURN_OK.equals(returnMap.get(Epbdevice.MSG_ID))) {
+            if ("OK".equals(returnMap.get("msgId"))) {
                 // printer OK
             } else {
                 // error
-                System.out.println(returnMap.get(Epbdevice.MSG));
+                System.out.println(returnMap.get("msg"));
             }
         } catch (Throwable thr) {
             System.out.println("thr:" + thr.getMessage());

@@ -62,7 +62,7 @@ public class HttpUtil {
                 reader.close();
                 // 断开连接
                 connection.disconnect();
-                returnMapping.put(Epbmemberson.MSG_ID, Epbmemberson.OK);
+                returnMapping.put(Epbmemberson.MSG_ID, Epbmemberson.RETURN_OK);
                 returnMapping.put(Epbmemberson.MSG, jsonReturn);
                 return returnMapping;
             } else {
@@ -165,7 +165,7 @@ public class HttpUtil {
 //        }
                 conn.disconnect();// 断开连接
                 System.out.println("msg:" + msg);
-                returnMapping.put(Epbmemberson.MSG_ID, Epbmemberson.OK);
+                returnMapping.put(Epbmemberson.MSG_ID, Epbmemberson.RETURN_OK);
                 returnMapping.put(Epbmemberson.MSG, msg);
                 return returnMapping;
             } else {
