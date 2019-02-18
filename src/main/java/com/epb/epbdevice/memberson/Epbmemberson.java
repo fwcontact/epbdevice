@@ -63,10 +63,14 @@ public class Epbmemberson {
 //    private static final SimpleDateFormat DATEFORMAT2 = new SimpleDateFormat("yyyy-MM-dd 'T'HH:mm:ssZ");
     private static final SimpleDateFormat DATEFORMAT3 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     
+    //vipId:CustomerNumber
+    //vipName:name
+    //Mobile:vipPhone
+    //MobileCountryCode:vipHoneCountryCode
     public static Map<String, String> getVip(final Connection conn,
-            final BigDecimal recKey, final String shopId, final String homeCurrId,
-            final String customerNumber, final String cardNumber, final String nric, final String name,
-            final String mobileNumberCountryCode, final String mobileNumber, final String emailAddress) {
+            final BigDecimal opentableRecKey,
+            final String vipId, final String cardNumber, final String nric, final String vipName,
+            final String vipHoneCountryCode, final String vipPhone, final String emailAddress) {
         final Map<String, String> returnMap = new HashMap<>();
         // log version        
         CommonUtility.printVersion();
@@ -104,30 +108,20 @@ public class Epbmemberson {
                         setString = (String) value;
                     }
                 }
-                if (null != setId) switch (setId) {
-                    case "POSO2OCONT":
+                if ("POSO2OCONT".equals(setId)) {
                         posO2oCont = setString;
-                        break;
-                    case "POSO2OURL":
+                } else if ("POSO2OURL".equals(setId)) {
                         posO2oUrl = setString;
-                        break;
-                    case "POSO2OTOKEN":
+                } else if ("POSO2OTOKEN".equals(setId)) {
                         posO2oAccessToken = setString;
-                        break;
-                    case "POSO2OVENDOR":
+                } else if ("POSO2OVENDOR".equals(setId)) {
                         posO2oVendor = setString;
-                        break;
-                    case "POSO2OAPPKEY":
+                } else if ("POSO2OAPPKEY".equals(setId)) {
                         posO2oAppKey = setString;
-                        break;
-                    case "POSO2OSECRET":
+                } else if ("POSO2OSECRET".equals(setId)) {
                         posO2oAppSecret = setString;
-                        break;
-                    case "DiscFormat":
+                } else if ("DiscFormat".equals(setId)) {
                         discFormat = setString;
-                        break;
-                    default:
-                        break;
                 }
             }
             
@@ -166,10 +160,45 @@ public class Epbmemberson {
                 returnMap.put(MSG, "Disable memberson API");
                 return returnMap;
             }
+                       
+            // get parameter
+            sql = "SELECT A.SHOP_ID, B.CURR_ID, A.ORG_ID FROM OPENTABLE A, EP_ORG B WHERE A.REC_KEY = ? AND A.ORG_ID = B.ORG_ID";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setObject(1, opentableRecKey);
+            rs = pstmt.executeQuery();
+            metaData = (ResultSetMetaData) rs.getMetaData();
+            columnCount = metaData.getColumnCount();
+            String shopId = EMPTY;
+            String currId = EMPTY;
+            String orgId = EMPTY;
+            
+            while (rs.next()) {
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = metaData.getColumnLabel(i);
+                    Object value = rs.getObject(columnName);
+                    if ("SHOP_ID".equals(columnName.toUpperCase())) {
+                        shopId = (String) value;
+                    } else if ("CURR_ID".equals(columnName.toUpperCase())) {
+                        currId = (String) value;
+                    } else if ("ORG_ID".equals(columnName.toUpperCase())) {
+                        orgId = (String) value;
+                    }
+                }
+            }
+            // free mem
+            pstmt.close();
+            rs.close();
+            
+            if (shopId == null || shopId.length() == 0 
+                    || currId == null || currId.length() == 0) {
+                returnMap.put(MSG_ID, FAIL);
+                returnMap.put(MSG, "Invalid shop or currency");
+                return returnMap;
+            }
             
             // call memberson API
             posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
-            Map<String, Object> retMap = Epbmemberson.getRedeemPointsConversionRate(posO2oUrl, posO2oAuth, posO2oAccessToken, homeCurrId);
+            Map<String, Object> retMap = Epbmemberson.getRedeemPointsConversionRate(posO2oUrl, posO2oAuth, posO2oAccessToken, currId);
             if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
                 returnMap.put(MSG, (String) retMap.get(MSG));
@@ -178,7 +207,7 @@ public class Epbmemberson {
 //            BigDecimal posO2oRedeemRatio = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
             BigDecimal fromRate = retMap.containsKey(Epbmemberson.RETURN_FROM_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_FROM_RATE) : null;
             BigDecimal toRate = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
-            retMap = searchVip(posO2oUrl, posO2oAuth, posO2oAccessToken, customerNumber, cardNumber, nric, name, mobileNumberCountryCode, mobileNumber, emailAddress);
+            retMap = searchVip(posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName, vipHoneCountryCode, vipPhone, emailAddress);
             if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
                 returnMap.put(MSG, (String) retMap.get(MSG));
@@ -199,20 +228,43 @@ public class Epbmemberson {
                     ? BigDecimal.ZERO 
                     : new BigDecimal((String) retMap.get(Epbmemberson.RETURN_BALANCE));
             String memberNo = (String) retMap.get(Epbmemberson.RETURN_MEMBER_NO);
-            retMap = getMemberDiscounts(posO2oUrl, posO2oAuth, posO2oAccessToken, memberNo, shopId);
-            if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
-                returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
-                returnMap.put(MSG, (String) retMap.get(MSG));
-                return returnMap;
+//            retMap = getMemberDiscounts(posO2oUrl, posO2oAuth, posO2oAccessToken, memberNo, shopId);
+//            if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
+//                returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
+//                returnMap.put(MSG, (String) retMap.get(MSG));
+//                return returnMap;
+//            }
+
+            //get vip Discount
+            // get parameter
+            BigDecimal vipDisc = null;
+            sql = "SELECT VIP_DISC FROM POS_VIP_CLASS WHERE CLASS_ID = ? AND (ORG_ID IS NULL OR ORG_ID = ?)";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setObject(1, classId);
+            pstmt.setObject(2, orgId);
+            rs = pstmt.executeQuery();
+            metaData = (ResultSetMetaData) rs.getMetaData();
+            columnCount = metaData.getColumnCount();
+            while (rs.next()) {
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = metaData.getColumnLabel(i);
+                    Object value = rs.getObject(columnName);
+                    if ("VIP_DISC".equals(columnName.toUpperCase())) {
+                        vipDisc = value == null || (value + EMPTY).length() == 0 ? null : new BigDecimal(value + EMPTY);
+                    }
+                }
             }
-            BigDecimal vipDisc = (BigDecimal) retMap.get(RETURN_VIP_DISC);
+            // free mem
+            pstmt.close();
+            rs.close();
+            
             if (vipDisc == null) {
                 vipDisc = "B".equals(discFormat) ? new BigDecimal(100) : BigDecimal.ZERO;
             }
             System.out.println("vipDisc:" + vipDisc);
             
             // update vip information
-            sql = "UPDATE OPENTABLE SET VIP_ID = ?, VIP_NAME = ?, VIP_PHONE = ?, CLASS_ID = ?, VIP_DISC = ?, CUM_PTS = ?, VIP_PTS_MONEY = ? WHERE REC_KEY = ?";
+            sql = "UPDATE OPENTABLE SET VIP_ID = ?, VIP_NAME = ?, VIP_PHONE = ?, CLASS_ID = ?, VIP_DISC = ?, CUM_PTS = ?, VIP_PTS_MONEY = ?, CARD_NO = ? WHERE REC_KEY = ?";
             pstmt = conn.prepareStatement(sql);
             pstmt.setObject(1, retCustomerNumber);
             pstmt.setObject(2, retName);
@@ -221,7 +273,8 @@ public class Epbmemberson {
             pstmt.setObject(5, vipDisc);
             pstmt.setObject(6, cumPts);
             pstmt.setObject(7, fromRate == null || fromRate.compareTo(BigDecimal.ZERO) <= 0 ? BigDecimal.ZERO : cumPts.divide(fromRate).multiply(toRate).setScale(2, RoundingMode.DOWN));
-            pstmt.setObject(8, recKey);
+            pstmt.setObject(8, memberNo);
+            pstmt.setObject(9, opentableRecKey);
             boolean done = pstmt.execute();
             if (!done) {
                 returnMap.put(MSG_ID, FAIL);
@@ -474,11 +527,6 @@ public class Epbmemberson {
                         System.out.println("expiryDateStr:" + expiryDateStr);
                     
                         final Date expiryDate = DATEFORMAT3.parse(expiryDateStr);
-                        if (expiryDate.before((new Date()))) {
-                            System.out.println("expriy");
-                        } else {
-                            System.out.println("valid");
-                        }
                         if (ACTIVE.equals(status)
                                 && (expiryDateStr == null || expiryDateStr.length() == 0 || !expiryDate.before((new Date())))) {
                             System.out.println("OK");
@@ -687,7 +735,7 @@ public class Epbmemberson {
             Connection conn = DriverManager.getConnection(url, user, pwd);
             
             
-            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "HQ", "SGD", "01523935", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
+            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01523935", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
             if (Epbmemberson.RETURN_OK.equals(returnMap.get(Epbmemberson.MSG_ID))) {
                 // printer OK
             } else {
