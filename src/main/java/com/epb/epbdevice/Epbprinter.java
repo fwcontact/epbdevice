@@ -37,7 +37,7 @@ class Epbprinter {
             List<PrintPool> printPoolList = (List<PrintPool>) printMap.get(PRINT_LIST);
             if (printPoolList == null || printPoolList.isEmpty()) {
                 returnMap.put(Epbdevice.MSG_ID, "nodatafound");
-                returnMap.put(Epbdevice.MSG, "No data generated, Print key is " + recKey);
+                returnMap.put(Epbdevice.MSG, "No printer data generated, Print key is " + recKey);
                 return returnMap;
             }
             String printEncoding = EMPTY;
