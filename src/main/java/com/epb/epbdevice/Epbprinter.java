@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +26,7 @@ class Epbprinter {
     private static final String LPT = "LPT";
     
     public static Map<String, String> printFile(final Connection conn, final String recKey, final String userId) {
-        final Map<String, String> returnMap = new HashMap<String, String>();
+        final Map<String, String> returnMap = new HashMap<>();
         try {
             final Map<String, Object> printMap = getPrintPoolList(conn, recKey, userId);
 //            List<PrintPool> printPoolList = getPrintPoolList(conn, recKey, userId);
@@ -35,13 +36,13 @@ class Epbprinter {
             }
             List<PrintPool> printPoolList = (List<PrintPool>) printMap.get(PRINT_LIST);
             if (printPoolList == null || printPoolList.isEmpty()) {
-                returnMap.put(Epbdevice.MSG_ID, "error");
-                returnMap.put(Epbdevice.MSG, "Failed to call procedure");
+                returnMap.put(Epbdevice.MSG_ID, "nodatafound");
+                returnMap.put(Epbdevice.MSG, "No data generated, Print key is " + recKey);
                 return returnMap;
             }
             String printEncoding = EMPTY;
             
-            List<PrintPool> printerPrintPoolList = new ArrayList<PrintPool>();
+            List<PrintPool> printerPrintPoolList = new ArrayList<>();
 //            boolean opened;
             String printPort;
             PrintPool pp;
@@ -69,8 +70,8 @@ class Epbprinter {
 //                            }     
                             final String returnMsg = Epbcomprinter.printPosReceipt(printPort, printerPrintPoolList);
                             if (!EMPTY.equals(returnMsg)) {
-                                returnMap.put(Epbdevice.MSG_ID, "error");
-                                returnMap.put(Epbdevice.MSG, returnMsg);
+                                returnMap.put(Epbdevice.MSG_ID, "printerror");
+                                returnMap.put(Epbdevice.MSG, returnMsg + ", Print key is " + recKey);
                                 return returnMap;
                             }
                         } else {
@@ -85,8 +86,8 @@ class Epbprinter {
 //                            }
                             final String returnMsg = Epbnetprinter.printPosReceipt(printPort, printerPrintPoolList, printEncoding);
                             if (!EMPTY.equals(returnMsg)) {
-                                returnMap.put(Epbdevice.MSG_ID, "error");
-                                returnMap.put(Epbdevice.MSG, returnMsg);
+                                returnMap.put(Epbdevice.MSG_ID, "printerror");
+                                returnMap.put(Epbdevice.MSG, returnMsg + ", Print key is " + recKey);
                                 return returnMap;
                             }
                         }
@@ -100,20 +101,20 @@ class Epbprinter {
             return returnMap;
         } catch (Throwable thr) {
             returnMap.put(Epbdevice.MSG_ID, "unhandle exception");
-            returnMap.put(Epbdevice.MSG, thr.getMessage());
+            returnMap.put(Epbdevice.MSG, thr.getMessage() + ", Print key is " + recKey);
             return returnMap;
         }
     }
     
     private static Map<String, Object> getPrintPoolList(final Connection conn, final String recKey, final String userId) {
-        final List<PrintPool> list = new ArrayList<PrintPool>();
+        final List<PrintPool> list = new ArrayList<>();
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        final Map<String, Object> returnMap = new HashMap<String, Object>();
+        final Map<String, Object> returnMap = new HashMap<>();
         try {
             if (conn == null) {
                 returnMap.put(MSG_ID, "failed");
-                returnMap.put(MSG, "Connnection is null");
+                returnMap.put(MSG, "Connection is null, Print key is " + recKey);
                 return returnMap;
             }
 
@@ -183,9 +184,9 @@ class Epbprinter {
                 returnMap.put(MSG, strMsg);
                 return returnMap;
             }
-        } catch (Exception e) {
-            returnMap.put(MSG_ID, "failed");
-            returnMap.put(MSG, e.getMessage());
+        } catch (SQLException e) {
+            returnMap.put(MSG_ID, "Failed to execute get_pos_print_file");
+            returnMap.put(MSG, "Failed to execute get_pos_print_file:" + e.getMessage() + ", Print key is " + recKey);
             return returnMap;
         } finally {
             try {
@@ -195,7 +196,7 @@ class Epbprinter {
                 if (rs != null) {
                     rs.close();
                 }
-            } catch (Throwable thr) {
+            } catch (SQLException thr) {
                 // DO NOTHING
             }
         }

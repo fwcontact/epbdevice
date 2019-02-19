@@ -2,6 +2,7 @@ package com.epb.epbdevice;
 
 import com.epb.epbdevice.beans.PrintPool;
 import com.epb.epbdevice.utl.Epbescpos;
+import com.epb.epbdevice.utl.QRCodeException;
 import com.epb.epbdevice.utl.StringParser;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -149,9 +150,9 @@ public class Epbnetprinter {
                     final String const2 = printPool.getConst2() == null ? EMPTY : printPool.getConst2();
 //                    final String format = printPool.getFormat() == null ? EMPTY : printPool.getFormat();
                     final Integer lineLength = printPool.getLength() == null ? 0 : printPool.getLength().intValue();
-                    final String align = printPool.getAlign() == null ? EMPTY : printPool.getAlign().toString();
-                    final String breakFlg = printPool.getBreakFlg() == null ? EMPTY : printPool.getBreakFlg().toString();
-                    final String fillBlankFlg = printPool.getFillBlankFlg() == null ? "N" : printPool.getFillBlankFlg().toString();
+                    final String align = printPool.getAlign() == null ? EMPTY : printPool.getAlign();
+                    final String breakFlg = printPool.getBreakFlg() == null ? EMPTY : printPool.getBreakFlg();
+                    final String fillBlankFlg = printPool.getFillBlankFlg() == null ? "N" : printPool.getFillBlankFlg();
                     output = EMPTY;
                     if (!(printCommand == null || EMPTY.equals(printCommand))) {
                         //输出
@@ -165,12 +166,12 @@ public class Epbnetprinter {
                         if (qrArray.length >= 2) {
                             try {
                                 position = Integer.parseInt(qrArray[1]);
-                            } catch (Throwable ex) {
+                            } catch (NumberFormatException ex) {
                                 position = 0;
                             }
                             try {
                                 qrSize = Integer.parseInt(qrArray[2]);
-                            } catch (Throwable ex) {
+                            } catch (NumberFormatException ex) {
                                 qrSize = 150;
                             }
                             if (printCommand.startsWith(COMMAND_QR115200)) {
@@ -188,7 +189,7 @@ public class Epbnetprinter {
                         if (qrArray.length == 3) {
                             try {
                                 position = Integer.parseInt(qrArray[1]);
-                            } catch (Throwable ex) {
+                            } catch (NumberFormatException ex) {
                                 position = 0;
                             }
                             try {
@@ -213,7 +214,7 @@ public class Epbnetprinter {
                         if (qrArray.length >= 2) {
                             try {
                                 position = Integer.parseInt(qrArray[1]);
-                            } catch (Throwable ex) {
+                            } catch (NumberFormatException ex) {
                                 position = 0;
                             }
                             String barcodeImgPath = Epbescpos.generateBarcode128(output);
@@ -260,7 +261,7 @@ public class Epbnetprinter {
                 }
                 skipThisLine = false;
             }
-        } catch (Throwable ex) {
+        } catch (QRCodeException ex) {
             System.out.println("Print receipt head Failed!" + ex);
         }
     }
