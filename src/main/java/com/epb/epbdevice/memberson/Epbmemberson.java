@@ -63,10 +63,21 @@ public class Epbmemberson {
 //    private static final SimpleDateFormat DATEFORMAT2 = new SimpleDateFormat("yyyy-MM-dd 'T'HH:mm:ssZ");
     private static final SimpleDateFormat DATEFORMAT3 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     
-    //vipId:CustomerNumber
-    //vipName:name
-    //Mobile:vipPhone
-    //MobileCountryCode:vipHoneCountryCode
+    /**
+     * call memberson API, get vip ID, name, mobile, vip class, vip discount, points, redeem ratio
+     * get this value and update to table OPENTABLE
+     *
+     * @param conn JDBC connection
+     * @param opentableRecKey opentable.rec_key, BigDecimal
+     * @param vipId CustomerNumber, String
+     * @param cardNumber cardNumber, String
+     * @param nric nric, String
+     * @param vipName name, String
+     * @param vipPhoneCountryCode MobileCountryCode, String 
+     * @param vipPhone Mobile, String
+     * @param emailAddress emailAddress, String 
+     * @return Map<String, String> 
+     */
     public static Map<String, String> getVip(final Connection conn,
             final BigDecimal opentableRecKey,
             final String vipId, final String cardNumber, final String nric, final String vipName,
@@ -275,13 +286,8 @@ public class Epbmemberson {
             pstmt.setObject(7, fromRate == null || fromRate.compareTo(BigDecimal.ZERO) <= 0 ? BigDecimal.ZERO : cumPts.divide(fromRate).multiply(toRate).setScale(2, RoundingMode.DOWN));
             pstmt.setObject(8, memberNo);
             pstmt.setObject(9, opentableRecKey);
-            boolean done = pstmt.execute();
-            if (!done) {
-                returnMap.put(MSG_ID, FAIL);
-                returnMap.put(MSG, "error updating VIP information");
-                return returnMap;
-            }
-            
+            pstmt.execute();
+            returnMap.put(MSG_ID, RETURN_OK);            
             return returnMap;
         } catch (SQLException thr) {
             String msg = "error getVip:" + thr.getMessage();
@@ -316,64 +322,64 @@ public class Epbmemberson {
         }
     }
     
-    private static Map<String, String> getToken(final String baseurl, final String userName, final String userPassword, final String callAuth) {
-        final Map<String, String> returnMap = new HashMap<>();
-        try {
-            String callHttpUrl = baseurl + SLASH + "api/user/authenticate";
-            JSONObject jsonBody = new JSONObject();
-            jsonBody.put("UserName", userName);
-            jsonBody.put("Password", userPassword);
-            System.out.println(jsonBody.toString());
-            final Map<String, String> callMap = HttpUtil.callHttpMethod(callHttpUrl, callAuth, null, HttpUtil.POST_METHOD, jsonBody.toString());
-            if (Epbmemberson.RETURN_OK.equals(callMap.get(MSG_ID))) {
-                returnMap.put(MSG_ID, RETURN_OK);
-                returnMap.put(MSG, callMap.get(MSG));
-            } else {
-                returnMap.put(MSG_ID, callMap.get(MSG_ID));
-                returnMap.put(MSG, callMap.get(MSG));
-            }            
-            return returnMap;
-        } catch (JSONException thr) {
-            System.out.println("error getToken:" + thr.getMessage());
-            return returnMap;
-        }
-    }
-    
-    private static Map<String, String> getProfile(final String baseurl, final String callAuth, final String token, final String vipID) {
-        final Map<String, String> returnMap = new HashMap<>();
-        try {
-//            Map<String, String> callMap = getToken(baseurl, userName, userPassword, callAuth);
-//            String token = null;
-//            if (HttpUtil.OK.equals(callMap.get(HttpUtil.MSG_ID))) {
-//                token = callMap.get(HttpUtil.MSG);
-//            } else {
-//                returnMap.put(HttpUtil.MSG_ID, callMap.get(HttpUtil.MSG_ID));
-//                returnMap.put(HttpUtil.MSG, callMap.get(HttpUtil.MSG));
-//                return returnMap;
-//            }            
-            String callHttpUrl = baseurl + SLASH + "api/profile" + SLASH + vipID;
+//    private static Map<String, String> getToken(final String baseurl, final String userName, final String userPassword, final String callAuth) {
+//        final Map<String, String> returnMap = new HashMap<>();
+//        try {
+//            String callHttpUrl = baseurl + SLASH + "api/user/authenticate";
 //            JSONObject jsonBody = new JSONObject();
 //            jsonBody.put("UserName", userName);
 //            jsonBody.put("Password", userPassword);
-//            callMap = HttpUtil.callHttpGetMethod(callHttpUrl, callAuth, token);
-            HttpUtil.callHttpGetMethod(callHttpUrl, callAuth, token);
-//            if (HttpUtil.OK.equals(callMap.get(HttpUtil.MSG_ID))) {
-//                returnMap.put(HttpUtil.MSG_ID, HttpUtil.OK);
-//                returnMap.put(HttpUtil.MSG, callMap.get(HttpUtil.MSG));
+//            System.out.println(jsonBody.toString());
+//            final Map<String, String> callMap = HttpUtil.callHttpMethod(callHttpUrl, callAuth, null, HttpUtil.POST_METHOD, jsonBody.toString());
+//            if (Epbmemberson.RETURN_OK.equals(callMap.get(MSG_ID))) {
+//                returnMap.put(MSG_ID, RETURN_OK);
+//                returnMap.put(MSG, callMap.get(MSG));
 //            } else {
-//                returnMap.put(HttpUtil.MSG_ID, callMap.get(HttpUtil.MSG_ID));
-//                returnMap.put(HttpUtil.MSG, callMap.get(HttpUtil.MSG));
-//            }     
-//            
-//            System.out.println("msgId:" + returnMap.get(HttpUtil.MSG_ID));
-//            System.out.println("msg:" + returnMap.get(HttpUtil.MSG));
-//            HttpUtil.callGetRequest(callHttpUrl, callAuth, token);
-            return returnMap;
-        } catch (Throwable thr) {
-            System.out.println("error getProfile:" + thr.getMessage());
-            return returnMap;
-        }
-    }
+//                returnMap.put(MSG_ID, callMap.get(MSG_ID));
+//                returnMap.put(MSG, callMap.get(MSG));
+//            }            
+//            return returnMap;
+//        } catch (JSONException thr) {
+//            System.out.println("error getToken:" + thr.getMessage());
+//            return returnMap;
+//        }
+//    }
+//    
+//    private static Map<String, String> getProfile(final String baseurl, final String callAuth, final String token, final String vipID) {
+//        final Map<String, String> returnMap = new HashMap<>();
+//        try {
+////            Map<String, String> callMap = getToken(baseurl, userName, userPassword, callAuth);
+////            String token = null;
+////            if (HttpUtil.OK.equals(callMap.get(HttpUtil.MSG_ID))) {
+////                token = callMap.get(HttpUtil.MSG);
+////            } else {
+////                returnMap.put(HttpUtil.MSG_ID, callMap.get(HttpUtil.MSG_ID));
+////                returnMap.put(HttpUtil.MSG, callMap.get(HttpUtil.MSG));
+////                return returnMap;
+////            }            
+//            String callHttpUrl = baseurl + SLASH + "api/profile" + SLASH + vipID;
+////            JSONObject jsonBody = new JSONObject();
+////            jsonBody.put("UserName", userName);
+////            jsonBody.put("Password", userPassword);
+////            callMap = HttpUtil.callHttpGetMethod(callHttpUrl, callAuth, token);
+//            HttpUtil.callHttpGetMethod(callHttpUrl, callAuth, token);
+////            if (HttpUtil.OK.equals(callMap.get(HttpUtil.MSG_ID))) {
+////                returnMap.put(HttpUtil.MSG_ID, HttpUtil.OK);
+////                returnMap.put(HttpUtil.MSG, callMap.get(HttpUtil.MSG));
+////            } else {
+////                returnMap.put(HttpUtil.MSG_ID, callMap.get(HttpUtil.MSG_ID));
+////                returnMap.put(HttpUtil.MSG, callMap.get(HttpUtil.MSG));
+////            }     
+////            
+////            System.out.println("msgId:" + returnMap.get(HttpUtil.MSG_ID));
+////            System.out.println("msg:" + returnMap.get(HttpUtil.MSG));
+////            HttpUtil.callGetRequest(callHttpUrl, callAuth, token);
+//            return returnMap;
+//        } catch (Throwable thr) {
+//            System.out.println("error getProfile:" + thr.getMessage());
+//            return returnMap;
+//        }
+//    }
     
     // Search Profile:{baseurl}/api/profile/search 
     private static Map<String, Object> searchVip(final String baseurl, final String callAuth, final String token,
@@ -563,7 +569,7 @@ public class Epbmemberson {
     
     //2.10 Get Conversion Rate GET type/conversion-rate 
     //2.11 Redeem Points POST /api//transaction/redeem-point     
-    public static Map<String, Object> getRedeemPointsConversionRate(final String baseurl, final String callAuth, final String token, final String homeCurrId) {
+    private static Map<String, Object> getRedeemPointsConversionRate(final String baseurl, final String callAuth, final String token, final String homeCurrId) {
         final Map<String, Object> returnMap = new HashMap<>();
         try {           
             String callHttpUrl = baseurl + SLASH + "api/type/conversion-rate";
@@ -611,7 +617,7 @@ public class Epbmemberson {
         }
     }
     
-    public static Map<String, Object> getMemberDiscounts(final String baseurl, final String callAuth, final String token, 
+    private static Map<String, Object> getMemberDiscounts(final String baseurl, final String callAuth, final String token, 
             final String memberNo, final String locId) {
         final Map<String, Object> returnMap = new HashMap<>();
         try {      
@@ -667,16 +673,12 @@ public class Epbmemberson {
         }
     }
     
-    //
-    // private
-    //
-    
-    private static String getString(String input) {
-        if (null == input) {
-            return "";
-        }
-        return input;
-    }
+//    private static String getString(String input) {
+//        if (null == input) {
+//            return "";
+//        }
+//        return input;
+//    }
     
     public static void main(String[] args) {
         try {
@@ -734,10 +736,10 @@ public class Epbmemberson {
 
             Connection conn = DriverManager.getConnection(url, user, pwd);
             
-            
             final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01523935", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
             if (Epbmemberson.RETURN_OK.equals(returnMap.get(Epbmemberson.MSG_ID))) {
                 // printer OK
+                System.out.println("call memberson API OK");
             } else {
                 // error
                 System.out.println(returnMap.get(Epbmemberson.MSG));
