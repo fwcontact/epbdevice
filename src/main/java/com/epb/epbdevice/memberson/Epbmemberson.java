@@ -47,7 +47,8 @@ public class Epbmemberson {
     public static final String RETURN_GENDER_CODE = "GenderCode";
     public static final String RETURN_NATIONALITY_CODE = "NationalityCode";
     public static final String RETURN_HAS_ACTIVE_MEMBERSHIP = "HasActiveMembership";
-    public static final String RETURN_TIER = "Tier";
+//    public static final String RETURN_TIER = "Tier";
+    public static final String RETURN_TYPE = "Type";
     public static final String RETURN_MEMBER_NO = "MemberNo";
     public static final String RETURN_STATUS = "Status";
     public static final String RETURN_VALID_FROM = "ValidFrom";
@@ -57,6 +58,8 @@ public class Epbmemberson {
     public static final String RETURN_TO_RATE = "ToRate";
     public static final String RETURN_AMOUNT = "Amount";
     public static final String RETURN_VIP_DISC = "VipDiscount";
+//    private static final String RETURN_EPB_VIP_CLASS = "classId";
+//    private static final String RETURN_EPB_VIP_DISC = "vipDisc";
     
 //    private static final SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 ////    private static final SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
@@ -234,7 +237,35 @@ public class Epbmemberson {
                 returnMap.put(MSG, (String) retMap.get(MSG));
                 return returnMap;
             }
-            String classId = (String) retMap.get(Epbmemberson.RETURN_TIER);
+//            String classId = (String) retMap.get(Epbmemberson.RETURN_TIER);
+            String type = (String) retMap.get(Epbmemberson.RETURN_TYPE);
+//            System.out.println("type:" + type);
+            String classId = EMPTY;
+            if (type != null && type.length() != 0) {
+                // free mem
+                pstmt.close();
+                rs.close();
+                sql = "SELECT REMARK FROM VIP_SELFMAS1 WHERE SELF1_ID = ?";
+                pstmt = conn.prepareStatement(sql);
+                pstmt.setObject(1, type);
+//                pstmt.setObject(2, orgId);
+                rs = pstmt.executeQuery();
+                metaData = (ResultSetMetaData) rs.getMetaData();
+                columnCount = metaData.getColumnCount();
+                while (rs.next()) {
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnLabel(i);
+                        Object value = rs.getObject(columnName);
+                        if ("REMARK".equals(columnName.toUpperCase())) {
+                            classId = (String) value;
+                        }
+                    }
+                }
+                // free mem
+                pstmt.close();
+                rs.close();
+            }
+//            System.out.println("classId:" + classId);
             BigDecimal cumPts = retMap.get(Epbmemberson.RETURN_BALANCE) == null || EMPTY.equals(retMap.get(Epbmemberson.RETURN_BALANCE))
                     ? BigDecimal.ZERO 
                     : new BigDecimal((String) retMap.get(Epbmemberson.RETURN_BALANCE));
@@ -272,7 +303,7 @@ public class Epbmemberson {
             if (vipDisc == null) {
                 vipDisc = "B".equals(discFormat) ? new BigDecimal(100) : BigDecimal.ZERO;
             }
-            System.out.println("vipDisc:" + vipDisc);
+//            System.out.println("vipDisc:" + vipDisc);
             
             // update vip information
             sql = "UPDATE OPENTABLE SET VIP_ID = ?, VIP_NAME = ?, VIP_PHONE = ?, CLASS_ID = ?, VIP_DISC = ?, CUM_PTS = ?, VIP_PTS_MONEY = ?, CARD_NO = ? WHERE REC_KEY = ?";
@@ -305,6 +336,7 @@ public class Epbmemberson {
                 }
             } catch (SQLException thr) {
                 // DO NOTHING
+                System.out.println("error getVip 2:" + thr.getMessage());
             }
         }
     }
@@ -523,20 +555,22 @@ public class Epbmemberson {
                                 }
                             }
                         }
-                        String tier = dataObject.getString(RETURN_TIER);  // vip class
+//                        String tier = dataObject.getString(RETURN_TIER);  // vip class
+                        String type = dataObject.getString(RETURN_TYPE);  // vip class
                         String memberNo = dataObject.getString(RETURN_MEMBER_NO);  // vipId
                         String status = dataObject.getString(RETURN_STATUS);  // vip class
                         String expiryDateStr = dataObject.getString(RETURN_EXPIRY_DATE);  // ExpiryDate
-                        System.out.println("tier:" + tier);
+                        System.out.println("type:" + type);
                         System.out.println("memberNo:" + memberNo);
                         System.out.println("status:" + status);
                         System.out.println("expiryDateStr:" + expiryDateStr);
                     
                         final Date expiryDate = DATEFORMAT3.parse(expiryDateStr);
-                        if (ACTIVE.equals(status)
-                                && (expiryDateStr == null || expiryDateStr.length() == 0 || !expiryDate.before((new Date())))) {
-                            System.out.println("OK");
-                            returnMap.put(RETURN_TIER, tier);
+                        if (//ACTIVE.equals(status) && 
+                                (expiryDateStr == null || expiryDateStr.length() == 0 || !expiryDate.before((new Date())))) {
+//                            System.out.println("OK");
+//                            returnMap.put(RETURN_TIER, tier);
+                            returnMap.put(RETURN_TYPE, type);
                             returnMap.put(RETURN_MEMBER_NO, memberNo);
                             returnMap.put(RETURN_STATUS, status);
                             returnMap.put(RETURN_EXPIRY_DATE, expiryDateStr);
@@ -616,6 +650,47 @@ public class Epbmemberson {
             return returnMap;
         }
     }
+    
+//    public static Map<String, Object> getVipDiscount(final String orgId, final String locId, final String type) {
+//        final Map<String, Object> returnMap = new HashMap<String, Object>();
+//        try {
+//            List<Object> entities = LocalPersistence.getResultList(
+//                    VipSelfmas1.class,
+//                    "SELECT * FROM VIP_SELFMAS1 WHERE SELF1_ID = ?",
+//                    new Object[]{type});
+//            if (entities == null || entities.isEmpty()) {
+//                returnMap.put(RETURN_EPB_VIP_CLASS, EMPTY);
+//                returnMap.put(RETURN_EPB_VIP_DISC, null);
+//                return returnMap;
+//            } else {
+//                String classId = ((VipSelfmas1) entities.get(0)).getRemark();
+//                if (classId == null || classId.length() == 0) {
+//                    returnMap.put(RETURN_EPB_VIP_CLASS, EMPTY);
+//                    returnMap.put(RETURN_EPB_VIP_DISC, null);
+//                    return returnMap;
+//                }
+//                // free mom
+//                entities.clear();
+//                
+//                entities = LocalPersistence.getResultList(
+//                    PosVipClass.class,
+//                    "SELECT * FROM POS_VIP_CLASS WHERE CLASS_ID = ? AND (ORG_ID IS NULL OR ORG_ID = '' OR ORG_ID = ?)",
+//                    new Object[]{classId, orgId});
+//                if (entities == null || entities.isEmpty()) {
+//                    returnMap.put(RETURN_EPB_VIP_CLASS, EMPTY);
+//                    returnMap.put(RETURN_EPB_VIP_DISC, null);
+//                    return returnMap;
+//                }
+//                returnMap.put(RETURN_EPB_VIP_CLASS, classId);
+//                returnMap.put(RETURN_EPB_VIP_DISC, ((PosVipClass) entities.get(0)).getVipDisc());
+//                return returnMap;
+//            }
+//        } catch (Throwable thrl) {
+//            returnMap.put(RETURN_EPB_VIP_CLASS, EMPTY);
+//            returnMap.put(RETURN_EPB_VIP_DISC, null);
+//            return returnMap;
+//        }
+//    }
     
     private static Map<String, Object> getMemberDiscounts(final String baseurl, final String callAuth, final String token, 
             final String memberNo, final String locId) {
@@ -736,7 +811,8 @@ public class Epbmemberson {
 
             Connection conn = DriverManager.getConnection(url, user, pwd);
             
-            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01523935", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
+//            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01523935", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
+            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01094017", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
             if (Epbmemberson.RETURN_OK.equals(returnMap.get(Epbmemberson.MSG_ID))) {
                 // printer OK
                 System.out.println("call memberson API OK");
