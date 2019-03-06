@@ -7,6 +7,7 @@ package com.epb.epbdevice.memberson;
 import com.epb.epbdevice.utl.CommonUtility;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -231,6 +232,7 @@ public class Epbmemberson {
             String retCustomerNumber = customerMap.get(Epbmemberson.RETURN_CUSTOMER_NUMBER);
             String retName = customerMap.get(Epbmemberson.RETURN_NAME);
             String retMobile = customerMap.get(Epbmemberson.RETURN_MOBILE_NUMBER);
+            String dob = customerMap.get(Epbmemberson.RETURN_DOB);
             retMap = getVipSummary(posO2oUrl, posO2oAuth, posO2oAccessToken, retCustomerNumber);
             if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
@@ -306,18 +308,47 @@ public class Epbmemberson {
 //            System.out.println("vipDisc:" + vipDisc);
             
             // update vip information
-            sql = "UPDATE OPENTABLE SET VIP_ID = ?, VIP_NAME = ?, VIP_PHONE = ?, CLASS_ID = ?, VIP_DISC = ?, CUM_PTS = ?, VIP_PTS_MONEY = ?, CARD_NO = ? WHERE REC_KEY = ?";
-            pstmt = conn.prepareStatement(sql);
-            pstmt.setObject(1, retCustomerNumber);
-            pstmt.setObject(2, retName);
-            pstmt.setObject(3, retMobile);
-            pstmt.setObject(4, classId);
-            pstmt.setObject(5, vipDisc);
-            pstmt.setObject(6, cumPts);
-            pstmt.setObject(7, fromRate == null || fromRate.compareTo(BigDecimal.ZERO) <= 0 ? BigDecimal.ZERO : cumPts.divide(fromRate).multiply(toRate).setScale(2, RoundingMode.DOWN));
-            pstmt.setObject(8, memberNo);
-            pstmt.setObject(9, opentableRecKey);
-            pstmt.execute();
+//            sql = "UPDATE OPENTABLE "
+//                    + " SET VIP_ID = ?, VIP_NAME = ?, VIP_PHONE = ?, CLASS_ID = ?, VIP_DISC = ?, CUM_PTS = ?, VIP_PTS_MONEY = ?, CARD_NO = ? "
+//                    + " WHERE REC_KEY = ?";
+//            pstmt = conn.prepareStatement(sql);
+//            pstmt.setObject(1, retCustomerNumber);
+//            pstmt.setObject(2, retName);
+//            pstmt.setObject(3, retMobile);
+//            pstmt.setObject(4, classId);
+//            pstmt.setObject(5, vipDisc);
+//            pstmt.setObject(6, cumPts);
+//            pstmt.setObject(7, fromRate == null || fromRate.compareTo(BigDecimal.ZERO) <= 0 ? BigDecimal.ZERO : cumPts.divide(fromRate).multiply(toRate).setScale(2, RoundingMode.DOWN));
+//            pstmt.setObject(8, memberNo);
+//            pstmt.setObject(9, opentableRecKey);
+//            pstmt.execute();
+
+            //调用函数
+//            v_opentable_rec_key varchar2,
+//    v_vip_id in varchar2,v_vip_name in varchar2,v_class_id in varchar2,v_vip_disc in varchar2,v_cum_pts in varchar2,
+//    v_pts in varchar2,v_money in varchar2,
+//    v_card_no in varchar2,v_birthday
+            CallableStatement stmt = (CallableStatement ) conn.prepareCall("call EP_BISTRO.update_opentable_vip_info(?,?,?,?,?,?,?,?,?,?,?,?)");
+            stmt.registerOutParameter(1, java.sql.Types.VARCHAR);
+            stmt.registerOutParameter(2, java.sql.Types.VARCHAR);
+            stmt.setString(3, opentableRecKey + EMPTY);
+            stmt.setString(4, retCustomerNumber);
+            stmt.setString(5, retName);
+            stmt.setString(6, classId);
+            stmt.setString(7, vipDisc + EMPTY);
+            stmt.setString(8, cumPts + EMPTY);
+            stmt.setString(9, fromRate + EMPTY);
+            stmt.setString(10, toRate + EMPTY);
+            stmt.setString(11, memberNo);
+            stmt.setString(12, dob);
+            stmt.execute();
+            String strRtn = stmt.getString(1);
+            String strMsg = stmt.getString(2);
+            if (!RETURN_OK.equals(strRtn)) {
+                returnMap.put(MSG_ID, FAIL);   
+                returnMap.put(MSG, strMsg);   
+            }
+
             returnMap.put(MSG_ID, RETURN_OK);            
             return returnMap;
         } catch (SQLException thr) {
@@ -566,7 +597,7 @@ public class Epbmemberson {
                         System.out.println("expiryDateStr:" + expiryDateStr);
                     
                         final Date expiryDate = DATEFORMAT3.parse(expiryDateStr);
-                        if (//ACTIVE.equals(status) && 
+                        if (ACTIVE.equals(status) && 
                                 (expiryDateStr == null || expiryDateStr.length() == 0 || !expiryDate.before((new Date())))) {
 //                            System.out.println("OK");
 //                            returnMap.put(RETURN_TIER, tier);
@@ -728,8 +759,8 @@ public class Epbmemberson {
                         final Date validFrom = validFromStr == null || validFromStr.length() == 0 ? null : DATEFORMAT3.parse(validFromStr);
                         final Date expiryDate = expiryDateStr == null || expiryDateStr.length() == 0 ? null : DATEFORMAT3.parse(expiryDateStr);
                         String status = dataObject.getString(RETURN_STATUS);  // Status
-                        if (ACTIVE.equals(status)
-                                && (expiryDate == null || !expiryDate.before((new Date())))
+                        if (ACTIVE.equals(status) && 
+                                (expiryDate == null || !expiryDate.before((new Date())))
                                 && validFrom != null && validFrom.before((new Date()))) {
                             BigDecimal vipDisc = new BigDecimal(amount);
                             returnMap.put(RETURN_VIP_DISC, vipDisc);
@@ -803,16 +834,18 @@ public class Epbmemberson {
 ////            redeemPoints(baseurl, auth, token, "C80006235M", 100, "C21 Points", new Date(), "RD001", "1 SGD", "HQ", "034534599");
 //            getMemberDiscounts(baseurl, auth, token, "CT9001178M", "HQ");
             String driver = "oracle.jdbc.driver.OracleDriver";
-            String url = "jdbc:oracle:thin:@localhost:1523:XE";
+//            String url = "jdbc:oracle:thin:@localhost:1523:XE";
+            String url = "jdbc:oracle:thin:@192.168.1.11:1521:ORCL";
             String user = "EPBSH";
-            String pwd = "EPB9209";
+//            String pwd = "EPB9209";
+            String pwd = "EPBSH";
             Class.forName(driver);
             System.out.println("driver is ok");
 
             Connection conn = DriverManager.getConnection(url, user, pwd);
             
 //            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01523935", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
-            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01094017", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
+            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01008396", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
             if (Epbmemberson.RETURN_OK.equals(returnMap.get(Epbmemberson.MSG_ID))) {
                 // printer OK
                 System.out.println("call memberson API OK");
