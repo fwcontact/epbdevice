@@ -70,9 +70,11 @@ class Epbprinter {
 //                            }     
                             final String returnMsg = Epbcomprinter.printPosReceipt(printPort, printerPrintPoolList);
                             if (!EMPTY.equals(returnMsg)) {
-                                returnMap.put(Epbdevice.MSG_ID, "printerror");
-                                returnMap.put(Epbdevice.MSG, returnMsg + ", Print key is " + recKey);
-                                return returnMap;
+                                // never return
+//                                returnMap.put(Epbdevice.MSG_ID, "printerror");
+//                                returnMap.put(Epbdevice.MSG, returnMsg + ", Print key is " + recKey);
+//                                return returnMap;
+                                System.out.println(returnMsg + ", Print key is " + recKey);
                             }
                         } else {
 //                            opened = Epbnetprinter.openEpbNetPrinter(printPort);
@@ -86,9 +88,11 @@ class Epbprinter {
 //                            }
                             final String returnMsg = Epbnetprinter.printPosReceipt(printPort, printerPrintPoolList, printEncoding);
                             if (!EMPTY.equals(returnMsg)) {
-                                returnMap.put(Epbdevice.MSG_ID, "printerror");
-                                returnMap.put(Epbdevice.MSG, returnMsg + ", Print key is " + recKey);
-                                return returnMap;
+                                // never return
+//                                returnMap.put(Epbdevice.MSG_ID, "printerror");
+//                                returnMap.put(Epbdevice.MSG, returnMsg + ", Print key is " + recKey);
+//                                return returnMap;
+                                System.out.println(returnMsg + ", Print key is " + recKey);
                             }
                         }
                     }

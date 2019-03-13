@@ -664,7 +664,8 @@ public class Epbmemberson {
                             double fromRate = dataObject.getDouble(RETURN_FROM_RATE);
                             double toRate = dataObject.getDouble(RETURN_TO_RATE);
 //                            BigDecimal toRateB = new BigDecimal(fromRate/toRate);
-//                            System.out.println("toRateB:" + toRateB);
+                            System.out.println("toRateB:" + toRate);
+                            System.out.println("fromRateB:" + fromRate);
                             returnMap.put(RETURN_FROM_RATE, new BigDecimal(fromRate));  
                             returnMap.put(RETURN_TO_RATE, new BigDecimal(toRate));                           
                             break;
@@ -843,7 +844,7 @@ public class Epbmemberson {
             System.out.println("driver is ok");
 
             Connection conn = DriverManager.getConnection(url, user, pwd);
-            
+//            01523935
 //            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01523935", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
             final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01008396", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
             if (Epbmemberson.RETURN_OK.equals(returnMap.get(Epbmemberson.MSG_ID))) {
