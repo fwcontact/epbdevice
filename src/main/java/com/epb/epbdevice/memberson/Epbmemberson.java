@@ -33,6 +33,7 @@ public class Epbmemberson {
     private static final String EMPTY = "";
     private static final String COMMA = ",";
     private static final String ACTIVE = "ACTIVE";
+    private static final String EXPIRED = "EXPIRED";
     public static final String MSG_ID = "msgId";
     public static final String MSG = "msg";
     public static final String RETURN_OK = "OK";
@@ -500,6 +501,11 @@ public class Epbmemberson {
             String custHasActiveMembership;
             if (dataArray.length() > 0) {
                 int count = dataArray.length();
+                if (count > 1) {
+                    returnMap.put(MSG_ID, FAIL);
+                    returnMap.put(MSG, "Multiple records returned, please narrow your search condition");
+                    return returnMap;
+                }
                 for (int i = 0; i < count; i++) {
                     JSONObject dataObject = (JSONObject) dataArray.get(i);
                     if (dataObject != null) {
@@ -531,7 +537,8 @@ public class Epbmemberson {
                 }
             } else {
                 returnMap.put(MSG_ID, FAIL);
-                returnMap.put(MSG, "Invalid VIP");
+                returnMap.put(MSG, "No records returned");
+//                return returnMap;
             }
             
             return returnMap;
@@ -565,6 +572,8 @@ public class Epbmemberson {
                 return returnMap;
             }     
             
+            boolean existExpired = false;
+            boolean existActive = false;
 //            System.out.println("msg:" + returnMap.get(HttpUtil.MSG));
             JSONObject jsonResult = new JSONObject(callMap.get(MSG));
 //            String membershipSummaries = jsonResult.getString("MembershipSummaries");
@@ -606,6 +615,7 @@ public class Epbmemberson {
                             returnMap.put(RETURN_STATUS, status);
                             returnMap.put(RETURN_EXPIRY_DATE, expiryDateStr);
                             returnMap.put(RETURN_BALANCE, balance);
+                            existActive = true;
                             break;
 //                            final Date expiryDate = DATEFORMAT.parse(expiryDateStr);
 //                            if (expiryDate.before((new Date()))) {
@@ -613,16 +623,27 @@ public class Epbmemberson {
 //                            } else {
 //                                System.out.println("valid");
 //                            }
+                        } else if (EXPIRED.equals(status)) {
+                            existExpired = true;
                         }                        
                     }
                 }
             } else {
                 returnMap.put(MSG_ID, FAIL);
-                returnMap.put(MSG, "Invalid VIP");
+                returnMap.put(MSG, "Invalid member");
             }
 //            System.out.println("msgId:" + returnMap.get(HttpUtil.MSG_ID));
 //            System.out.println("msg:" + returnMap.get(HttpUtil.MSG));
 //            HttpUtil.callGetRequest(callHttpUrl, callAuth, token);
+
+
+            if (!existActive) {
+                if (existExpired) {
+                    returnMap.put(MSG_ID, FAIL);
+                    returnMap.put(MSG, "Expired member");
+                }
+            }
+
             return returnMap;
         } catch (ParseException | JSONException thr) {
             returnMap.put(MSG_ID, FAIL);
