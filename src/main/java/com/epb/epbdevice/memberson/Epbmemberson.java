@@ -510,15 +510,16 @@ public class Epbmemberson {
                     JSONObject dataObject = (JSONObject) dataArray.get(i);
                     if (dataObject != null) {
                         customerMap = new HashMap<>();
-                        custNo = dataObject.getString(RETURN_CUSTOMER_NUMBER);
-                        custName = dataObject.getString(RETURN_NAME);
-                        custMobile = dataObject.getString(RETURN_MOBILE_NUMBER);
-                        custEmailAddress = dataObject.getString(RETURN_EMAIL_ADDRESS);
-                        custDob = dataObject.getString(RETURN_DOB);
-                        custFirstName = dataObject.getString(RETURN_FIRST_NAME);
-                        custLastName = dataObject.getString(RETURN_LAST_NAME);
-                        custGenderCode = dataObject.getString(RETURN_GENDER_CODE);
-                        custNationalityCode = dataObject.getString(RETURN_NATIONALITY_CODE);
+                        custNo = dataObject.optString(RETURN_CUSTOMER_NUMBER);
+//                        System.out.println("custNo:" + custNo);
+                        custName = dataObject.optString(RETURN_NAME);
+                        custMobile = dataObject.optString(RETURN_MOBILE_NUMBER);
+                        custEmailAddress = dataObject.optString(RETURN_EMAIL_ADDRESS);
+                        custDob = dataObject.optString(RETURN_DOB);
+                        custFirstName = dataObject.optString(RETURN_FIRST_NAME);
+                        custLastName = dataObject.optString(RETURN_LAST_NAME);
+                        custGenderCode = dataObject.optString(RETURN_GENDER_CODE);
+                        custNationalityCode = dataObject.optString(RETURN_NATIONALITY_CODE);
 //                        custHasActiveMembership = dataObject.getString(RETURN_HAS_ACTIVE_MEMBERSHIP);                        
                         
                         customerMap.put(RETURN_CUSTOMER_NUMBER, custNo);
@@ -856,18 +857,18 @@ public class Epbmemberson {
 ////            redeemPoints(baseurl, auth, token, "C80006235M", 100, "C21 Points", new Date(), "RD001", "1 SGD", "HQ", "034534599");
 //            getMemberDiscounts(baseurl, auth, token, "CT9001178M", "HQ");
             String driver = "oracle.jdbc.driver.OracleDriver";
-//            String url = "jdbc:oracle:thin:@localhost:1523:XE";
-            String url = "jdbc:oracle:thin:@192.168.1.11:1521:ORCL";
+            String url = "jdbc:oracle:thin:@localhost:1523:XE";
+//            String url = "jdbc:oracle:thin:@192.168.1.11:1521:ORCL";
             String user = "EPBSH";
-//            String pwd = "EPB9209";
-            String pwd = "EPBSH";
+            String pwd = "EPB9209";
+//            String pwd = "EPBSH";
             Class.forName(driver);
             System.out.println("driver is ok");
 
             Connection conn = DriverManager.getConnection(url, user, pwd);
 //            01523935
 //            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01523935", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
-            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01008396", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
+            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01528863", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
             if (Epbmemberson.RETURN_OK.equals(returnMap.get(Epbmemberson.MSG_ID))) {
                 // printer OK
                 System.out.println("call memberson API OK");
