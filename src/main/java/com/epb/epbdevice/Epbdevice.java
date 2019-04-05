@@ -1,12 +1,10 @@
 package com.epb.epbdevice;
 
 import com.epb.epbdevice.utl.CommonUtility;
-import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Map;
-import java.util.Properties;
 
 public class Epbdevice {
     public static final String MSG_ID = "msgId";

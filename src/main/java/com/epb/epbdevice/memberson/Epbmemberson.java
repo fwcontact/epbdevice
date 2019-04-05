@@ -241,7 +241,7 @@ public class Epbmemberson {
                 return returnMap;
             }
 //            String classId = (String) retMap.get(Epbmemberson.RETURN_TIER);
-            String type = (String) retMap.get(Epbmemberson.RETURN_TYPE);
+            String type = getSmoothType((String) retMap.get(Epbmemberson.RETURN_TYPE));
 //            System.out.println("type:" + type);
             String classId = EMPTY;
             if (type != null && type.length() != 0) {
@@ -808,6 +808,17 @@ public class Epbmemberson {
 //        }
 //        return input;
 //    }
+    
+    // hardcode, max length is 16
+    private static String getSmoothType(final String type) {
+        if (type == null) {
+            return type;
+        }
+        if (type.length() <= 16) {
+            return type;
+        }
+        return type.substring(0, 16);
+    }
     
     public static void main(String[] args) {
         try {
