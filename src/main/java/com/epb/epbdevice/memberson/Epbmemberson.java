@@ -6,7 +6,6 @@ package com.epb.epbdevice.memberson;
 
 import com.epb.epbdevice.utl.CommonUtility;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -16,8 +15,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,7 +39,7 @@ public class Epbmemberson {
     public static final String MSG = "msg";
     public static final String RETURN_OK = "OK";
     public static final String FAIL = "FAIL";    
-    public static final String RETURN_CUSTOMER_MAP = "CUSTOMERMAP";
+    public static final String RETURN_CUSTOMER_MAP_LIST = "CUSTOMERMAPLIST";
     public static final String RETURN_CUSTOMER_NUMBER = "CustomerNumber";
     public static final String RETURN_NAME = "Name";
     public static final String RETURN_MOBILE_NUMBER = "MobileNumber";
@@ -229,7 +230,9 @@ public class Epbmemberson {
                 returnMap.put(MSG, (String) retMap.get(MSG));
                 return returnMap;
             }
-            Map<String, String> customerMap = (Map<String, String>) retMap.get(Epbmemberson.RETURN_CUSTOMER_MAP);
+//            Map<String, String> customerMap = (Map<String, String>) retMap.get(Epbmemberson.RETURN_CUSTOMER_MAP);
+            List<Map<String, String>> customerMapList = (List<Map<String, String>>) retMap.get(Epbmemberson.RETURN_CUSTOMER_MAP_LIST);
+            final Map<String, String> customerMap = customerMapList.get(0);
             String retCustomerNumber = customerMap.get(Epbmemberson.RETURN_CUSTOMER_NUMBER);
             String retName = customerMap.get(Epbmemberson.RETURN_NAME);
             String retMobile = customerMap.get(Epbmemberson.RETURN_MOBILE_NUMBER);
@@ -488,6 +491,7 @@ public class Epbmemberson {
             
 //            JSONObject jsonResult = new JSONObject(callMap.get(HttpUtil.MSG));
             JSONArray dataArray = new JSONArray(callMap.get(MSG));
+            List<Map<String, String>> customerMapList = new ArrayList<Map<String, String>>();
             Map<String, String> customerMap;
             String custNo;
             String custName;
@@ -499,9 +503,11 @@ public class Epbmemberson {
             String custGenderCode;
             String custNationalityCode;
             String custHasActiveMembership;
+            boolean allowMoreRecords
+                    = !(mobileNumber == null || EMPTY.equals(mobileNumber)) || !(emailAddress == null || EMPTY.equals(emailAddress));
             if (dataArray.length() > 0) {
                 int count = dataArray.length();
-                if (count > 1) {
+                if (!allowMoreRecords && count > 1) {
                     returnMap.put(MSG_ID, FAIL);
                     returnMap.put(MSG, "Multiple records returned, please narrow your search condition");
                     return returnMap;
@@ -533,8 +539,10 @@ public class Epbmemberson {
                         customerMap.put(RETURN_NATIONALITY_CODE, custNationalityCode);
 //                        customerMap.put(RETURN_HAS_ACTIVE_MEMBERSHIP, custHasActiveMembership);
                         
-                        returnMap.put(RETURN_CUSTOMER_MAP, customerMap);
-                    }
+//                        returnMap.put(RETURN_CUSTOMER_MAP, customerMap);
+                        customerMapList.add(customerMap);
+                    }      
+                    returnMap.put(RETURN_CUSTOMER_MAP_LIST, customerMapList);
                 }
             } else {
                 returnMap.put(MSG_ID, FAIL);
