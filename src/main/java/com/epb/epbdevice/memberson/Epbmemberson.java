@@ -477,6 +477,7 @@ public class Epbmemberson {
             if (!RETURN_OK.equals(strRtn)) {
                 returnMap.put(MSG_ID, FAIL);   
                 returnMap.put(MSG, strMsg);   
+                return returnMap;
             }
 
             returnMap.put(MSG_ID, RETURN_OK);            
