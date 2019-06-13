@@ -33,6 +33,7 @@ public class Epbmemberson {
     private static final String COMMA = ",";
     private static final String ACTIVE = "ACTIVE";
     private static final String EXPIRED = "EXPIRED";
+    private static final String TERMINATED = "TERMINATED";
     public static final String MSG_ID = "msgId";
     public static final String MSG = "msg";
     public static final String RESULT = "result";
@@ -175,7 +176,7 @@ public class Epbmemberson {
             
             // call memberson API
             posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
-            Map<String, Object> retMap = searchVip(posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName, vipPhoneCountryCode, vipPhone, emailAddress);
+            Map<String, Object> retMap = searchVip(posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName == null || EMPTY.equals(vipName) ? EMPTY : "%" + vipName + "%", vipPhoneCountryCode, vipPhone, emailAddress);
             if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
                 returnMap.put(MSG, (String) retMap.get(MSG));
@@ -711,6 +712,7 @@ public class Epbmemberson {
             
             boolean existExpired = false;
             boolean existActive = false;
+            boolean existTerminated = false;  //TERMINATED
 //            System.out.println("msg:" + returnMap.get(HttpUtil.MSG));
             JSONObject jsonResult = new JSONObject(callMap.get(MSG));
 //            String membershipSummaries = jsonResult.getString("MembershipSummaries");
@@ -762,6 +764,8 @@ public class Epbmemberson {
 //                            }
                         } else if (EXPIRED.equals(status)) {
                             existExpired = true;
+                        } else if (TERMINATED.equals(status)) {
+                            existTerminated = true;
                         }                        
                     }
                 }
@@ -778,6 +782,12 @@ public class Epbmemberson {
                 if (existExpired) {
                     returnMap.put(MSG_ID, FAIL);
                     returnMap.put(MSG, "Expired member");
+                } else if (existTerminated) {
+                    returnMap.put(MSG_ID, FAIL);
+                    returnMap.put(MSG, "Member status is terminated");
+                } else {
+                    returnMap.put(MSG_ID, FAIL);
+                    returnMap.put(MSG, "Invalid member");
                 }
             }
 
