@@ -359,7 +359,7 @@ public class Epbmemberson {
             BigDecimal toRate;
             BigDecimal cumPts;
             String memberNo;
-            if ("EBP".equals(customerSource)) {
+            if ("EPB".equals(customerSource)) {
                 fromRate = BigDecimal.ONE;
                 toRate = BigDecimal.ONE;
                 cumPts = BigDecimal.ZERO;
