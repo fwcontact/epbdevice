@@ -15,8 +15,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -61,6 +63,7 @@ public class Epbmemberson {
     public static final String RETURN_TO_RATE = "ToRate";
     public static final String RETURN_AMOUNT = "Amount";
     public static final String RETURN_VIP_DISC = "VipDiscount";
+    public static final String RETURN_CUSTOMER_SOURCE = "CustomerSource";
 //    private static final String RETURN_EPB_VIP_CLASS = "classId";
 //    private static final String RETURN_EPB_VIP_DISC = "vipDisc";
     
@@ -176,7 +179,7 @@ public class Epbmemberson {
             
             // call memberson API
             posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
-            Map<String, Object> retMap = searchVip(posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName == null || EMPTY.equals(vipName) ? EMPTY : "%" + vipName + "%", vipPhoneCountryCode, vipPhone, emailAddress);
+            Map<String, Object> retMap = searchVip(conn, opentableRecKey, posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName == null || EMPTY.equals(vipName) ? EMPTY : "%" + vipName + "%", vipPhoneCountryCode, vipPhone, emailAddress);
             if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
                 returnMap.put(MSG, (String) retMap.get(MSG));
@@ -215,6 +218,7 @@ public class Epbmemberson {
      *
      * @param conn JDBC connection
      * @param opentableRecKey opentable.rec_key, BigDecimal
+     * @param customerSource MEMBERSON OR EPB, String
      * @param customerNumber CustomerNumber, String
      * @param name name, String
      * @param mobileNumber Mobile, String
@@ -224,7 +228,7 @@ public class Epbmemberson {
      */
     public static Map<String, String> updateVipSummary(final Connection conn,
             final BigDecimal opentableRecKey,
-            final String customerNumber, final String name, String mobileNumber, final String emailAddress, final String dob) {
+            final String customerSource, final String customerNumber, final String name, String mobileNumber, final String emailAddress, final String dob) {
         final Map<String, String> returnMap = new HashMap<>();
 //        // log version        
 //        CommonUtility.printVersion();
@@ -350,38 +354,21 @@ public class Epbmemberson {
                 return returnMap;
             }
             
-            // call memberson API
-            posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
-            Map<String, Object> retMap = Epbmemberson.getRedeemPointsConversionRate(posO2oUrl, posO2oAuth, posO2oAccessToken, currId);
-            if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
-                returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
-                returnMap.put(MSG, (String) retMap.get(MSG));
-                return returnMap;
-            }
-//            BigDecimal posO2oRedeemRatio = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
-            BigDecimal fromRate = retMap.containsKey(Epbmemberson.RETURN_FROM_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_FROM_RATE) : null;
-            BigDecimal toRate = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
-            
-//            Map<String, String> customerMap = (Map<String, String>) retMap.get(Epbmemberson.RETURN_CUSTOMER_MAP);
-            
-            retMap = getVipSummary(posO2oUrl, posO2oAuth, posO2oAccessToken, customerNumber);
-            if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
-                returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
-                returnMap.put(MSG, (String) retMap.get(MSG));
-                return returnMap;
-            }
-//            String classId = (String) retMap.get(Epbmemberson.RETURN_TIER);
-            String type = getSmoothType((String) retMap.get(Epbmemberson.RETURN_TYPE));
-//            System.out.println("type:" + type);
             String classId = EMPTY;
-            if (type != null && type.length() != 0) {
-                // free mem
-                pstmt.close();
-                rs.close();
-                sql = "SELECT REMARK FROM VIP_SELFMAS1 WHERE SELF1_ID = ?";
+            BigDecimal fromRate;
+            BigDecimal toRate;
+            BigDecimal cumPts;
+            String memberNo;
+            if ("EBP".equals(customerSource)) {
+                fromRate = BigDecimal.ONE;
+                toRate = BigDecimal.ONE;
+                cumPts = BigDecimal.ZERO;
+                memberNo = customerNumber;
+                // get parameter
+                sql = "SELECT CLASS_ID FROM POS_VIP_MAS WHERE VIP_ID = ? AND (ORG_ID IS NULL OR ORG_ID = ?)";
                 pstmt = conn.prepareStatement(sql);
-                pstmt.setObject(1, type);
-//                pstmt.setObject(2, orgId);
+                pstmt.setObject(1, customerNumber);
+                pstmt.setObject(2, orgId);
                 rs = pstmt.executeQuery();
                 metaData = (ResultSetMetaData) rs.getMetaData();
                 columnCount = metaData.getColumnCount();
@@ -389,7 +376,7 @@ public class Epbmemberson {
                     for (int i = 1; i <= columnCount; i++) {
                         String columnName = metaData.getColumnLabel(i);
                         Object value = rs.getObject(columnName);
-                        if ("REMARK".equals(columnName.toUpperCase())) {
+                        if ("CLASS_ID".equals(columnName.toUpperCase())) {
                             classId = (String) value;
                         }
                     }
@@ -397,19 +384,66 @@ public class Epbmemberson {
                 // free mem
                 pstmt.close();
                 rs.close();
-            }
+            } else {
+                // call memberson API
+                posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
+                Map<String, Object> retMap = Epbmemberson.getRedeemPointsConversionRate(posO2oUrl, posO2oAuth, posO2oAccessToken, currId);
+                if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
+                    returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
+                    returnMap.put(MSG, (String) retMap.get(MSG));
+                    return returnMap;
+                }
+//            BigDecimal posO2oRedeemRatio = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
+                fromRate = retMap.containsKey(Epbmemberson.RETURN_FROM_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_FROM_RATE) : null;
+                toRate = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
+
+//            Map<String, String> customerMap = (Map<String, String>) retMap.get(Epbmemberson.RETURN_CUSTOMER_MAP);
+                retMap = getVipSummary(posO2oUrl, posO2oAuth, posO2oAccessToken, customerNumber);
+                if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
+                    returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
+                    returnMap.put(MSG, (String) retMap.get(MSG));
+                    return returnMap;
+                }
+//            String classId = (String) retMap.get(Epbmemberson.RETURN_TIER);
+                String type = getSmoothType((String) retMap.get(Epbmemberson.RETURN_TYPE));
+//            System.out.println("type:" + type);
+//            String classId = EMPTY;
+                if (type != null && type.length() != 0) {
+                    // free mem
+                    pstmt.close();
+                    rs.close();
+                    sql = "SELECT REMARK FROM VIP_SELFMAS1 WHERE SELF1_ID = ?";
+                    pstmt = conn.prepareStatement(sql);
+                    pstmt.setObject(1, type);
+//                pstmt.setObject(2, orgId);
+                    rs = pstmt.executeQuery();
+                    metaData = (ResultSetMetaData) rs.getMetaData();
+                    columnCount = metaData.getColumnCount();
+                    while (rs.next()) {
+                        for (int i = 1; i <= columnCount; i++) {
+                            String columnName = metaData.getColumnLabel(i);
+                            Object value = rs.getObject(columnName);
+                            if ("REMARK".equals(columnName.toUpperCase())) {
+                                classId = (String) value;
+                            }
+                        }
+                    }
+                    // free mem
+                    pstmt.close();
+                    rs.close();
+                }
 //            System.out.println("classId:" + classId);
-            BigDecimal cumPts = retMap.get(Epbmemberson.RETURN_BALANCE) == null || EMPTY.equals(retMap.get(Epbmemberson.RETURN_BALANCE))
-                    ? BigDecimal.ZERO 
-                    : new BigDecimal((String) retMap.get(Epbmemberson.RETURN_BALANCE));
-            String memberNo = (String) retMap.get(Epbmemberson.RETURN_MEMBER_NO);
+                cumPts = retMap.get(Epbmemberson.RETURN_BALANCE) == null || EMPTY.equals(retMap.get(Epbmemberson.RETURN_BALANCE))
+                        ? BigDecimal.ZERO
+                        : new BigDecimal((String) retMap.get(Epbmemberson.RETURN_BALANCE));
+                memberNo = (String) retMap.get(Epbmemberson.RETURN_MEMBER_NO);
 //            retMap = getMemberDiscounts(posO2oUrl, posO2oAuth, posO2oAccessToken, memberNo, shopId);
 //            if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
 //                returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
 //                returnMap.put(MSG, (String) retMap.get(MSG));
 //                return returnMap;
 //            }
-
+            }
             //get vip Discount
             // get parameter
             BigDecimal vipDisc = null;
@@ -577,12 +611,13 @@ public class Epbmemberson {
 //    }
     
     // Search Profile:{baseurl}/api/profile/search 
-    private static Map<String, Object> searchVip(final String baseurl, final String callAuth, final String token,
+    private static Map<String, Object> searchVip(final Connection conn, final BigDecimal opentableRecKey, final String baseurl, final String callAuth, final String token,
             final String customerNumber, final String cardNumber, final String nric, final String name,
             final String mobileNumberCountryCode, final String mobileNumber, final String emailAddress) {
         final Map<String, Object> returnMap = new HashMap<>();
         try {
             String callHttpUrl = baseurl + SLASH + "api/profile/search";
+            JSONArray rtnDataArray = new JSONArray();
             JSONObject jsonBody = new JSONObject();
             jsonBody.put("CustomerNumber", customerNumber == null ? EMPTY : customerNumber);
             jsonBody.put("IsCustomerNumberWildcardSearch", (customerNumber != null && !EMPTY.equals(customerNumber)));
@@ -600,14 +635,48 @@ public class Epbmemberson {
 //            System.out.println(jsonBody.toString());
             Map<String, String> callMap = HttpUtil.callHttpMethod(callHttpUrl, callAuth, token, HttpUtil.POST_METHOD, jsonBody.toString());
             if (RETURN_OK.equals(callMap.get(MSG_ID))) {
+//                returnMap.put(MSG_ID, RETURN_OK);
+//                returnMap.put(MSG, callMap.get(MSG));
+                JSONArray dataArray = new JSONArray(callMap.get(MSG));
+                if (dataArray.length() > 0) {
+                    int count = dataArray.length();
+                    for (int i = 0; i < count; i++) {
+                        JSONObject dataObject = (JSONObject) dataArray.get(i);
+                        dataObject.put(RETURN_CUSTOMER_SOURCE, "MEMBERSON");
+                        rtnDataArray.put(dataObject);
+                    }
+                }
+//            } else {
+//                returnMap.put(MSG_ID, callMap.get(MSG_ID));
+//                returnMap.put(MSG, callMap.get(MSG));
+//                return returnMap;
+            }
+            
+            List<Map<String, Object>> mapList = getEpbVip(conn, opentableRecKey, customerNumber, name, cardNumber, mobileNumber, emailAddress);
+            for (Map<String, Object> map : mapList) {
+                JSONObject dataObject = new JSONObject();
+                dataObject.put(RETURN_CUSTOMER_NUMBER, map.get(RETURN_CUSTOMER_NUMBER));
+//                dataObject.put(RETURN_MEMBER_NO, map.get(RETURN_CUSTOMER_NUMBER));
+                dataObject.put(RETURN_NAME, map.get(RETURN_NAME));
+                dataObject.put(RETURN_EMAIL_ADDRESS, map.get(RETURN_EMAIL_ADDRESS));
+                dataObject.put(RETURN_MOBILE_NUMBER, map.get(RETURN_MOBILE_NUMBER));
+                dataObject.put(RETURN_FIRST_NAME, EMPTY);
+                dataObject.put(RETURN_LAST_NAME, EMPTY);
+                dataObject.put(RETURN_CUSTOMER_SOURCE, "EPB");
+                rtnDataArray.put(dataObject);
+            }
+            
+            System.out.println("rtnDataArray:" +rtnDataArray.toString());
+            
+            if (rtnDataArray.length() > 0) {
                 returnMap.put(MSG_ID, RETURN_OK);
-                returnMap.put(MSG, callMap.get(MSG));
-                return returnMap;
+                returnMap.put(MSG, rtnDataArray.toString());
             } else {
                 returnMap.put(MSG_ID, callMap.get(MSG_ID));
                 returnMap.put(MSG, callMap.get(MSG));
-                return returnMap;
             }
+            
+            return returnMap;
 
 //            JSONObject jsonResult = new JSONObject(callMap.get(HttpUtil.MSG));
 //            returnMap.put(RETURN_CUSTOMER_NUMBER, jsonResult.getString(RETURN_CUSTOMER_NUMBER));
@@ -966,7 +1035,107 @@ public class Epbmemberson {
         return type.substring(0, 16);
     }
     
-    public static void main(String[] args) {
+    private static List<Map<String, Object>> getEpbVip(final Connection conn, final BigDecimal opentableRecKey,final String vipId, final String name, final String cardNo, final String vipPhone, final String email) {
+        final List<Map<String, Object>> returnMapList = new ArrayList<Map<String, Object>>();
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            if ((vipId == null || vipId.trim().length() == 0)
+                    && (name == null || name.trim().length() == 0)
+                    && (cardNo == null || cardNo.trim().length() == 0)
+                    && (vipPhone == null || vipPhone.trim().length() == 0)
+                    && (email == null || email.trim().length() == 0)) {
+                return returnMapList;
+            }
+            
+            String sql = "SELECT ORG_ID FROM OPENTABLE WHERE REC_KEY = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setObject(1, opentableRecKey);
+            rs = pstmt.executeQuery();
+            ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            String epbOrgId = EMPTY;
+
+            while (rs.next()) {
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = metaData.getColumnLabel(i);
+                    Object value = rs.getObject(columnName);
+                    if ("ORG_ID".equals(columnName.toUpperCase())) {
+                        epbOrgId = (String) value;
+                    } 
+                }
+            }
+            // free mem
+            pstmt.close();
+            rs.close();
+
+
+            // get parameter
+            sql = "SELECT VIP_ID, NAME, VIP_PHONE1, EMAIL_ADDR FROM POS_VIP_MAS "
+                    + " WHERE CLASS_ID IN (SELECT CLASS_ID FROM POS_VIP_CLASS WHERE REMARK LIKE ? AND (ORG_ID IS NULL OR ORG_ID = '' OR ORG_ID = ?)) "
+                    + " AND (ORG_ID IS NULL OR ORG_ID = '' OR ORG_ID = ?)"
+                    + (vipId == null || vipId.length() == 0 ? EMPTY : " AND LOWER(VIP_ID) = LOWER('" + vipId + "') ")
+                    + (name == null || name.length() == 0 ? EMPTY : " AND LOWER(NAME) LIKE LOWER('%" + name + "%') ")
+                    + (cardNo == null || cardNo.length() == 0 ? EMPTY : " AND LOWER(CARD_NO) LIKE LOWER('%" + cardNo + "%') ")
+                    + (vipPhone == null || vipPhone.length() == 0 ? EMPTY : " AND VIP_PHONE1 = '" + vipPhone + "' ")
+                    + (email == null || email.length() == 0 ? EMPTY : " AND LOWER(EMAIL_ADDR) = LOWER('" + email + "') ");
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setObject(1, "CULINA%");
+            pstmt.setObject(2, epbOrgId);
+            pstmt.setObject(3, epbOrgId);
+            rs = pstmt.executeQuery();
+            metaData = (ResultSetMetaData) rs.getMetaData();
+            columnCount = metaData.getColumnCount();
+            String epbVipId = EMPTY;
+            String epbName = EMPTY;
+            String epbMobile = EMPTY;
+            String epbEmailAddr = EMPTY;
+
+            while (rs.next()) {
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = metaData.getColumnLabel(i);
+                    Object value = rs.getObject(columnName);
+                    if ("VIP_ID".equals(columnName.toUpperCase())) {
+                        epbVipId = (String) value;
+                    } else if ("NAME".equals(columnName.toUpperCase())) {
+                        epbName = (String) value;
+                    } else if ("VIP_PHONE1".equals(columnName.toUpperCase())) {
+                        epbMobile = (String) value;
+                    } else if ("EMAIL_ADDR".equals(columnName.toUpperCase())) {
+                        epbEmailAddr = (String) value;
+                    }
+                }
+                final Map<String, Object> returnMap = new HashMap<String, Object>();
+                returnMap.put(RETURN_CUSTOMER_NUMBER, epbVipId);
+                returnMap.put(RETURN_MEMBER_NO, epbVipId);
+                returnMap.put(RETURN_NAME, epbName);
+                returnMap.put(RETURN_MOBILE_NUMBER, epbMobile);
+                returnMap.put(RETURN_EMAIL_ADDRESS, epbEmailAddr);
+                returnMapList.add(returnMap);
+            }
+            // free mem
+            pstmt.close();
+            rs.close();
+
+            return returnMapList;
+        } catch (SQLException thr) {
+            // DO NOTHING
+            return returnMapList;
+        } finally {
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (Throwable thrl) {
+                // do nothing
+            }
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
         try {
 //            if (1 == 1) {
 //                JSONObject jsonBody = new JSONObject();
@@ -983,17 +1152,28 @@ public class Epbmemberson {
 ////            String auth = "VGVzdEN1c3RvbWVy, VGVzdFBhc3N3b3Jk";
 ////            String userId = "testuser";
 ////            String userPasswrod = "testpassword";
-//            String baseurl = "https://c21sguat.memgate.com";
-////            String auth = "RVBCUE9T,OHRTMjBoWDFENDVT";
-//            String userId = "EPBPOS";
-//            String userPasswrod = "8tS20hX1D45S";
-//            String auth = AES.Encrypt(userId) + "," + AES.Encrypt(userPasswrod);      
-//            System.out.println(auth);
-////            Map<String, String> returnMapping = getToken(baseurl, userId, userPasswrod, auth);
-//            String token = "f9e96fd1-c6c5-4a36-9e02-6dc355b22d4f";//returnMapping.get(HttpUtil.MSG);
-////            getProfile(baseurl, userId, userPasswrod, auth, "123");
-////            getProfile(baseurl, auth, token, "01463571");
-//            searchVip(baseurl, auth, "1668bec1-7f80-4528-90bf-51eb3b3a4d4b", "01463571", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
+            String baseurl = "https://c21sg.memgate.com";
+//            String auth = "RVBCUE9T,OHRTMjBoWDFENDVT";
+            String userId = "EPBPOS";
+            String userPasswrod = "YfG79vCr5TZ1";
+            String auth = AES.Encrypt(userId) + "," + AES.Encrypt(userPasswrod);    
+            
+            String driver = "oracle.jdbc.driver.OracleDriver";
+            String url = "jdbc:oracle:thin:@localhost:1523:XE";
+//            String url = "jdbc:oracle:thin:@192.168.1.11:1521:ORCL";
+            String user = "EPBSH";
+            String pwd = "EPB9209";
+//            String pwd = "EPBSH";
+            Class.forName(driver);
+            System.out.println("driver is ok");
+
+            Connection conn = DriverManager.getConnection(url, user, pwd);
+            System.out.println(auth);
+//            Map<String, String> returnMapping = getToken(baseurl, userId, userPasswrod, auth);
+            String token = "b24a3a48-86c6-45c7-b15d-e4560ceed775";//returnMapping.get(HttpUtil.MSG);
+//            getProfile(baseurl, userId, userPasswrod, auth, "123");
+//            getProfile(baseurl, auth, token, "01463571");
+            searchVip(conn, BigDecimal.ZERO, baseurl, auth, token, EMPTY, EMPTY, EMPTY, "%CHEN%", EMPTY, EMPTY, EMPTY);
 //            getVipSummary(baseurl, auth, token, "01523935");
 ////            final List<PoslineMemberson> poslineMembersonList = new ArrayList<PoslineMemberson>();
 ////            PoslineMemberson poslineMemberson = new PoslineMemberson();
@@ -1015,36 +1195,26 @@ public class Epbmemberson {
 ////            getRedeemPointsConversionRate(baseurl, auth, token, "SGD");
 ////            
 ////            redeemPoints(baseurl, auth, token, "C80006235M", 100, "C21 Points", new Date(), "RD001", "1 SGD", "HQ", "034534599");
-//            getMemberDiscounts(baseurl, auth, token, "CT9001178M", "HQ");
-            String driver = "oracle.jdbc.driver.OracleDriver";
-            String url = "jdbc:oracle:thin:@localhost:1523:XE";
-//            String url = "jdbc:oracle:thin:@192.168.1.11:1521:ORCL";
-            String user = "EPBSH";
-            String pwd = "EPB9209";
-//            String pwd = "EPBSH";
-            Class.forName(driver);
-            System.out.println("driver is ok");
-
-            Connection conn = DriverManager.getConnection(url, user, pwd);
-//            01523935
-//            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01523935", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
-            Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01528863", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
-            if (Epbmemberson.RETURN_OK.equals(returnMap.get(Epbmemberson.MSG_ID))) {
-                // printer OK
-                System.out.println("call memberson API OK");
-            } else {
-                // error
-                System.out.println(returnMap.get(Epbmemberson.MSG));
-            }
-            
-            returnMap = Epbmemberson.updateVipSummary(conn, BigDecimal.ZERO, "01528863", "SA FINA HE", "13420944473", "", "");
-            if (Epbmemberson.RETURN_OK.equals(returnMap.get(Epbmemberson.MSG_ID))) {
-                // printer OK
-                System.out.println("call memberson update API OK");
-            } else {
-                // error
-                System.out.println(returnMap.get(Epbmemberson.MSG));
-            }
+////            getMemberDiscounts(baseurl, auth, token, "CT9001178M", "HQ");
+////            01523935
+////            final Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01523935", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
+//            Map<String, String> returnMap = Epbmemberson.getVip(conn, BigDecimal.ZERO, "01528863", EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY);
+//            if (Epbmemberson.RETURN_OK.equals(returnMap.get(Epbmemberson.MSG_ID))) {
+//                // printer OK
+//                System.out.println("call memberson API OK");
+//            } else {
+//                // error
+//                System.out.println(returnMap.get(Epbmemberson.MSG));
+//            }
+//            
+//            returnMap = Epbmemberson.updateVipSummary(conn, BigDecimal.ZERO, "01528863", "SA FINA HE", "13420944473", "", "");
+//            if (Epbmemberson.RETURN_OK.equals(returnMap.get(Epbmemberson.MSG_ID))) {
+//                // printer OK
+//                System.out.println("call memberson update API OK");
+//            } else {
+//                // error
+//                System.out.println(returnMap.get(Epbmemberson.MSG));
+//            }
             
         } catch (ClassNotFoundException | SQLException ex) {
             System.out.println(ex);
