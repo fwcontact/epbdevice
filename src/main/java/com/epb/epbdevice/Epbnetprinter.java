@@ -2,7 +2,7 @@ package com.epb.epbdevice;
 
 import com.epb.epbdevice.beans.PrintPool;
 import com.epb.epbdevice.utl.Epbescpos;
-import com.epb.epbdevice.utl.QRCodeException;
+import com.epb.epbdevice.utl.QrCode2;
 import com.epb.epbdevice.utl.StringParser;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -160,28 +160,34 @@ public class Epbnetprinter {
                     }
                     output = printPool.getVal();
 
-                    if (printCommand != null && printCommand.length() != 0
-                            && (printCommand.startsWith(COMMAND_QR) || printCommand.startsWith(COMMAND_QR115200))) {
-                        qrArray = printCommand.split(COMMA);
-                        if (qrArray.length >= 2) {
-                            try {
-                                position = Integer.parseInt(qrArray[1]);
-                            } catch (NumberFormatException ex) {
-                                position = 0;
-                            }
-                            try {
-                                qrSize = Integer.parseInt(qrArray[2]);
-                            } catch (NumberFormatException ex) {
-                                qrSize = 150;
-                            }
-                            if (printCommand.startsWith(COMMAND_QR115200)) {
-                                Epbescpos.printQRCodeBaudrate115200(socketWriter, position, output, qrSize);
-                            } else {
-                                Epbescpos.printQRCode(socketWriter, position, output, qrSize);
-                            }
-                            line = EMPTY;
-                            continue;
-                        }
+                    if (printCommand != null && printCommand.length() != 0 && printCommand.equals(COMMAND_QR)) {
+                        String qrDate = (const1 == null ? EMPTY : const1.trim()) + (output == null ? EMPTY : output.trim()) + (const2 == null ? EMPTY : const2.trim());
+                        if (qrDate != null && !EMPTY.equals(qrDate)) {
+                            QrCode2.printQrCode(socketWriter, qrDate);
+                        }     
+                        continue;                        
+//                    } else if (printCommand != null && printCommand.length() != 0
+//                            && (printCommand.startsWith(COMMAND_QR) || printCommand.startsWith(COMMAND_QR115200))) {
+//                        qrArray = printCommand.split(COMMA);
+//                        if (qrArray.length >= 2) {
+//                            try {
+//                                position = Integer.parseInt(qrArray[1]);
+//                            } catch (NumberFormatException ex) {
+//                                position = 0;
+//                            }
+//                            try {
+//                                qrSize = Integer.parseInt(qrArray[2]);
+//                            } catch (NumberFormatException ex) {
+//                                qrSize = 150;
+//                            }
+//                            if (printCommand.startsWith(COMMAND_QR115200)) {
+//                                Epbescpos.printQRCodeBaudrate115200(socketWriter, position, output, qrSize);
+//                            } else {
+//                                Epbescpos.printQRCode(socketWriter, position, output, qrSize);
+//                            }
+//                            line = EMPTY;
+//                            continue;
+//                        }
                     } else if (printCommand != null && printCommand.length() != 0
                             && (printCommand.startsWith(COMMAND_IMAGE) || printCommand.startsWith(COMMAND_IMAGE115200))) {
                         qrArray = printCommand.split(COMMA);
@@ -261,7 +267,7 @@ public class Epbnetprinter {
                 }
                 skipThisLine = false;
             }
-        } catch (QRCodeException ex) {
+        } catch (Throwable ex) {
             System.out.println("Print receipt head Failed!" + ex);
         }
     }
