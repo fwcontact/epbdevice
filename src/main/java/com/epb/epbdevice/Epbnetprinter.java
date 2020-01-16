@@ -154,7 +154,7 @@ public class Epbnetprinter {
                     final String breakFlg = printPool.getBreakFlg() == null ? EMPTY : printPool.getBreakFlg();
                     final String fillBlankFlg = printPool.getFillBlankFlg() == null ? "N" : printPool.getFillBlankFlg();
                     output = EMPTY;
-                    if (!(printCommand == null || EMPTY.equals(printCommand))) {
+                    if (printCommand != null && !EMPTY.equals(printCommand) && !COMMAND_QR.equals(printCommand)) {
                         //输出
                         line += StringParser.getSplitString(printCommand);
                     }
