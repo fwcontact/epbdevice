@@ -86,7 +86,7 @@ class Epbprinter {
 //                                returnMap.put(Epbdevice.MSG, "Failed to open net printer port" + "->" + printPort);
 //                                return returnMap;
 //                            }
-                            final String returnMsg = Epbnetprinter.printPosReceipt(printPort, printerPrintPoolList, printEncoding);
+                            final String returnMsg = Epbnetprinter2.printPosReceipt(printPort, printerPrintPoolList, printEncoding);
                             if (!EMPTY.equals(returnMsg)) {
                                 // never return
 //                                returnMap.put(Epbdevice.MSG_ID, "printerror");
