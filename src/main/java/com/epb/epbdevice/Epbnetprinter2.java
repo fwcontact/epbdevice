@@ -1,6 +1,7 @@
 package com.epb.epbdevice;
 
 import com.epb.epbdevice.beans.PrintPool;
+import com.epb.epbdevice.utl.CommonUtility;
 import com.epb.epbdevice.utl.QrCode2;
 import com.epb.epbdevice.utl.StringParser;
 import java.io.BufferedInputStream;
@@ -49,7 +50,9 @@ public class Epbnetprinter2 {
     
     private String doPrintPosReceipt(final String ipAddr, final List<PrintPool> printPoolList, final String encoding) {
         try {
+            CommonUtility.printLog("connecting:" + ipAddr);
             boolean opened = doOpenEpbNetPrinter(ipAddr, encoding);
+            CommonUtility.printLog("connected:" + ipAddr);
             if (opened) {
                 doPrintPosReceipt(printPoolList);
                 doCloseNetPrinter();
@@ -256,6 +259,8 @@ public class Epbnetprinter2 {
             }
         } catch (Throwable ex) {
             System.out.println("com.epb.epbdevice.Epbnetprinter2.doCloseNetPrinter()" + ":" + ex.getMessage());
+        } finally {
+            CommonUtility.printLog("disconnect");
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.epb.epbdevice;
 
 import com.epb.epbdevice.beans.PrintPool;
+import com.epb.epbdevice.utl.CommonUtility;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.CallableStatement;
@@ -28,6 +29,7 @@ class Epbprinter {
     public static Map<String, String> printFile(final Connection conn, final String recKey, final String userId) {
         final Map<String, String> returnMap = new HashMap<>();
         try {
+            CommonUtility.printLog("print start");
             final Map<String, Object> printMap = getPrintPoolList(conn, recKey, userId);
 //            List<PrintPool> printPoolList = getPrintPoolList(conn, recKey, userId);
             if (!OK.equals(printMap.get(MSG_ID))) {
@@ -86,7 +88,9 @@ class Epbprinter {
 //                                returnMap.put(Epbdevice.MSG, "Failed to open net printer port" + "->" + printPort);
 //                                return returnMap;
 //                            }
+                            CommonUtility.printLog("print to net printer:" + printPort);
                             final String returnMsg = Epbnetprinter2.printPosReceipt(printPort, printerPrintPoolList, printEncoding);
+                            CommonUtility.printLog("Done:" + printPort);
                             if (!EMPTY.equals(returnMsg)) {
                                 // never return
 //                                returnMap.put(Epbdevice.MSG_ID, "printerror");
@@ -107,6 +111,8 @@ class Epbprinter {
             returnMap.put(Epbdevice.MSG_ID, "unhandle exception");
             returnMap.put(Epbdevice.MSG, thr.getMessage() + ", Print key is " + recKey);
             return returnMap;
+        } finally {
+            CommonUtility.printLog("print end");
         }
     }
     
