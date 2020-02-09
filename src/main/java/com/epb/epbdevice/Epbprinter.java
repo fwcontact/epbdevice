@@ -32,7 +32,7 @@ class Epbprinter {
     private static final CopyOnWriteArrayList<String> WAITING_QUEUE = new CopyOnWriteArrayList<String>();
     private static final CopyOnWriteArrayList<String> PRINTING_QUEUE = new CopyOnWriteArrayList<String>();
     private static final ConcurrentHashMap<String, List<PrintPool>> FULL_PRINT_POOL_MAPPING = new ConcurrentHashMap<String, List<PrintPool>>();
-    private static final CopyOnWriteArrayList<String> HIS_QUEUE = new CopyOnWriteArrayList<String>();
+//    private static final CopyOnWriteArrayList<String> HIS_QUEUE = new CopyOnWriteArrayList<String>();
     
     public static Map<String, String> printFile(final Connection conn, final String recKey, final String userId) {
         final Map<String, String> returnMap = new HashMap<>();
@@ -53,7 +53,7 @@ class Epbprinter {
             
             FULL_PRINT_POOL_MAPPING.put(recKey, printPoolList);
             WAITING_QUEUE.add(recKey);        
-            HIS_QUEUE.add(recKey);   
+//            HIS_QUEUE.add(recKey);   
             
 //            startPrint sell = new startPrint();
 //            Thread thread = new Thread(sell);
@@ -70,9 +70,9 @@ class Epbprinter {
             return returnMap;
         } finally {            
 //            CommonUtility.printLog("print end");
-            for (String key : HIS_QUEUE) {
-                CommonUtility.printLog("his key:" + key);
-            }
+//            for (String key : HIS_QUEUE) {
+//                CommonUtility.printLog("his key:" + key);
+//            }
         }
     }
     
