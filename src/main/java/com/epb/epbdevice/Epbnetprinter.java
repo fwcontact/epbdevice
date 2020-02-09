@@ -4,6 +4,7 @@ import com.epb.epbdevice.beans.PrintPool;
 import com.epb.epbdevice.utl.Epbescpos;
 import com.epb.epbdevice.utl.QrCode2;
 import com.epb.epbdevice.utl.StringParser;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -31,6 +32,7 @@ public class Epbnetprinter {
     private static final String COMMAND_BARCODE128_115200 = "b128_115200";
     private Socket client;
     private PrintWriter socketWriter;
+    private BufferedOutputStream bos = null;
     
     public static String printPosReceipt(final String ipAddr, final List<PrintPool> printPoolList, final String encoding) {
         return new Epbnetprinter().doPrintPosReceipt(ipAddr, printPoolList, encoding);
@@ -93,11 +95,13 @@ public class Epbnetprinter {
                 final String defaultEncoding = System.getProperty("file.encoding");
 //                socketWriter = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), encoding), true);// 创建输入输出数据流
 //                socketWriter = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), "GBK"), true);
+                System.out.println("encoding:" + (encoding == null || encoding.length() == 0 ? defaultEncoding : encoding));
                 socketWriter = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), encoding == null || encoding.length() == 0 ? defaultEncoding : encoding), true);// 创建输入输出数据流
 //                socketWriter.println("defaultEncoding:" + defaultEncoding);// 打印完毕自动走纸
 //                socketWriter.flush();
 //                System.out.println("encoding:" + encoding);// 打印完毕自动走纸
 //                socketWriter.flush();
+                bos = new BufferedOutputStream(client.getOutputStream()); 
             }
             return true;
         } catch (IOException ex) {
@@ -107,6 +111,14 @@ public class Epbnetprinter {
                     socketWriter = null;
                 } catch (Throwable thr) {
                     System.out.println("com.epb.epbdevice.Epbnetprinter.openEpbNetPrinter()" + ":" + thr.getMessage());
+                }
+            }
+            if (bos != null) {
+                try {
+                    bos.close();
+                    bos = null;
+                } catch (Throwable thr) {
+                    System.out.println("com.epb.epbdevice.Epbnetprinter2.openEpbNetPrinter()" + ":" + thr.getMessage());
                 }
             }
             if (client != null) {
@@ -163,7 +175,8 @@ public class Epbnetprinter {
                     if (printCommand != null && printCommand.length() != 0 && printCommand.equals(COMMAND_QR)) {
                         String qrDate = (const1 == null ? EMPTY : const1.trim()) + (output == null ? EMPTY : output.trim()) + (const2 == null ? EMPTY : const2.trim());
                         if (qrDate != null && !EMPTY.equals(qrDate)) {
-                            QrCode2.printQrCode(socketWriter, qrDate);
+//                            QrCode2.printQrCode(socketWriter, qrDate);
+                            QrCode2.printQrCode(bos, qrDate);
                         }     
                         continue;                        
 //                    } else if (printCommand != null && printCommand.length() != 0

@@ -263,7 +263,8 @@ class Epbprinter {
                 if (PRINTER_LINE.compareTo(pp.getLineNo()) != 0) {
                     printerPrintPoolList.add(pp);
                 } else {
-                    printEncoding = pp.getVal();
+                    printEncoding = pp.getConst1();  // print charset
+                    System.out.println("Encoding:" + printEncoding);
                 }
                 if (PRINTER_LINE.compareTo(pp.getLineNo()) == 0 || index == size - 1) {
                     if (!printerPrintPoolList.isEmpty()) {
@@ -273,7 +274,7 @@ class Epbprinter {
                             // do nothing
                         } else {
                             CommonUtility.printLog("print to net printer:" + printPort);
-                            final String returnMsg = Epbnetprinter2.printPosReceipt(printPort, printerPrintPoolList, printEncoding);
+                            final String returnMsg = Epbnetprinter.printPosReceipt(printPort, printerPrintPoolList, printEncoding);
                             CommonUtility.printLog("Done:" + printPort);
                             if (!EMPTY.equals(returnMsg)) {
                                 // never return
