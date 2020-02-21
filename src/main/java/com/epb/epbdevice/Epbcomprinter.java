@@ -38,10 +38,28 @@ class Epbcomprinter {
     public static void cutPaper() {
         new Epbcomprinter().doCutPaper();
     }
+    
+    public static String testConnectPrinter(final String serialParallelPort) {
+        return new Epbcomprinter().doTestConnectPrinter(serialParallelPort);
+    }
 
     //
     // private
     //
+    
+    private String doTestConnectPrinter(final String serialParallelPort) {
+        try {
+            boolean opened = doOpenEpbprinter(serialParallelPort);
+            if (opened) {
+                doClosePrinter();
+                return EMPTY;
+            } else {
+                return "Failed to open printer port" + "->" + serialParallelPort;
+            }
+        } catch (Throwable thr) {
+            return "Failed to open printer port" + "->" + thr.getMessage();
+        }
+    }
     
     private boolean doOpenEpbprinter(final String serialParallelPort) {
         try {
@@ -54,6 +72,20 @@ class Epbcomprinter {
             ioPrint = null;
 //            System.out.println("com.epb.epbdevice.Epbprinter.Epbprinter()" + ":" + ex.getMessage());
             return false;
+        }
+    }
+
+    private void doClosePrinter() {
+        try {
+            if (ioPrint == null) {
+                // do nothing
+                return;
+            }
+            ioPrint.flush();
+            ioPrint.close();
+        } catch (IOException ex) {
+            ioPrint = null;
+            System.out.println("com.epb.epbdevice.Epbprinter.closePrinter()" + ":" + ex.getMessage());
         }
     }
     
@@ -406,20 +438,6 @@ class Epbcomprinter {
         } catch (IOException ex) {
 //            ioPrint = null;
             System.out.println("com.epb.epbdevice.Epbprinter.printCmd()" + ":" + ex.getMessage());
-        }
-    }
-
-    private void doClosePrinter() {
-        try {
-            if (ioPrint == null) {
-                // do nothing
-                return;
-            }
-            ioPrint.flush();
-            ioPrint.close();
-        } catch (IOException ex) {
-            ioPrint = null;
-            System.out.println("com.epb.epbdevice.Epbprinter.closePrinter()" + ":" + ex.getMessage());
         }
     }
 

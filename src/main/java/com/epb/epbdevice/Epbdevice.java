@@ -4,12 +4,18 @@ import com.epb.epbdevice.utl.CommonUtility;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.HashMap;
 import java.util.Map;
 
 public class Epbdevice {
     public static final String MSG_ID = "msgId";
     public static final String MSG = "msg";
     public static final String RETURN_OK = "OK";
+    public static final String RETURN_FAIL = "Fail";
+    
+    private static final String COM = "COM";
+    private static final String LPT = "LPT";
+    private static final String EMPTY = "";
 //    private static final Log LOG = LogFactory.getLog(Epbescpos.class);
     
     public synchronized static void initBat(final String intiFilePathName) {  //D:\\EPBrowser\\EPB\\init.bat
@@ -30,6 +36,32 @@ public class Epbdevice {
         CommonUtility.printVersion();
         
         return Epbprinter.printFile(conn, recKey, userId);
+    }
+    
+    public synchronized static Map<String, String> testConnectPrinter(final String printPort) {
+        Map<String, String> returnMap = new HashMap<String, String>();
+        if (printPort != null
+                && (printPort.toUpperCase().startsWith(COM) || printPort.toUpperCase().startsWith(LPT) || !Epbnetprinter.checkNetPort(printPort))) {
+            String returnMsg = Epbcomprinter.testConnectPrinter(printPort);
+            if (returnMsg == null || EMPTY.equals(returnMsg)) {
+                returnMap.put(Epbdevice.MSG_ID, Epbdevice.RETURN_OK);
+                returnMap.put(Epbdevice.MSG, EMPTY);
+            } else {
+                returnMap.put(Epbdevice.MSG_ID, RETURN_FAIL);
+                returnMap.put(Epbdevice.MSG, returnMsg);
+            }
+            return returnMap;
+        } else {
+            String returnMsg = Epbnetprinter.testConnectPrinter(printPort);
+            if (returnMsg == null || EMPTY.equals(returnMsg)) {
+                returnMap.put(Epbdevice.MSG_ID, Epbdevice.RETURN_OK);
+                returnMap.put(Epbdevice.MSG, EMPTY);
+            } else {
+                returnMap.put(Epbdevice.MSG_ID, RETURN_FAIL);
+                returnMap.put(Epbdevice.MSG, returnMsg);
+            }
+            return returnMap;
+        }
     }
     
     //

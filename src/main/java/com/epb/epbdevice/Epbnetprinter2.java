@@ -80,7 +80,7 @@ public class Epbnetprinter2 {
         try {
             if (client == null) {
                 client = new java.net.Socket();
-                client.connect(new InetSocketAddress(ip, 9100), 10000); // 创建一个 socket
+                client.connect(new InetSocketAddress(ip, 9100), 1000); // 创建一个 socket
                 bis = new BufferedInputStream(client.getInputStream()); 
                 bos = new BufferedOutputStream(client.getOutputStream()); 
             }

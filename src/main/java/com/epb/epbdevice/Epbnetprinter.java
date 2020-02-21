@@ -57,9 +57,27 @@ public class Epbnetprinter {
         }
     }
     
+    public static String testConnectPrinter(final String ipAddr) {
+        return new Epbnetprinter().doTestConnectPrinter(ipAddr);
+    }
+    
     //
     // private
     //
+    
+    private String doTestConnectPrinter(final String ipAddr) {
+        try {
+            boolean opened = doOpenEpbNetPrinter(ipAddr, null);
+            if (opened) {
+                doCloseNetPrinter();
+                return EMPTY;
+            } else {
+                return "Failed to open net printer port" + "->" + ipAddr;
+            }
+        } catch (Throwable thr) {
+            return "Failed to open net printer port" + "->" + thr.getMessage();
+        }
+    }
     
     private String doPrintPosReceipt(final String ipAddr, final List<PrintPool> printPoolList, final String encoding) {
         try {

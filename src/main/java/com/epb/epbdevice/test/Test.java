@@ -1,7 +1,6 @@
 package com.epb.epbdevice.test;
 
 import com.epb.epbdevice.Epbdevice;
-import com.epb.epbdevice.Epbnetprinter;
 import com.epb.epbdevice.beans.PrintPool;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -12,7 +11,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public class Test {
