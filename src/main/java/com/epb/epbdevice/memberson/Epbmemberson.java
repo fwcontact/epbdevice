@@ -63,6 +63,7 @@ public class Epbmemberson {
     public static final String RETURN_TO_RATE = "ToRate";
     public static final String RETURN_AMOUNT = "Amount";
     public static final String RETURN_VIP_DISC = "VipDiscount";
+    public static final String RETURN_EPB_TYPE_ID = "typeId";
     public static final String RETURN_CUSTOMER_SOURCE = "CustomerSource";
 //    private static final String RETURN_EPB_VIP_CLASS = "classId";
 //    private static final String RETURN_EPB_VIP_DISC = "vipDisc";
@@ -355,6 +356,7 @@ public class Epbmemberson {
             }
             
             String classId = EMPTY;
+            String epbTypeId = EMPTY;  // browrrow qr code
             BigDecimal fromRate;
             BigDecimal toRate;
             BigDecimal cumPts;
@@ -414,7 +416,7 @@ public class Epbmemberson {
                     // free mem
                     pstmt.close();
                     rs.close();
-                    sql = "SELECT REMARK FROM VIP_SELFMAS1 WHERE SELF1_ID = ?";
+                    sql = "SELECT REMARK, NAME FROM VIP_SELFMAS1 WHERE SELF1_ID = ?";
                     pstmt = conn.prepareStatement(sql);
                     pstmt.setObject(1, type);
 //                pstmt.setObject(2, orgId);
@@ -427,6 +429,8 @@ public class Epbmemberson {
                             Object value = rs.getObject(columnName);
                             if ("REMARK".equals(columnName.toUpperCase())) {
                                 classId = (String) value;
+                            } else if ("NAME".equals(columnName.toUpperCase())) {
+                                epbTypeId = (String) value;
                             }
                         }
                     }
@@ -508,7 +512,7 @@ public class Epbmemberson {
             stmt.setString(10, toRate + EMPTY);
             stmt.setString(11, memberNo);
             stmt.setString(12, dob);
-            stmt.setString(13, type);
+            stmt.setString(13, epbTypeId);
             stmt.execute();
             String strRtn = stmt.getString(1);
             String strMsg = stmt.getString(2);
