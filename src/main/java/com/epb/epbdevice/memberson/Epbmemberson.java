@@ -55,6 +55,7 @@ public class Epbmemberson {
 //    public static final String RETURN_TIER = "Tier";
     public static final String RETURN_TYPE = "Type";
     public static final String RETURN_MEMBER_NO = "MemberNo";
+    public static final String RETURN_CUSTOMIZE_NO = "CardNumber";  // it is funny, do not modify
     public static final String RETURN_STATUS = "Status";
     public static final String RETURN_VALID_FROM = "ValidFrom";
     public static final String RETURN_EXPIRY_DATE = "ExpiryDate";
@@ -361,6 +362,7 @@ public class Epbmemberson {
             BigDecimal toRate;
             BigDecimal cumPts;
             String memberNo;
+            String customizeNo;
             String type;
             if ("EPB".equals(customerSource)) {
                 type = EMPTY;
@@ -368,6 +370,7 @@ public class Epbmemberson {
                 toRate = BigDecimal.ONE;
                 cumPts = BigDecimal.ZERO;
                 memberNo = customerNumber;
+                customizeNo = EMPTY;
                 // get parameter
                 sql = "SELECT CLASS_ID FROM POS_VIP_MAS WHERE VIP_ID = ? AND (ORG_ID IS NULL OR ORG_ID = ?)";
                 pstmt = conn.prepareStatement(sql);
@@ -443,6 +446,7 @@ public class Epbmemberson {
                         ? BigDecimal.ZERO
                         : new BigDecimal((String) retMap.get(Epbmemberson.RETURN_BALANCE));
                 memberNo = (String) retMap.get(Epbmemberson.RETURN_MEMBER_NO);
+                customizeNo = (String) retMap.get(Epbmemberson.RETURN_CUSTOMIZE_NO);
 //            retMap = getMemberDiscounts(posO2oUrl, posO2oAuth, posO2oAccessToken, memberNo, shopId);
 //            if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
 //                returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
@@ -499,7 +503,7 @@ public class Epbmemberson {
 //    v_vip_id in varchar2,v_vip_name in varchar2,v_class_id in varchar2,v_vip_disc in varchar2,v_cum_pts in varchar2,
 //    v_pts in varchar2,v_money in varchar2,
 //    v_card_no in varchar2,v_birthday
-            CallableStatement stmt = (CallableStatement ) conn.prepareCall("call EP_BISTRO.update_opentable_vip_info(?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            CallableStatement stmt = (CallableStatement ) conn.prepareCall("call EP_BISTRO.update_opentable_vip_info(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
             stmt.registerOutParameter(1, java.sql.Types.VARCHAR);
             stmt.registerOutParameter(2, java.sql.Types.VARCHAR);
             stmt.setString(3, opentableRecKey + EMPTY);
@@ -513,6 +517,7 @@ public class Epbmemberson {
             stmt.setString(11, memberNo);
             stmt.setString(12, dob);
             stmt.setString(13, epbTypeId);
+            stmt.setString(14, customizeNo);
             stmt.execute();
             String strRtn = stmt.getString(1);
             String strMsg = stmt.getString(2);
@@ -810,6 +815,19 @@ public class Epbmemberson {
                                 }
                             }
                         }
+                        
+                        JSONArray cardSummariesArray = dataObject.getJSONArray("CardSummaries");
+                        String customizeNo = null;
+                        if (cardSummariesArray != null && cardSummariesArray.length() > 0) {
+                            int asCount = cardSummariesArray.length();
+                            for (int k = 0; k < asCount; k++) {
+                                JSONObject asDataObject = (JSONObject) cardSummariesArray.get(k);
+                                if (asDataObject != null) {
+                                    customizeNo = asDataObject.getString(RETURN_CUSTOMIZE_NO);
+                                }
+                            }
+                        }
+                        
 //                        String tier = dataObject.getString(RETURN_TIER);  // vip class
                         String type = dataObject.getString(RETURN_TYPE);  // vip class
                         String memberNo = dataObject.getString(RETURN_MEMBER_NO);  // vipId
@@ -827,6 +845,7 @@ public class Epbmemberson {
 //                            returnMap.put(RETURN_TIER, tier);
                             returnMap.put(RETURN_TYPE, type);
                             returnMap.put(RETURN_MEMBER_NO, memberNo);
+                            returnMap.put(RETURN_CUSTOMIZE_NO, customizeNo);
                             returnMap.put(RETURN_STATUS, status);
                             returnMap.put(RETURN_EXPIRY_DATE, expiryDateStr);
                             returnMap.put(RETURN_BALANCE, balance);
