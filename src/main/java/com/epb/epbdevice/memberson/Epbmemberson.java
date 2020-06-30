@@ -440,7 +440,7 @@ public class Epbmemberson {
                     // free mem
                     pstmt.close();
                     rs.close();
-                }
+                }                
 //            System.out.println("classId:" + classId);
                 cumPts = retMap.get(Epbmemberson.RETURN_BALANCE) == null || EMPTY.equals(retMap.get(Epbmemberson.RETURN_BALANCE))
                         ? BigDecimal.ZERO

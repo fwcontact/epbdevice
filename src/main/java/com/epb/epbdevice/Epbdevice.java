@@ -38,6 +38,19 @@ public class Epbdevice {
         return Epbprinter.printFile(conn, recKey, userId);
     }
     
+    /**
+     * Message queue to trigger printer in LAN
+     *
+     * @param printQueueMap  Map<String, Object>
+     * @return Map<String, String> 
+     */
+    public synchronized static Map<String, String> printFile(final Map<String, Object> printQueueMap) {
+        // log version
+        CommonUtility.printVersion();
+        
+        return Epbprinter.printFileMQ(printQueueMap);
+    }
+    
     public synchronized static Map<String, String> testConnectPrinter(final String printPort) {
         Map<String, String> returnMap = new HashMap<String, String>();
         if (printPort != null

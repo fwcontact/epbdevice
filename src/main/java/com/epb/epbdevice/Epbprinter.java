@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -45,6 +46,73 @@ class Epbprinter {
                 returnMap.put(Epbdevice.MSG, (String) printMap.get(MSG));
             }
             List<PrintPool> printPoolList = (List<PrintPool>) printMap.get(PRINT_LIST);
+//            if (printPoolList == null || printPoolList.isEmpty()) {
+//                returnMap.put(Epbdevice.MSG_ID, "nodatafound");
+//                returnMap.put(Epbdevice.MSG, "No printer data generated, Print key is " + recKey);
+//                return returnMap;
+//            }
+//            
+//            FULL_PRINT_POOL_MAPPING.put(recKey, printPoolList);
+//            WAITING_QUEUE.add(recKey);        
+////            HIS_QUEUE.add(recKey);   
+//            
+////            startPrint sell = new startPrint();
+////            Thread thread = new Thread(sell);
+////            thread.start(); 
+//
+//            startPrint();
+//            
+//            returnMap.put(Epbdevice.MSG_ID, Epbdevice.RETURN_OK);
+//            returnMap.put(Epbdevice.MSG, EMPTY);
+//            return returnMap;
+            return printFile(recKey, printPoolList);
+        } catch (Throwable thr) {
+            returnMap.put(Epbdevice.MSG_ID, "unhandle exception");
+            returnMap.put(Epbdevice.MSG, thr.getMessage() + ", Print key is " + recKey);
+            return returnMap;
+        } finally {            
+//            CommonUtility.printLog("print end");
+//            for (String key : HIS_QUEUE) {
+//                CommonUtility.printLog("his key:" + key);
+//            }
+        }
+    }
+    
+    public static Map<String, String> printFileMQ(final Map<String, Object> printQueueMap) {
+        final Map<String, String> returnMap = new HashMap<>();
+        try {
+            if (!OK.equals(printQueueMap.get(MSG_ID))) {
+                returnMap.put(Epbdevice.MSG_ID, (String) printQueueMap.get(MSG_ID));
+                returnMap.put(Epbdevice.MSG, (String) printQueueMap.get(MSG));
+            }
+            List<PrintPool> printPoolList = (List<PrintPool>) printQueueMap.get(PRINT_LIST);
+            if (printPoolList == null || printPoolList.isEmpty()) {
+                returnMap.put(Epbdevice.MSG_ID, "nodatafound");
+                returnMap.put(Epbdevice.MSG, "No printer data generated");
+                return returnMap;
+            }
+            String recKey = System.currentTimeMillis() + "" + new Random().nextInt(100);
+            return printFile(recKey, printPoolList);
+        } catch (Throwable thr) {
+            returnMap.put(Epbdevice.MSG_ID, "unhandle exception");
+            returnMap.put(Epbdevice.MSG, thr.getMessage());
+            return returnMap;
+        } finally {            
+//            CommonUtility.printLog("print end");
+//            for (String key : HIS_QUEUE) {
+//                CommonUtility.printLog("his key:" + key);
+//            }
+        }
+    }
+    
+    
+    //
+    // private
+    //
+    
+    private static Map<String, String> printFile(final String recKey, final List<PrintPool> printPoolList) {
+        final Map<String, String> returnMap = new HashMap<>();
+        try {
             if (printPoolList == null || printPoolList.isEmpty()) {
                 returnMap.put(Epbdevice.MSG_ID, "nodatafound");
                 returnMap.put(Epbdevice.MSG, "No printer data generated, Print key is " + recKey);
@@ -75,12 +143,6 @@ class Epbprinter {
 //            }
         }
     }
-    
-    
-    //
-    // private
-    //
-    
     
 //    private static class startPrint implements Runnable {
 //
