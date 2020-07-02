@@ -118,7 +118,22 @@ class Epbprinter {
                 returnMap.put(Epbdevice.MSG, "No printer data generated, Print key is " + recKey);
                 return returnMap;
             }
-            
+            CommonUtility.printLog("printPoolList size is " + printPoolList.size());
+            System.out.println("printPort, lineNo, orderNo, printCommand, const1, const2, format, length, align, breakFlg, fillBlankFlg, val");
+            for (PrintPool pp : printPoolList) {
+                System.out.println(pp.getPrintPort() + ","
+                        + pp.getLineNo() + ","
+                        + pp.getOrderNo() + ","
+                        + pp.getPrintCommand() + ","
+                        + pp.getConst1() + ","
+                        + pp.getConst2() + ","
+                        + pp.getFormat() + ","
+                        + pp.getLength() + ","
+                        + pp.getAlign() + ","
+                        + pp.getBreakFlg()+ ","
+                        + pp.getFillBlankFlg()+ ","
+                        + pp.getVal());
+            }
             FULL_PRINT_POOL_MAPPING.put(recKey, printPoolList);
             WAITING_QUEUE.add(recKey);        
 //            HIS_QUEUE.add(recKey);   
@@ -308,6 +323,7 @@ class Epbprinter {
             if (FULL_PRINT_POOL_MAPPING.containsKey(recKey)) {
                 printPoolList.addAll(FULL_PRINT_POOL_MAPPING.get(recKey));
             }     
+            System.out.println("printFile printPoolList size:" + printPoolList.size());
             if (printPoolList.isEmpty()) {
                 returnMap.put(Epbdevice.MSG_ID, Epbdevice.RETURN_OK);
                 returnMap.put(Epbdevice.MSG, EMPTY);
@@ -322,6 +338,7 @@ class Epbprinter {
             int size = printPoolList.size();
             for (int index = 0; index < size; index++) {
                 pp = printPoolList.get(index);
+                System.out.println("lineNo:" + pp.getLineNo());
                 if (PRINTER_LINE.compareTo(pp.getLineNo()) != 0) {
                     printerPrintPoolList.add(pp);
                 } else {
@@ -331,6 +348,7 @@ class Epbprinter {
                 if (PRINTER_LINE.compareTo(pp.getLineNo()) == 0 || index == size - 1) {
                     if (!printerPrintPoolList.isEmpty()) {
                         printPort = printerPrintPoolList.get(0).getPrintPort();
+                        System.out.println("printPort:" + printPort);
                         if (printPort != null 
                                 && (printPort.toUpperCase().startsWith(COM) || printPort.toUpperCase().startsWith(LPT) || !Epbnetprinter.checkNetPort(printPort))) { 
                             // do nothing
