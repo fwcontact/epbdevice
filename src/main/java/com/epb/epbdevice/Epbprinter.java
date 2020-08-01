@@ -45,12 +45,18 @@ class Epbprinter {
         final Map<String, String> returnMap = new HashMap<>();
         try {
             LOG.info("printFile:" + recKey);
+            if (recKey == null || recKey.isEmpty()) {
+                returnMap.put(Epbdevice.MSG_ID, OK);
+                returnMap.put(Epbdevice.MSG, "Print key is null, do nothing, return OK");
+                return returnMap;
+            }
 //            CommonUtility.printLog("print start");
             final Map<String, Object> printMap = getPrintPoolList(conn, recKey, userId);
 //            List<PrintPool> printPoolList = getPrintPoolList(conn, recKey, userId);
             if (!OK.equals(printMap.get(MSG_ID))) {
                 returnMap.put(Epbdevice.MSG_ID, (String) printMap.get(MSG_ID));
                 returnMap.put(Epbdevice.MSG, (String) printMap.get(MSG));
+                return returnMap;
             }
             List<PrintPool> printPoolList = (List<PrintPool>) printMap.get(PRINT_LIST);
             LOG.info("printPoolList size:" + (printPoolList == null ? "0" : printPoolList.size()));
