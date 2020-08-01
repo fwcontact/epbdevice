@@ -14,8 +14,11 @@ import java.net.Socket;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class Epbnetprinter {
+    private static final Log LOG = LogFactory.getLog(Epbnetprinter.class);
     private static final String EMPTY = "";
 //    private static final String COM = "COM";
 //    private static final String LPT = "LPT";
@@ -52,7 +55,8 @@ public class Epbnetprinter {
             final boolean isIp = mat.matches();
             return isIp;
         } catch (Throwable throwable) {
-            System.out.println("com.epb.epbdevice.Epbnetprinter.checkNetPort()" + ":" + throwable.getMessage());
+//            System.out.println("com.epb.epbdevice.Epbnetprinter.checkNetPort()" + ":" + throwable.getMessage());
+            LOG.error("error exec checkNetPort", throwable);
             return false;
         }
     }
@@ -74,8 +78,10 @@ public class Epbnetprinter {
             } else {
                 return "Failed to open net printer port" + "->" + ipAddr;
             }
-        } catch (Throwable thr) {
-            return "Failed to open net printer port" + "->" + thr.getMessage();
+        } catch (Throwable ex) {
+//            ex.printStackTrace();
+            LOG.error("error exec doTestConnectPrinter", ex);
+            return "Failed to open net printer port" + "->" + ex.getMessage();
         }
     }
     
@@ -89,8 +95,10 @@ public class Epbnetprinter {
             } else {
                 return "Failed to open net printer port" + "->" + ipAddr;
             }
-        } catch (Throwable thr) {
-            return "Failed to print receipt" + "->" + thr.getMessage();
+        } catch (Throwable ex) {
+//            ex.printStackTrace();
+            LOG.error("error exec doPrintPosReceipt", ex);
+            return "Failed to print receipt" + "->" + ex.getMessage();
         }
     }
     
@@ -113,7 +121,7 @@ public class Epbnetprinter {
                 final String defaultEncoding = System.getProperty("file.encoding");
 //                socketWriter = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), encoding), true);// 创建输入输出数据流
 //                socketWriter = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), "GBK"), true);
-                System.out.println("encoding:" + (encoding == null || encoding.length() == 0 ? defaultEncoding : encoding));
+//                System.out.println("encoding:" + (encoding == null || encoding.length() == 0 ? defaultEncoding : encoding));
                 socketWriter = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), encoding == null || encoding.length() == 0 ? defaultEncoding : encoding), true);// 创建输入输出数据流
 //                socketWriter.println("defaultEncoding:" + defaultEncoding);// 打印完毕自动走纸
 //                socketWriter.flush();
@@ -127,27 +135,35 @@ public class Epbnetprinter {
                 try {
                     socketWriter.close();
                     socketWriter = null;
-                } catch (Throwable thr) {
-                    System.out.println("com.epb.epbdevice.Epbnetprinter.openEpbNetPrinter()" + ":" + thr.getMessage());
+                } catch (Throwable ex2) {
+//                    ex2.printStackTrace();
+//                    System.out.println("com.epb.epbdevice.Epbnetprinter.openEpbNetPrinter()" + ":" + ex2.getMessage());
+                    LOG.error("error exec doOpenEpbNetPrinter", ex2);
                 }
             }
             if (bos != null) {
                 try {
                     bos.close();
                     bos = null;
-                } catch (Throwable thr) {
-                    System.out.println("com.epb.epbdevice.Epbnetprinter2.openEpbNetPrinter()" + ":" + thr.getMessage());
+                } catch (IOException ex2) {
+//                    ex2.printStackTrace();
+//                    System.out.println("com.epb.epbdevice.Epbnetprinter2.openEpbNetPrinter()" + ":" + thr.getMessage());
+                    LOG.error("error exec doOpenEpbNetPrinter", ex2);
                 }
             }
             if (client != null) {
                 try {
                     client.close();
                     client = null;
-                } catch (IOException ioe) {
-                    System.out.println("com.epb.epbdevice.Epbnetprinter.openEpbNetPrinter()" + ":" + ioe.getMessage());
+                } catch (IOException ex2) {
+//                    ex2.printStackTrace();
+//                    System.out.println("com.epb.epbdevice.Epbnetprinter.openEpbNetPrinter()" + ":" + ioe.getMessage());
+                    LOG.error("error exec doOpenEpbNetPrinter", ex2);
                 }
             }
-            System.out.println("com.epb.epbdevice.Epbnetprinter.openEpbNetPrinter()" + ":" + ex.getMessage());
+//            System.out.println("com.epb.epbdevice.Epbnetprinter.openEpbNetPrinter()" + ":" + ex.getMessage());
+//            ex.printStackTrace();
+            LOG.error("error exec doOpenEpbNetPrinter", ex);
             return false;
         }
     }
@@ -299,7 +315,9 @@ public class Epbnetprinter {
                 skipThisLine = false;
             }
         } catch (Throwable ex) {
-            System.out.println("Print receipt head Failed!" + ex);
+//            ex.printStackTrace();
+//            System.out.println("Print receipt head Failed!" + ex);
+            LOG.error("error exec doPrintPosReceipt", ex);
         }
     }
 
@@ -313,7 +331,9 @@ public class Epbnetprinter {
             socketWriter.println((lineText));// 打印完毕自动走纸
             socketWriter.flush();
         } catch (Throwable ex) {
-            System.out.println("com.epb.epbdevice.Epbnetprinter.printText()" + ":" + ex.getMessage());
+//            System.out.println("com.epb.epbdevice.Epbnetprinter.printText()" + ":" + ex.getMessage());
+//            ex.printStackTrace();
+            LOG.error("error exec doPrintText", ex);
         }
     }
     
@@ -354,19 +374,25 @@ public class Epbnetprinter {
                 try {
                     socketWriter.close();
                     socketWriter = null;
-                } catch (Throwable thr) {
-                    System.out.println("com.epb.epbdevice.Epbnetprinter.openEpbNetPrinter()" + ":" + thr.getMessage());
+                } catch (Throwable ex2) {
+//                    ex2.printStackTrace();
+//                    System.out.println("com.epb.epbdevice.Epbnetprinter.openEpbNetPrinter()" + ":" + thr.getMessage());
+                    LOG.error("error exec doCloseNetPrinter", ex2);
                 }
             }
             if (client != null) {
                 try {
                     client.close();
                     client = null;
-                } catch (IOException ioe) {
-                    System.out.println("com.epb.epbdevice.Epbnetprinter.closePrinter()" + ":" + ioe.getMessage());
+                } catch (IOException ex2) {
+//                    ex2.printStackTrace();
+//                    System.out.println("com.epb.epbdevice.Epbnetprinter.closePrinter()" + ":" + ioe.getMessage());
+                    LOG.error("error exec doCloseNetPrinter", ex2);
                 }
             }
-            System.out.println("com.epb.epbdevice.Epbnetprinter.closePrinter()" + ":" + ex.getMessage());
+//            System.out.println("com.epb.epbdevice.Epbnetprinter.closePrinter()" + ":" + ex.getMessage());
+//            ex.printStackTrace();
+            LOG.error("error exec doCloseNetPrinter", ex);
         }
     }
 }
