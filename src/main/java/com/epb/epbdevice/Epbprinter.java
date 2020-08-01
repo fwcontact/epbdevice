@@ -44,7 +44,7 @@ class Epbprinter {
     public static Map<String, String> printFile(final Connection conn, final String recKey, final String userId) {
         final Map<String, String> returnMap = new HashMap<>();
         try {
-            LOG.debug("local call printFile:" + recKey);
+            LOG.info("printFile:" + recKey);
 //            CommonUtility.printLog("print start");
             final Map<String, Object> printMap = getPrintPoolList(conn, recKey, userId);
 //            List<PrintPool> printPoolList = getPrintPoolList(conn, recKey, userId);
@@ -53,7 +53,7 @@ class Epbprinter {
                 returnMap.put(Epbdevice.MSG, (String) printMap.get(MSG));
             }
             List<PrintPool> printPoolList = (List<PrintPool>) printMap.get(PRINT_LIST);
-            LOG.debug("printPoolList size:" + printPoolList.size());
+            LOG.info("printPoolList size:" + (printPoolList == null ? "0" : printPoolList.size()));
 //            if (printPoolList == null || printPoolList.isEmpty()) {
 //                returnMap.put(Epbdevice.MSG_ID, "nodatafound");
 //                returnMap.put(Epbdevice.MSG, "No printer data generated, Print key is " + recKey);
@@ -91,6 +91,7 @@ class Epbprinter {
     public static Map<String, String> printFileMQ(final Map<String, Object> printQueueMap) {
         final Map<String, String> returnMap = new HashMap<>();
         try {
+            LOG.info("call printFileMQ");
             if (!OK.equals(printQueueMap.get(MSG_ID))) {
                 returnMap.put(Epbdevice.MSG_ID, (String) printQueueMap.get(MSG_ID));
                 returnMap.put(Epbdevice.MSG, (String) printQueueMap.get(MSG));
@@ -139,10 +140,9 @@ class Epbprinter {
                 return returnMap;
             }
 //            CommonUtility.printLog("printPoolList size is " + printPoolList.size());
-            System.out.println(
-                    "printPort, lineNo, orderNo, printCommand, const1, const2, format, length, align, breakFlg, fillBlankFlg, val");
+            LOG.info("printPort, lineNo, orderNo, printCommand, const1, const2, format, length, align, breakFlg, fillBlankFlg, val");
             for (PrintPool pp : printPoolList) {
-                System.out.println(pp.getPrintPort() + ","
+                LOG.info(pp.getPrintPort() + ","
                         + pp.getLineNo() + ","
                         + pp.getOrderNo() + ","
                         + pp.getPrintCommand() + ","
@@ -279,12 +279,24 @@ class Epbprinter {
                             printPool.setVal((String) value);
                         }
                     }
+                    LOG.info("printPool:" + printPool.getPrintPort() + ","
+                            + printPool.getLineNo()+ "," 
+                            + printPool.getOrderNo()+ "," 
+                            + printPool.getPrintCommand()+ "," 
+                            + printPool.getConst1()+ "," 
+                            + printPool.getConst2()+ "," 
+                            + printPool.getFormat()+ "," 
+                            + printPool.getLength()+ "," 
+                            + printPool.getAlign()+ "," 
+                            + printPool.getBreakFlg()+ "," 
+                            + printPool.getFillBlankFlg()+ "," 
+                            + printPool.getVal());
                     list.add(printPool);
                 }
                 returnMap.put(MSG_ID, OK);
                 returnMap.put(MSG, EMPTY);
                 returnMap.put(PRINT_LIST, list);
-                LOG.debug("list size:" + list.size());
+                LOG.info("list size:" + list.size());
                 return returnMap;
             } else {
                 returnMap.put(MSG_ID, strRtn);
