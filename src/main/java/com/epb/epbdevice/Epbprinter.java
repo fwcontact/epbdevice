@@ -146,21 +146,21 @@ class Epbprinter {
                 return returnMap;
             }
 //            CommonUtility.printLog("printPoolList size is " + printPoolList.size());
-            LOG.info("printPort, lineNo, orderNo, printCommand, const1, const2, format, length, align, breakFlg, fillBlankFlg, val");
-            for (PrintPool pp : printPoolList) {
-                LOG.info(pp.getPrintPort() + ","
-                        + pp.getLineNo() + ","
-                        + pp.getOrderNo() + ","
-                        + pp.getPrintCommand() + ","
-                        + pp.getConst1() + ","
-                        + pp.getConst2() + ","
-                        + pp.getFormat() + ","
-                        + pp.getLength() + ","
-                        + pp.getAlign() + ","
-                        + pp.getBreakFlg() + ","
-                        + pp.getFillBlankFlg() + ","
-                        + pp.getVal());
-            }
+//            LOG.info("printPort, lineNo, orderNo, printCommand, const1, const2, format, length, align, breakFlg, fillBlankFlg, val");
+//            for (PrintPool pp : printPoolList) {
+//                LOG.info(pp.getPrintPort() + ","
+//                        + pp.getLineNo() + ","
+//                        + pp.getOrderNo() + ","
+//                        + pp.getPrintCommand() + ","
+//                        + pp.getConst1() + ","
+//                        + pp.getConst2() + ","
+//                        + pp.getFormat() + ","
+//                        + pp.getLength() + ","
+//                        + pp.getAlign() + ","
+//                        + pp.getBreakFlg() + ","
+//                        + pp.getFillBlankFlg() + ","
+//                        + pp.getVal());
+//            }
             FULL_PRINT_POOL_MAPPING.put(recKey, printPoolList);
             WAITING_QUEUE.add(recKey);
 //            HIS_QUEUE.add(recKey);   
@@ -285,18 +285,18 @@ class Epbprinter {
                             printPool.setVal((String) value);
                         }
                     }
-                    LOG.info("printPool:" + printPool.getPrintPort() + ","
-                            + printPool.getLineNo()+ "," 
-                            + printPool.getOrderNo()+ "," 
-                            + printPool.getPrintCommand()+ "," 
-                            + printPool.getConst1()+ "," 
-                            + printPool.getConst2()+ "," 
-                            + printPool.getFormat()+ "," 
-                            + printPool.getLength()+ "," 
-                            + printPool.getAlign()+ "," 
-                            + printPool.getBreakFlg()+ "," 
-                            + printPool.getFillBlankFlg()+ "," 
-                            + printPool.getVal());
+//                    LOG.info("printPool:" + printPool.getPrintPort() + ","
+//                            + printPool.getLineNo()+ "," 
+//                            + printPool.getOrderNo()+ "," 
+//                            + printPool.getPrintCommand()+ "," 
+//                            + printPool.getConst1()+ "," 
+//                            + printPool.getConst2()+ "," 
+//                            + printPool.getFormat()+ "," 
+//                            + printPool.getLength()+ "," 
+//                            + printPool.getAlign()+ "," 
+//                            + printPool.getBreakFlg()+ "," 
+//                            + printPool.getFillBlankFlg()+ "," 
+//                            + printPool.getVal());
                     list.add(printPool);
                 }
                 returnMap.put(MSG_ID, OK);
