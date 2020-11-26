@@ -6,8 +6,11 @@ package com.epb.epbdevice.utl;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 //import org.apache.commons.logging.Log;
 //import org.apache.commons.logging.LogFactory;
 
@@ -17,7 +20,7 @@ import java.io.PrintWriter;
  */
 public class QrCode2 {
     
-//    private static final Log LOG = LogFactory.getLog(QrCode2.class);
+    private static final Log LOG = LogFactory.getLog(QrCode2.class);
     
     public static synchronized void printQrCode(final PrintWriter socketWriter, final String qrdata) {
 //        String qrdata = "https://redcross.give.asia/campaign/como-lifestyle-for-australian-bushfire-emergency-response#/";
@@ -129,9 +132,8 @@ public class QrCode2 {
             bus.write(qrdata.getBytes());
             bus.write(printQR);
             bus.flush();
-        } catch (Throwable thrl) {
-//            LOG.error("printQrCode Failed", thrl);
-            System.out.println("com.epb.epbdevice.utl.QrCode2.printQrCode():" + thrl.getMessage());
+        } catch (IOException thrl) {
+            LOG.error("printQrCode Failed", thrl);
         }
     }
     
@@ -186,9 +188,8 @@ public class QrCode2 {
             bus.write(qrdata.getBytes());
             bus.write(printQR);
             bus.flush();
-        } catch (Throwable thrl) {
-//            LOG.error("printQrCode Failed", thrl);
-            System.out.println("com.epb.epbdevice.utl.QrCode2.printQrCode():" + thrl.getMessage());
+        } catch (IOException thrl) {
+            LOG.error("printQrCode Failed", thrl);
         }
     }
     
@@ -251,7 +252,7 @@ public class QrCode2 {
             bos.write(printQR);
             bos.write(("\r\n").getBytes());
             bos.flush();
-        } catch (Throwable thrl) {
+        } catch (IOException thrl) {
             System.out.println(thrl);
         }
     }

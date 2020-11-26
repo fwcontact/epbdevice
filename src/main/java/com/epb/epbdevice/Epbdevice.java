@@ -1,11 +1,18 @@
 package com.epb.epbdevice;
 
+import com.epb.epbdevice.printer.Epbprinter;
+import com.epb.epbdevice.printer.Epbnetprinter;
+import com.epb.epbdevice.printer.Epbcomprinter;
 import com.epb.epbdevice.utl.CommonUtility;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class Epbdevice {
     public static final String MSG_ID = "msgId";
@@ -16,6 +23,7 @@ public class Epbdevice {
     private static final String COM = "COM";
     private static final String LPT = "LPT";
     private static final String EMPTY = "";
+    private static final Log LOG = LogFactory.getLog(Epbdevice.class);
 //    private static final Log LOG = LogFactory.getLog(Epbescpos.class);
     
     public synchronized static void initBat(final String intiFilePathName) {  //D:\\EPBrowser\\EPB\\init.bat
@@ -27,7 +35,7 @@ public class Epbdevice {
                 new Epbdevice().runAppNoWait("sh " + intiFilePathName); // /EPBrowser/EPB/init.command
             }
         } catch (Exception ex) {
-            System.out.println("Initial print parameter error!" + ex.getMessage());
+            LOG.error("Initial print parameter error!" , ex);
         }
     }
     
@@ -52,7 +60,7 @@ public class Epbdevice {
     }
     
     public synchronized static Map<String, String> testConnectPrinter(final String printPort) {
-        Map<String, String> returnMap = new HashMap<String, String>();
+        Map<String, String> returnMap = new HashMap<>();
         if (printPort != null
                 && (printPort.toUpperCase().startsWith(COM) || printPort.toUpperCase().startsWith(LPT) || !Epbnetprinter.checkNetPort(printPort))) {
             String returnMsg = Epbcomprinter.testConnectPrinter(printPort);
@@ -101,13 +109,12 @@ public class Epbdevice {
     }
 
     private void runAppNoWait(String sCommand) throws Exception {
-        Process child = null;
         try {
-            child = Runtime.getRuntime().exec(sCommand);
+            Process child = Runtime.getRuntime().exec(sCommand);
             InputStream in = child.getInputStream();
             in.close();
-        } catch (Exception ex) {
-            System.out.println("runAppNoWait error!" + ex.getMessage());
+        } catch (IOException ex) {
+            LOG.error("runAppNoWait error!", ex);
         } finally {
         }
     }
@@ -153,7 +160,7 @@ public class Epbdevice {
                 // error
                 System.out.println(returnMap.get("msg"));
             }
-        } catch (Throwable thr) {
+        } catch (ClassNotFoundException | SQLException thr) {
             System.out.println("thr:" + thr.getMessage());
         }
     }

@@ -189,7 +189,7 @@ public class Test {
 //    }
 //
     
-        public static List<PrintPool> getTestPrintPool(BigDecimal recKey) {
+    public static List<PrintPool> getTestPrintPool(BigDecimal recKey) {
         final List<PrintPool> list = new ArrayList<PrintPool>();
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -273,12 +273,12 @@ public class Test {
         }
     }
         
-        public static void test() {
+    public static void test() {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         Connection conn = null;
         try {
-            String driver = "oracle.jdbc.driver.OracleDriver"; 
+            String driver = "oracle.jdbc.driver.OracleDriver";
 //            String url = "jdbc:oracle:thin:@192.168.1.11:1521:orcl";
             String url = "jdbc:oracle:thin:@localhost:1523:XE";
             String user = "EPBSH";
@@ -292,45 +292,38 @@ public class Test {
 
             System.out.println("conection is ok");
 
-             StringBuilder sb = new StringBuilder();
-                sb.append("SELECT NAME FROM STKMAS WHERE STK_ID = '");
-                sb.append("STK024");
-                sb.append("'ORDER BY STK_ID ASC");
-                pstmt = conn.prepareStatement(sb.toString());
-                rs = pstmt.executeQuery();
-                ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
-                int columnCount = metaData.getColumnCount();
-                while (rs.next()) {
-                    for (int i = 1; i <= columnCount; i++) {
-                        String columnName = metaData.getColumnLabel(i);
-                        Object value = rs.getObject(columnName);
-                        // PRINT_PORT, LINE_NO, ORDER_NO, PRINT_COMMAND, CONST1, CONST2, FORMAT, LENGTH, ALIGN, BREAK_FLG, FILL_BLANK_FLG, VAL
-                        if ("NAME".equals(columnName.toUpperCase())) {
-                            //System.out.println((String) value);
-                            System.out.println(rs.getString(columnName));
-                        }
+            StringBuilder sb = new StringBuilder();
+            sb.append("SELECT NAME FROM STKMAS WHERE STK_ID = '");
+            sb.append("STK024");
+            sb.append("'ORDER BY STK_ID ASC");
+            pstmt = conn.prepareStatement(sb.toString());
+            rs = pstmt.executeQuery();
+            ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            while (rs.next()) {
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = metaData.getColumnLabel(i);
+                    Object value = rs.getObject(columnName);
+                    // PRINT_PORT, LINE_NO, ORDER_NO, PRINT_COMMAND, CONST1, CONST2, FORMAT, LENGTH, ALIGN, BREAK_FLG, FILL_BLANK_FLG, VAL
+                    if ("NAME".equals(columnName.toUpperCase())) {
+                        //System.out.println((String) value);
+                        System.out.println(rs.getString(columnName));
                     }
                 }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             if (conn != null) {
                 try {
-                conn.close();
+                    conn.close();
                 } catch (Throwable thr) {
-                    
                 }
             }
         }
     }
     
     public static void main(String args[]) {
-        if (1 == 1) {
-//            String encoding = System.getProperty("file.encoding");  
-//            System.out.println("----encoding:" + encoding);
-            Epbdevice.printFile(null, null, null);
-            return;
-        }
 //        final List<PrintPool> list = getTestPrintPool();
 //        if (list == null || list.isEmpty()) {
 //            return;

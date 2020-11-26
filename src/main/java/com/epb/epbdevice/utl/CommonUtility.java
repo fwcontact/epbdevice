@@ -9,6 +9,8 @@ import com.epb.epbdevice.Epbdevice;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Properties;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  *
@@ -16,6 +18,7 @@ import java.util.Properties;
  */
 public class CommonUtility {
     
+    private static final Log LOG = LogFactory.getLog(CommonUtility.class);
     private static final java.text.SimpleDateFormat DATETIMEFORMAT = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final String SPACE = " ";
     
@@ -34,6 +37,6 @@ public class CommonUtility {
         final String displayMessage = DATETIMEFORMAT.format(new Date()) 
                 + SPACE + SPACE + SPACE + SPACE + SPACE + SPACE + SPACE + SPACE 
                 + message;
-        System.out.println(displayMessage);
+        LOG.info(displayMessage);
     }
 }

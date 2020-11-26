@@ -20,6 +20,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -69,6 +71,7 @@ public class Epbmemberson {
 //    private static final String RETURN_EPB_VIP_CLASS = "classId";
 //    private static final String RETURN_EPB_VIP_DISC = "vipDisc";
     
+    private static final Log LOG = LogFactory.getLog(Epbmemberson.class);
 //    private static final SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 ////    private static final SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 //    private static final SimpleDateFormat DATEFORMAT2 = new SimpleDateFormat("yyyy-MM-dd 'T'HH:mm:ssZ");
@@ -193,9 +196,9 @@ public class Epbmemberson {
             returnMap.put(RESULT, (String) retMap.get(MSG));          
             
             return returnMap;
-        } catch (SQLException thr) {
-            String msg = "error getVip:" + thr.getMessage();
-            System.out.println(msg);
+        } catch (SQLException ex) {
+            String msg = "error getVip:" + ex.getMessage();
+            LOG.error(msg, ex);
             returnMap.put(MSG_ID, FAIL);
             returnMap.put(MSG, msg);
             return returnMap;
@@ -207,9 +210,9 @@ public class Epbmemberson {
                 if (rs != null) {
                     rs.close();
                 }
-            } catch (SQLException thr) {
+            } catch (SQLException ex) {
                 // DO NOTHING
-                System.out.println("error getVip 2:" + thr.getMessage());
+                LOG.error("error getVip 2", ex);
             }
         }
     }
@@ -531,7 +534,7 @@ public class Epbmemberson {
             return returnMap;
         } catch (SQLException thr) {
             String msg = "error updateVipSummary:" + thr.getMessage();
-            System.out.println(msg);
+            LOG.error(msg, thr);
             returnMap.put(MSG_ID, FAIL);
             returnMap.put(MSG, msg);
             return returnMap;
@@ -545,7 +548,7 @@ public class Epbmemberson {
                 }
             } catch (SQLException thr) {
                 // DO NOTHING
-                System.out.println("error updateVipSummary 2:" + thr.getMessage());
+                LOG.error("error updateVipSummary 2", thr);
             }
         }
     }
@@ -558,7 +561,7 @@ public class Epbmemberson {
         try {
             return AES.Encrypt(userName) + COMMA + AES.Encrypt(userPassword);
         } catch (Exception thr) {
-            System.out.println("error getAuth:" + thr.getMessage());
+            LOG.error("error getAuth", thr);
             return null;
         }
     }
@@ -678,7 +681,7 @@ public class Epbmemberson {
                 rtnDataArray.put(dataObject);
             }
             
-            System.out.println("rtnDataArray:" +rtnDataArray.toString());
+            LOG.info("rtnDataArray:" +rtnDataArray.toString());
             
             if (rtnDataArray.length() > 0) {
                 returnMap.put(MSG_ID, RETURN_OK);
@@ -765,6 +768,7 @@ public class Epbmemberson {
             returnMap.put(MSG_ID, FAIL);
             returnMap.put(MSG, "error searchVip:" + thr.getMessage());
 //            System.out.println("error searchVip:" + thr.getMessage());
+            LOG.error("error searchVip", thr);
             return returnMap;
         }
     }
@@ -833,10 +837,7 @@ public class Epbmemberson {
                         String memberNo = dataObject.getString(RETURN_MEMBER_NO);  // vipId
                         String status = dataObject.getString(RETURN_STATUS);  // vip class
                         String expiryDateStr = dataObject.getString(RETURN_EXPIRY_DATE);  // ExpiryDate
-                        System.out.println("type:" + type);
-                        System.out.println("memberNo:" + memberNo);
-                        System.out.println("status:" + status);
-                        System.out.println("expiryDateStr:" + expiryDateStr);
+                        LOG.info("type:" + type + ", memberNo:" + memberNo + ",status:" + status + ",expiryDateStr:" + expiryDateStr);
                     
                         final Date expiryDate = DATEFORMAT3.parse(expiryDateStr);
                         if (ACTIVE.equals(status) && 
@@ -891,6 +892,7 @@ public class Epbmemberson {
             returnMap.put(MSG_ID, FAIL);
             returnMap.put(MSG, "error getVipSummary:" + thr.getMessage());
 //            System.out.println("error getVipSummary:" + thr.getMessage());
+            LOG.error("error getVipSummary", thr);
             return returnMap;
         }
     }    
@@ -912,8 +914,7 @@ public class Epbmemberson {
                 returnMap.put(MSG, callMap.get(MSG));
             }     
             
-            System.out.println("msgId:" + returnMap.get(MSG_ID));
-            System.out.println("msg:" + returnMap.get(MSG));
+            LOG.info("msgId:" + returnMap.get(MSG_ID) + ",msg:" + returnMap.get(MSG));
 //            HttpUtil.callGetRequest(callHttpUrl, callAuth, token);
             
             JSONArray dataArray = new JSONArray(callMap.get(MSG));
@@ -927,8 +928,7 @@ public class Epbmemberson {
                             double fromRate = dataObject.getDouble(RETURN_FROM_RATE);
                             double toRate = dataObject.getDouble(RETURN_TO_RATE);
 //                            BigDecimal toRateB = new BigDecimal(fromRate/toRate);
-                            System.out.println("toRateB:" + toRate);
-                            System.out.println("fromRateB:" + fromRate);
+                            LOG.info("toRateB:" + toRate + ",fromRateB:" + fromRate);
                             returnMap.put(RETURN_FROM_RATE, new BigDecimal(fromRate));  
                             returnMap.put(RETURN_TO_RATE, new BigDecimal(toRate));                           
                             break;
@@ -942,6 +942,7 @@ public class Epbmemberson {
             returnMap.put(MSG_ID, FAIL);
             returnMap.put(MSG, "error getRedeemPointsConversionRate:" + thr.getMessage());
 //            System.out.println("error getRedeemPointsConversionRate:" + thr.getMessage());
+            LOG.error("error getRedeemPointsConversionRate", thr);
             return returnMap;
         }
     }
@@ -1007,8 +1008,7 @@ public class Epbmemberson {
                 returnMap.put(MSG, callMap.get(MSG));
             }     
             
-            System.out.println("msgId:" + returnMap.get(MSG_ID));
-            System.out.println("msg:" + returnMap.get(MSG));
+            LOG.info("msgId:" + returnMap.get(MSG_ID) + ",msg:" + returnMap.get(MSG));
 //            HttpUtil.callGetRequest(callHttpUrl, callAuth, token);
             
             JSONArray dataArray = new JSONArray(callMap.get(MSG));
@@ -1039,6 +1039,7 @@ public class Epbmemberson {
             returnMap.put(MSG_ID, FAIL);
             returnMap.put(MSG, "error redeemPoints:" + thr.getMessage());
 //            System.out.println("error redeemPoints:" + thr.getMessage());
+            LOG.error("error redeemPoints", thr);
             return returnMap;
         }
     }
@@ -1145,6 +1146,7 @@ public class Epbmemberson {
 
             return returnMapList;
         } catch (SQLException thr) {
+            LOG.error(thr);
             // DO NOTHING
             return returnMapList;
         } finally {
@@ -1155,8 +1157,9 @@ public class Epbmemberson {
                 if (rs != null) {
                     rs.close();
                 }
-            } catch (Throwable thrl) {
+            } catch (Throwable thr) {
                 // do nothing
+                LOG.error(thr);
             }
         }
     }

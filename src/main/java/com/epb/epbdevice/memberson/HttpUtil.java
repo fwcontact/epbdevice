@@ -5,12 +5,15 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class HttpUtil {
     
     public static final String POST_METHOD = "POST";
     public static final String GET_METHOD = "GET";
 
+    private static final Log LOG = LogFactory.getLog(HttpUtil.class);
     private static final int MS_TIMEOUT = 10000;
     private static final String UTF8 = "UTF-8";
     private static final String TIMEOUT = "TIMEOUT";
@@ -20,7 +23,7 @@ public class HttpUtil {
     public static Map<String, String> callHttpMethod(final String callUrl, final String callAuth, final String token, final String httpMethod, final String requestDataJson) {
         final Map<String, String> returnMapping = new HashMap<String, String>();
         try {
-            System.out.println("callUrl:" + callUrl);
+            LOG.info("callUrl:" + callUrl);
             URL url = new URL(callUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setDoOutput(true);
@@ -39,7 +42,7 @@ public class HttpUtil {
             connection.connect();
 
             if (requestDataJson != null && requestDataJson.length() != 0) {
-                System.out.println("requestDataJson:" + requestDataJson);
+                LOG.info("requestDataJson:" + requestDataJson);
                 OutputStream out = connection.getOutputStream();
                 out.write(requestDataJson.getBytes(UTF8));
                 out.flush();
@@ -58,7 +61,7 @@ public class HttpUtil {
                     sb.append(lines);
                 }
                 String jsonReturn = sb.toString();
-                System.out.println("msg:" + sb);
+                LOG.info("msg:" + sb);
                 reader.close();
                 // 断开连接
                 connection.disconnect();
@@ -77,7 +80,7 @@ public class HttpUtil {
                     }
                 }
                 in.close();
-                System.out.println("Network Error,ResponseCode=" + connection.getResponseCode() + " msg=" + msg);
+                LOG.info("Network Error,ResponseCode=" + connection.getResponseCode() + " msg=" + msg);
                 returnMapping.put(Epbmemberson.MSG_ID, Epbmemberson.FAIL);
                 returnMapping.put(Epbmemberson.MSG, "Network Error,ResponseCode=" + connection.getResponseCode() + " msg=" + msg);
                 return returnMapping;
@@ -85,22 +88,22 @@ public class HttpUtil {
         } catch (java.net.SocketTimeoutException ex) {
             returnMapping.put(Epbmemberson.MSG_ID, TIMEOUT);
             returnMapping.put(Epbmemberson.MSG, "Timeout");
-            System.out.println("----ex:" + ex.toString());
+            LOG.error(ex);
             return returnMapping;
         } catch (java.net.UnknownHostException ex) {
             returnMapping.put(Epbmemberson.MSG_ID, TIMEOUT);
             returnMapping.put(Epbmemberson.MSG, "unkowned");
-            System.out.println("----ex:" + ex.toString());
+            LOG.error(ex);
             return returnMapping;
         } catch (java.net.SocketException ex) {
             returnMapping.put(Epbmemberson.MSG_ID, TIMEOUT);
             returnMapping.put(Epbmemberson.MSG, "can not connect");
-            System.out.println("----ex:" + ex.toString());
+            LOG.error(ex);
             return returnMapping;
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             returnMapping.put(Epbmemberson.MSG_ID, Epbmemberson.FAIL);
             returnMapping.put(Epbmemberson.MSG, ex.toString());
-            System.out.println("----ex:" + ex.toString());
+            LOG.error(ex);
             return returnMapping;
         }
     }
@@ -111,7 +114,7 @@ public class HttpUtil {
             // 得到请求报文的二进制数据
             //byte[] data = strData.getBytes("UTF-8"); //"UTF-8"
 //        java.net.URL url = new java.net.URL(strUrl);
-            System.out.println("callUrl:" + callUrl);
+            LOG.info("callUrl:" + callUrl);
 //        java.net.URL url = new java.net.URL("https://c21sguat.memgate.com/api/profile/01463571");
             java.net.URL url = new java.net.URL(callUrl);
             //openConnection() 返回一个 URLConnection 对象，它表示到 URL 所引用的远程对象的连接
@@ -164,7 +167,7 @@ public class HttpUtil {
 //            //return "Network Error,ResponseCode=" + conn.getResponseCode();
 //        }
                 conn.disconnect();// 断开连接
-                System.out.println("msg:" + msg);
+                LOG.info("msg:" + msg);
                 returnMapping.put(Epbmemberson.MSG_ID, Epbmemberson.RETURN_OK);
                 returnMapping.put(Epbmemberson.MSG, msg);
                 return returnMapping;
@@ -179,7 +182,7 @@ public class HttpUtil {
                     }
                 }
                 in.close();
-                System.out.println("Network Error,ResponseCode=" + conn.getResponseCode() + " msg=" + msg);
+                LOG.info("Network Error,ResponseCode=" + conn.getResponseCode() + " msg=" + msg);
                 returnMapping.put(Epbmemberson.MSG_ID, Epbmemberson.FAIL);
                 returnMapping.put(Epbmemberson.MSG, "Network Error,ResponseCode=" + conn.getResponseCode() + " msg=" + msg);
                 return returnMapping;
@@ -187,22 +190,22 @@ public class HttpUtil {
         } catch (java.net.SocketTimeoutException ex) {
             returnMapping.put(Epbmemberson.MSG_ID, TIMEOUT);
             returnMapping.put(Epbmemberson.MSG, "Timeout");
-            System.out.println("----ex:" + ex.toString());
+            LOG.error(ex);
             return returnMapping;
         } catch (java.net.UnknownHostException ex) {
             returnMapping.put(Epbmemberson.MSG_ID, TIMEOUT);
             returnMapping.put(Epbmemberson.MSG, "unkowned");
-            System.out.println("----ex:" + ex.toString());
+            LOG.error(ex);
             return returnMapping;
         } catch (java.net.SocketException ex) {
             returnMapping.put(Epbmemberson.MSG_ID, TIMEOUT);
             returnMapping.put(Epbmemberson.MSG, "can not connect");
-            System.out.println("----ex:" + ex.toString());
+            LOG.error(ex);
             return returnMapping;
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             returnMapping.put(Epbmemberson.MSG_ID, Epbmemberson.FAIL);
             returnMapping.put(Epbmemberson.MSG, ex.toString());
-            System.out.println("----ex:" + ex.toString());
+            LOG.error(ex);
             return returnMapping;
         }
     }

@@ -676,7 +676,7 @@ public class EpbzjianApi {
             String digest = sb.toString();
             return digest;
         } catch (UnsupportedEncodingException | NoSuchAlgorithmException ex) {
-            System.out.println(ex.toString());
+            LOG.error(ex);
             return EMPTY;
         }
     }
@@ -686,7 +686,7 @@ public class EpbzjianApi {
 //        java.text.SimpleDateFormat format = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         dCur.getTime();
         String timestamp = DATETIME_FORMAT.format(dCur);
-        System.out.println("timestamp=" + timestamp);
+        LOG.info("timestamp=" + timestamp);
         return timestamp;
     }
 

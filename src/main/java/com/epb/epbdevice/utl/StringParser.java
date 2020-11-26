@@ -1,9 +1,13 @@
 package com.epb.epbdevice.utl;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class StringParser {
 
+    private static final Log LOG = LogFactory.getLog(StringParser.class);
     private static final String EMPTY = "";
     private static final String COMMA = ",";
     private static final String YES = "Y";
@@ -166,7 +170,7 @@ public class StringParser {
         } catch (Throwable ex) {
 //            EpbExceptionMessenger.showExceptionMessage(ex);
 //            EpbSimpleMessenger.showSimpleMessage("Split Failed!");
-            System.out.println("com.epb.epbdevice.utl.StringParser.getSplitString()" + "->" + ex.getMessage());
+            LOG.error("com.epb.epbdevice.utl.StringParser.getSplitString()", ex);
             return EMPTY;
         }
     }
@@ -189,14 +193,14 @@ public class StringParser {
                     temp = Integer.parseInt(splitArray[i], 16);
                     result = result + String.valueOf((char) temp);
                 } catch (NumberFormatException ex) {
-                    System.out.println("com.epb.epbdevice.utl.StringParser.getSplitAsciiString()" + "->" + ex.getMessage());
+                    LOG.error("com.epb.epbdevice.utl.StringParser.getSplitAsciiString()", ex);
                 }
             }
             return result;
         } catch (Throwable ex) {
 //            EpbExceptionMessenger.showExceptionMessage(ex);
 //            EpbSimpleMessenger.showSimpleMessage("Split Failed!");
-            System.out.println("com.epb.epbdevice.utl.StringParser.getSplitAsciiString()" + "->" + ex.getMessage());
+            LOG.error("com.epb.epbdevice.utl.StringParser.getSplitAsciiString()", ex);
             return EMPTY;
         }
     }
@@ -271,7 +275,7 @@ public class StringParser {
             }
             return str.getBytes("UTF-8").length;
 
-        } catch (Throwable throwable) {
+        } catch (UnsupportedEncodingException throwable) {
             return 0;
         }
     }

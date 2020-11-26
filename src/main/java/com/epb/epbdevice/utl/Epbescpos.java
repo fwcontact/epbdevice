@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import javax.imageio.ImageIO;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 //import org.apache.commons.logging.Log;
 //import org.apache.commons.logging.LogFactory;
 
@@ -21,7 +23,7 @@ import javax.imageio.ImageIO;
  */
 public class Epbescpos {
     
-//    private static final Log LOG = LogFactory.getLog(Epbescpos.class);
+    private static final Log LOG = LogFactory.getLog(Epbescpos.class);
     // Feed control sequences,0x0a=10,打印并换行,打印行缓冲器里的内容并向前走纸一行。当行缓冲器为 空时只向前走纸一行。  在页模式下：输出行缓冲器里的内容，光标定位到下一行
     private static final byte[] CTL_LF          = {0x0a};          // Print and line feed
     // Line Spacing,0x1b=27,0x33=51
@@ -122,9 +124,8 @@ public class Epbescpos {
             }
             bus.flush();
 //            bus.write(CTL_LF);
-        } catch (Throwable e) {
-//            LOG.error("failed to printImage", e);
-            System.out.println(e.getMessage());
+        } catch (IOException e) {
+            LOG.error("failed to printImage", e);
         }
     }
     
@@ -148,8 +149,7 @@ public class Epbescpos {
             bus.flush();
 //            bus.write(CTL_LF);
         } catch (Throwable e) {
-//            LOG.error("failed to printImage", e);
-            System.out.println(e.getMessage());
+            LOG.error("failed to printImage", e);
         }
     }
     
@@ -163,9 +163,8 @@ public class Epbescpos {
 //                LOG.debug("image does not exists" + "-->" + imagePath);
                 System.out.println("image does not exists" + "-->" + imagePath);
             }
-        } catch (Throwable ex) {
-//            LOG.error("failed to printImage", ex);
-            System.out.println("failed to printImage" + "-->" + ex.getMessage());
+        } catch (IOException ex) {
+            LOG.error("failed to printImage", ex);
         }
     }
     
@@ -179,9 +178,8 @@ public class Epbescpos {
 //                LOG.debug("image does not exists" + "-->" + imagePath);
                 System.out.println("image does not exists" + "-->" + imagePath);
             }
-        } catch (Throwable ex) {
-//            LOG.error("failed to printImage", ex);
-            System.out.println("failed to printImage" + "-->" + ex.getMessage());
+        } catch (IOException ex) {
+            LOG.error("failed to printImage", ex);
         }
     }
     
@@ -199,9 +197,8 @@ public class Epbescpos {
     public static void printQRCode(FileOutputStream bus, int linePosition, String qrCode) throws QRCodeException {
         try {
             printQRCode(bus, linePosition, qrCode, 150);
-        } catch (Throwable ex) {
-//            LOG.error("failed to printQRCode", ex);
-            System.out.println("failed to printQRCode" + "-->" + ex.getMessage());
+        } catch (QRCodeException ex) {
+            LOG.error("failed to printQRCode", ex);
         }
     }
     
@@ -224,9 +221,8 @@ public class Epbescpos {
             }
             bus.flush();
 //            bus.write(CTL_LF);
-        } catch (Throwable e) {
-//            LOG.error("failed to printImage", e);
-            System.out.println("failed to printImage" + "-->" + e.getMessage());
+        } catch (IOException e) {
+            LOG.error("failed to printImage", e);
         }
     }
     
@@ -238,9 +234,8 @@ public class Epbescpos {
     public static void printQRCode(OutputStream bus, int linePosition, String qrCode) throws QRCodeException {
         try {
             printQRCode(bus, linePosition, qrCode, 150);
-        } catch (Throwable ex) {
-//            LOG.error("failed to printQRCode", ex);
-            System.out.println("failed to printQRCode" + "-->" + ex.getMessage());
+        } catch (QRCodeException ex) {
+            LOG.error("failed to printQRCode", ex);
         }
     }
     
@@ -254,9 +249,8 @@ public class Epbescpos {
 //                LOG.debug("image does not exists" + "-->" + imagePath);
                 System.out.println("image does not exists" + "-->" + imagePath);
             }
-        } catch (Throwable ex) {
-//            LOG.error("failed to printImage", ex);
-            System.out.println("failed to printImage" + "-->" + ex);
+        } catch (IOException ex) {
+            LOG.error("failed to printImage", ex);
         }
     }
     
@@ -285,9 +279,8 @@ public class Epbescpos {
             }
             bus.flush();
 //            bus.write(CTL_LF);
-        } catch (Throwable e) {
-//            LOG.error("failed to printImageBaudrate115200", e);
-            System.out.println("failed to printImageBaudrate115200" + "-->" + e);
+        } catch (IOException | InterruptedException e) {
+            LOG.error("failed to printImageBaudrate115200", e);
         }
     }
     
@@ -313,9 +306,8 @@ public class Epbescpos {
             }
             bus.flush();
 //            bus.write(CTL_LF);
-        } catch (Throwable e) {
-//            LOG.error("failed to printImageBaudrate115200", e);
-            System.out.println("failed to printImageBaudrate115200" + "-->" + e);
+        } catch (InterruptedException e) {
+            LOG.error("failed to printImageBaudrate115200", e);
         }
     }
     
@@ -342,18 +334,16 @@ public class Epbescpos {
     public static void printQRCodeBaudrate115200(FileOutputStream bus, int linePosition, String qrCode) throws QRCodeException {
         try {
             printQRCodeBaudrate115200(bus, linePosition, qrCode, 150);
-        } catch (Throwable ex) {
-//            LOG.error("failed to printQRCodeBaudrate115200", ex);
-            System.out.println("failed to printQRCodeBaudrate115200" + "-->" + ex);
+        } catch (QRCodeException ex) {
+            LOG.error("failed to printQRCodeBaudrate115200", ex);
         }
     }
     
     public static void printQRCodeBaudrate115200(PrintWriter bus, int linePosition, String qrCode) throws QRCodeException {
         try {
             printQRCodeBaudrate115200(bus, linePosition, qrCode, 150);
-        } catch (Throwable ex) {
-//            LOG.error("failed to printQRCodeBaudrate115200", ex);
-            System.out.println("failed to printQRCodeBaudrate115200" + "-->" + ex);
+        } catch (QRCodeException ex) {
+            LOG.error("failed to printQRCodeBaudrate115200", ex);
         }
     }
     
@@ -367,9 +357,8 @@ public class Epbescpos {
 //                LOG.debug("image does not exists" + "-->" + imagePath);
                 System.out.println("image does not exists" + "-->" + imagePath);
             }            
-        } catch (Throwable ex) {
-//            LOG.error("failed to printImageBaudrate115200", ex);
-            System.out.println("failed to printImageBaudrate115200" + "-->" + ex);
+        } catch (IOException ex) {
+            LOG.error("failed to printImageBaudrate115200", ex);
         }
     }
     
@@ -383,9 +372,8 @@ public class Epbescpos {
 //                LOG.debug("image does not exists" + "-->" + imagePath);
                 System.out.println("image does not exists" + "-->" + imagePath);
             }            
-        } catch (Throwable ex) {
-//            LOG.error("failed to printImageBaudrate115200", ex);
-            System.out.println("failed to printImageBaudrate115200" + "-->" + ex.getMessage());
+        } catch (IOException ex) {
+            LOG.error("failed to printImageBaudrate115200", ex);
         }
     }
     
@@ -423,8 +411,7 @@ public class Epbescpos {
             System.out.println("failed to generateBarcode128");
             return null;
         } catch (Throwable ex) {
-//            LOG.error("failed to generateBarcode128", ex);
-            System.out.println("failed to generateBarcode128" + "-->" + ex.getMessage());
+            LOG.error("failed to generateBarcode128", ex);
             return null;
         }
     }
@@ -467,8 +454,8 @@ public class Epbescpos {
             ImageIO.write(tag, "JPG", out);
             out.close();
 
-        } catch (Throwable ex) {
-            System.out.println(ex);
+        } catch (IOException ex) {
+            LOG.error(ex);
         }
     }
     
@@ -564,7 +551,7 @@ public class Epbescpos {
 //            ioPrint.write("2110033".getBytes());
 //            ioPrint.flush();
 //            System.out.println("----end----");
-        } catch (Throwable ex) {
+        } catch (IOException ex) {
             System.out.println("test:" + ex);
         }
     }

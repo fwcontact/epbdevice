@@ -1,5 +1,7 @@
-package com.epb.epbdevice;
+package com.epb.epbdevice.printer;
 
+import com.epb.epbdevice.Epbdevice;
+import com.epb.epbdevice.printer.Epbnetprinter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.CallableStatement;
@@ -20,10 +22,12 @@ import java.util.stream.Collectors;
 import com.epb.epbdevice.beans.PrintPool;
 import com.epb.epbdevice.utl.CommonUtility;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-class Epbprinter {
+public class Epbprinter {
     private static final Log LOG = LogFactory.getLog(Epbprinter.class);
     private static final String MSG_ID = "msgId";
     private static final String MSG = "msg";
@@ -79,7 +83,9 @@ class Epbprinter {
 //            returnMap.put(Epbdevice.MSG_ID, Epbdevice.RETURN_OK);
 //            returnMap.put(Epbdevice.MSG, EMPTY);
 //            return returnMap;
-            return printFile(recKey, printPoolList);
+//0032021: BISTRO fnb epbdevice PRINTER no-print events
+//            return printFile(recKey, printPoolList);
+            return printFileThread(recKey, printPoolList);
         } catch (Throwable ex) {
 //            ex.printStackTrace();
             LOG.error("error exec printFile", ex);
@@ -119,7 +125,9 @@ class Epbprinter {
                 return returnMap;
             }
             String recKey = System.currentTimeMillis() + "" + new Random().nextInt(100);
-            return printFile(recKey, printPoolList);
+//            0032021: BISTRO fnb epbdevice PRINTER no-print events
+//            return printFile(recKey, printPoolList);
+            return printFileThread(recKey, printPoolList);
         } catch (Throwable ex) {
 //            ex.printStackTrace();
             LOG.error("error exec printFileMQ", ex);
@@ -618,4 +626,66 @@ class Epbprinter {
 //            }
 //        }
 //    }
+    
+    private static Map<String, String> printFileThread(final String fileRecKey, final List<PrintPool> printPoolList) {
+        // always return OK
+        final Map<String, String> returnMap = new HashMap<String, String>();
+        returnMap.put(MSG_ID, OK);
+        returnMap.put(MSG, EMPTY);
+        try {
+            LOG.info("printFile:" + fileRecKey);
+            if (printPoolList == null || printPoolList.isEmpty()) {
+                returnMap.put(Epbdevice.MSG_ID, "nodatafound");
+                returnMap.put(Epbdevice.MSG, "No printer data generated, Print key is " + fileRecKey);
+                return returnMap;
+            }
+            final EpbPrinterJob printerJob = new EpbPrinterJob(fileRecKey);
+            //创建一个线程池
+            ExecutorService pool = Executors.newFixedThreadPool(2);
+            
+            String printEncoding = EMPTY;
+
+            List<PrintPool> printerPrintPoolList = new ArrayList<PrintPool>();
+//            boolean opened;
+            String printPort;
+            PrintPool pp;
+            int size = printPoolList.size();
+            for (int index = 0; index < size; index++) {
+                pp = printPoolList.get(index);
+                if (PRINTER_LINE.compareTo(pp.getLineNo()) != 0) {
+                    printerPrintPoolList.add(pp);
+                } else {
+                    printEncoding = pp.getConst1(); // print charset
+//                    System.out.println("Encoding:" + printEncoding);
+                }
+
+                if (PRINTER_LINE.compareTo(pp.getLineNo()) == 0 || index == size - 1) {
+                    if (!printerPrintPoolList.isEmpty()) {
+                        printPort = printerPrintPoolList.get(0).getPrintPort();
+//                        System.out.println("printPort:" + printPort);
+                        if (printPort != null
+                                && (printPort.toUpperCase().startsWith(COM) || printPort.toUpperCase().startsWith(LPT)
+                                || !Epbnetprinter.checkNetPort(printPort))) {
+                            // do nothing
+                        } else {
+                            CommonUtility.printLog("call net printer:" + printPort);
+                            EpbPrintThread printThread = new EpbPrintThread(printerJob, printerPrintPoolList, printPort, printEncoding);
+                            //执行各个线程
+                            pool.execute(printThread);
+                        }
+                    }
+                    printerPrintPoolList.clear();
+                }
+            }
+            
+            //关闭线程池
+            pool.shutdown();
+            return returnMap;
+        } catch (Throwable thrl) {
+            LOG.error("Failed to print", thrl);
+            // TO DO
+            return returnMap;
+        }
+    }
+    
 }
