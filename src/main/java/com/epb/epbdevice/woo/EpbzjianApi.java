@@ -126,7 +126,8 @@ public class EpbzjianApi {
                 return null;
             }
 
-            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
+            JSONObject dataJson = jsonResult.getJSONObject(RETURN_DATA);
+//            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
 //            JSONObject bodyJson = jsonResult.getJSONObject(RETURN_DATA);
             String customerNo = getString(dataJson.getString("customer_no"));
             String customerName = getString(dataJson.getString("customer_name"));
@@ -203,8 +204,9 @@ public class EpbzjianApi {
                 return null;
             }
 
-            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
-//            JSONObject bodyJson = jsonResult.getJSONObject(RETURN_DATA);
+            JSONObject dataJson = jsonResult.getJSONObject(RETURN_DATA);
+//            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
+////            JSONObject bodyJson = jsonResult.getJSONObject(RETURN_DATA);
             String customerNo = getString(dataJson.getString("customer_no"));
             String customerName = getString(dataJson.getString("customer_name"));
             String customerGradeNo = getString(dataJson.getString("grade_no"));
@@ -289,7 +291,8 @@ public class EpbzjianApi {
                 return null;
             }
 
-            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
+//            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
+            JSONObject dataJson = jsonResult.getJSONObject(RETURN_DATA);
 //            String customerNo = CFunction.getString(bodyJson.getString("customer_no"));
 //            String customerName = CFunction.getString(bodyJson.getString("customer_name"));
 //            String accountType = CFunction.getString(bodyJson.getString("account_type"));
@@ -517,7 +520,8 @@ public class EpbzjianApi {
                 return returnMapping;
             }
 
-            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
+//            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
+            JSONObject dataJson = jsonResult.getJSONObject(RETURN_DATA);
             String saleAmt = getString(dataJson.getString(RETURN_SALE_AMT));
             String disAmt = getString(dataJson.getString(RETURN_DIS_AMT));
             returnMapping.put(RETURN_CODE, result);            
