@@ -118,7 +118,7 @@ public class EpbzjianApi {
             }
             LOG.info(returnStr);
             JSONObject jsonResult = new JSONObject(returnStr);
-            String result = getString(jsonResult.getString(RETURN_CODE));
+            String result = getString(jsonResult.optString(RETURN_CODE));
 //            String reason = getString(jsonResult.getString(RETURN_DESC));
 
             if (!RETURN_OK.equals(result)) {
@@ -129,20 +129,20 @@ public class EpbzjianApi {
             JSONObject dataJson = jsonResult.getJSONObject(RETURN_DATA);
 //            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
 //            JSONObject bodyJson = jsonResult.getJSONObject(RETURN_DATA);
-            String customerNo = getString(dataJson.getString("customer_no"));
-            String customerName = getString(dataJson.getString("customer_name"));
-            String customerGradeNo = getString(dataJson.getString("customer_grade_no"));
+            String customerNo = getString(dataJson.optString("customer_no"));
+            String customerName = getString(dataJson.optString("customer_name"));
+            String customerGradeNo = getString(dataJson.optString("customer_grade_no"));
 //            try {
 //                customerGradeNo = CFunction.getString(dataJson.getString("customer_grade_no"));
 //            } catch (Throwable throwable) {
 //                customerGradeNo = customerGradeNo == null || customerGradeNo.isEmpty() || STRING_NULL.equals(customerGradeNo) ? "1" : customerGradeNo;
 //            }
 //            String customerGradeName = CFunction.getString(dataJson.getString("customer_grade_name"));
-            String gender = getString(dataJson.getString("gender"));
-            String birthday = getString(dataJson.getString("birthday"));
-            String telephoneNo = getString(dataJson.getString("telephone_no"));
-            String belongSiteNo = getString(dataJson.getString("belong_site_no"));
-            String belongAgentNo = getString(dataJson.getString("belong_agent_no"));
+            String gender = getString(dataJson.optString("gender"));
+            String birthday = getString(dataJson.optString("birthday"));
+            String telephoneNo = getString(dataJson.optString("telephone_no"));
+            String belongSiteNo = getString(dataJson.optString("belong_site_no"));
+            String belongAgentNo = getString(dataJson.optString("belong_agent_no"));
             final CrmPosVipInfo posVipInfo = new CrmPosVipInfo();
             posVipInfo.setVipId(customerNo);
             posVipInfo.setName(customerName);
@@ -195,7 +195,7 @@ public class EpbzjianApi {
             LOG.info(returnStr);
 //            returnStr = "{\"code\":\"000\",\"desc\":null,\"data\":{\"customer_no\":\"702250\",\"customer_name\":\"123\",\"grade_no\":\"30\",\"grade_name\":\"银卡会员\",\"point\":50,\"gender\":\"女\",\"birthday\":\"1993-05-05 \",\"telephone_no\":\"15110228610\",\"belong_site_no\":\"036\",\"belong_agent_no\":null}}";
             JSONObject jsonResult = new JSONObject(returnStr);
-            String result = getString(jsonResult.getString(RETURN_CODE));
+            String result = getString(jsonResult.optString(RETURN_CODE));
 //            String reason = getString(jsonResult.getString(RETURN_DESC));
 
             if (!RETURN_OK.equals(result)) {
@@ -207,14 +207,14 @@ public class EpbzjianApi {
             JSONObject dataJson = jsonResult.getJSONObject(RETURN_DATA);
 //            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
 ////            JSONObject bodyJson = jsonResult.getJSONObject(RETURN_DATA);
-            String customerNo = getString(dataJson.getString("customer_no"));
-            String customerName = getString(dataJson.getString("customer_name"));
-            String customerGradeNo = getString(dataJson.getString("grade_no"));
-            String gender = getString(dataJson.getString("gender"));
-            String birthday = getString(dataJson.getString("birthday"));
-            String telephoneNo = getString(dataJson.getString("telephone_no"));
-            String belongSiteNo = getString(dataJson.getString("belong_site_no"));
-            String belongAgentNo = getString(dataJson.getString("belong_agent_no"));
+            String customerNo = getString(dataJson.optString("customer_no"));
+            String customerName = getString(dataJson.optString("customer_name"));
+            String customerGradeNo = getString(dataJson.optString("grade_no"));
+            String gender = getString(dataJson.optString("gender"));
+            String birthday = getString(dataJson.optString("birthday"));
+            String telephoneNo = getString(dataJson.optString("telephone_no"));
+            String belongSiteNo = getString(dataJson.optString("belong_site_no"));
+            String belongAgentNo = getString(dataJson.optString("belong_agent_no"));
             final CrmPosVipInfo posVipInfo = new CrmPosVipInfo();
             posVipInfo.setVipId(customerNo);
             posVipInfo.setName(customerName);
@@ -282,7 +282,7 @@ public class EpbzjianApi {
             
             LOG.info(returnStr);
             JSONObject jsonResult = new JSONObject(returnStr);
-            String result = getString(jsonResult.getString(RETURN_CODE));
+            String result = getString(jsonResult.optString(RETURN_CODE));
 //            String reason = getString(jsonResult.getString(RETURN_DESC));
 
             if (!RETURN_OK.equals(result)) {
@@ -296,7 +296,7 @@ public class EpbzjianApi {
 //            String customerNo = CFunction.getString(bodyJson.getString("customer_no"));
 //            String customerName = CFunction.getString(bodyJson.getString("customer_name"));
 //            String accountType = CFunction.getString(bodyJson.getString("account_type"));
-            String availableAmt = getString(dataJson.getString("available_amt"));
+            String availableAmt = getString(dataJson.optString("available_amt"));
             return availableAmt == null || availableAmt.length() == 0 
                     ? BigDecimal.ZERO 
                     : new BigDecimal(availableAmt);
@@ -509,8 +509,8 @@ public class EpbzjianApi {
             LOG.info(returnStr);
             
             JSONObject jsonResult = new JSONObject(returnStr);
-            String result = getString(jsonResult.getString(RETURN_CODE));
-            String reason = getString(jsonResult.getString(RETURN_DESC));
+            String result = getString(jsonResult.optString(RETURN_CODE));
+            String reason = getString(jsonResult.optString(RETURN_DESC));
 
             if (!RETURN_OK.equals(result)) {
                 returnMapping.put(RETURN_CODE, result);
@@ -522,8 +522,8 @@ public class EpbzjianApi {
 
 //            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
             JSONObject dataJson = jsonResult.getJSONObject(RETURN_DATA);
-            String saleAmt = getString(dataJson.getString(RETURN_SALE_AMT));
-            String disAmt = getString(dataJson.getString(RETURN_DIS_AMT));
+            String saleAmt = getString(dataJson.optString(RETURN_SALE_AMT));
+            String disAmt = getString(dataJson.optString(RETURN_DIS_AMT));
             returnMapping.put(RETURN_CODE, result);            
             returnMapping.put(RETURN_DESC, reason);            
 //            returnMapping.put(RETURN_DESC, CFunction.getCouponReturnMsg(result));
@@ -621,8 +621,8 @@ public class EpbzjianApi {
             LOG.info(returnStr);
             
             JSONObject jsonResult = new JSONObject(returnStr);
-            String result = getString(jsonResult.getString(RETURN_CODE));
-            String reason = getString(jsonResult.getString(RETURN_DESC));
+            String result = getString(jsonResult.optString(RETURN_CODE));
+            String reason = getString(jsonResult.optString(RETURN_DESC));
 
             if (!RETURN_OK.equals(result)) {
                 returnMapping.put(RETURN_CODE, result);
