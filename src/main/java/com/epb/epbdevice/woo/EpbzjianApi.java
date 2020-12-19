@@ -138,11 +138,11 @@ public class EpbzjianApi {
 //                customerGradeNo = customerGradeNo == null || customerGradeNo.isEmpty() || STRING_NULL.equals(customerGradeNo) ? "1" : customerGradeNo;
 //            }
 //            String customerGradeName = CFunction.getString(dataJson.getString("customer_grade_name"));
-            String gender = getString(dataJson.optString("gender"));
-            String birthday = getString(dataJson.optString("birthday"));
-            String telephoneNo = getString(dataJson.optString("telephone_no"));
-            String belongSiteNo = getString(dataJson.optString("belong_site_no"));
-            String belongAgentNo = getString(dataJson.optString("belong_agent_no"));
+            String gender = getString(dataJson.isNull("gender") ? EMPTY : dataJson.get("gender") + EMPTY);
+            String birthday = getString(dataJson.isNull("birthday") ? EMPTY : dataJson.get("birthday") + EMPTY);
+            String telephoneNo = getString(dataJson.isNull("telephone_no") ? EMPTY : dataJson.get("telephone_no") + EMPTY);
+            String belongSiteNo = getString(dataJson.isNull("belong_site_no") ? EMPTY : dataJson.get("belong_site_no") + EMPTY);   
+            String belongAgentNo = getString(dataJson.isNull("belong_agent_no") ? EMPTY : dataJson.get("belong_agent_no") + EMPTY);
             final CrmPosVipInfo posVipInfo = new CrmPosVipInfo();
             posVipInfo.setVipId(customerNo);
             posVipInfo.setName(customerName);
