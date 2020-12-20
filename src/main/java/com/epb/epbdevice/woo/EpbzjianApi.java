@@ -126,9 +126,20 @@ public class EpbzjianApi {
                 return null;
             }
 
-            JSONObject dataJson = jsonResult.getJSONObject(RETURN_DATA);
+//            JSONObject dataJson = jsonResult.getJSONObject(RETURN_DATA);
 //            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
 //            JSONObject bodyJson = jsonResult.getJSONObject(RETURN_DATA);
+            JSONObject dataJson;
+            try {
+                dataJson = jsonResult.isNull(RETURN_DATA) ? null : new JSONObject(getString(jsonResult.optString(RETURN_DATA)));
+            } catch (JSONException ex) {
+//                LOG.error(ex);
+                dataJson = jsonResult.optJSONObject(RETURN_DATA);
+            }
+            if (dataJson == null) {
+                LOG.info("data is null");
+                return null;
+            }
             String customerNo = getString(dataJson.optString("customer_no"));
             String customerName = getString(dataJson.optString("customer_name"));
             String customerGradeNo = getString(dataJson.optString("customer_grade_no"));
@@ -203,7 +214,7 @@ public class EpbzjianApi {
 //                System.out.println(sMessage);
                 return null;
             }
-
+            
             JSONObject dataJson = jsonResult.getJSONObject(RETURN_DATA);
 //            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
 ////            JSONObject bodyJson = jsonResult.getJSONObject(RETURN_DATA);
@@ -291,8 +302,17 @@ public class EpbzjianApi {
                 return null;
             }
 
-//            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
-            JSONObject dataJson = jsonResult.getJSONObject(RETURN_DATA);
+            JSONObject dataJson;
+            try {
+                dataJson = jsonResult.isNull(RETURN_DATA) ? null : new JSONObject(getString(jsonResult.optString(RETURN_DATA)));
+            } catch (JSONException ex) {
+//                LOG.error(ex);
+                dataJson = jsonResult.optJSONObject(RETURN_DATA);
+            }
+            if (dataJson == null) {
+                LOG.info("data is null");
+                return null;
+            }
 //            String customerNo = CFunction.getString(bodyJson.getString("customer_no"));
 //            String customerName = CFunction.getString(bodyJson.getString("customer_name"));
 //            String accountType = CFunction.getString(bodyJson.getString("account_type"));
@@ -521,7 +541,18 @@ public class EpbzjianApi {
             }
 
 //            JSONObject dataJson = new JSONObject(getString(jsonResult.getString(RETURN_DATA)));
-            JSONObject dataJson = jsonResult.getJSONObject(RETURN_DATA);
+//            JSONObject dataJson = jsonResult.getJSONObject(RETURN_DATA);
+JSONObject dataJson;
+            try {
+                dataJson = jsonResult.isNull(RETURN_DATA) ? null : new JSONObject(getString(jsonResult.optString(RETURN_DATA)));
+            } catch (JSONException ex) {
+//                LOG.error(ex);
+                dataJson = jsonResult.optJSONObject(RETURN_DATA);
+            }
+            if (dataJson == null) {
+                LOG.info("data is null");
+                return null;
+            }
             String saleAmt = getString(dataJson.optString(RETURN_SALE_AMT));
             String disAmt = getString(dataJson.optString(RETURN_DIS_AMT));
             returnMapping.put(RETURN_CODE, result);            
