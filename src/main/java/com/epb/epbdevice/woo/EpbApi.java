@@ -472,6 +472,8 @@ public class EpbApi {
         try {
             String param;
             String couponNo;
+            LOG.info("vipID:" + vipID + ",docId:" + docId);
+            LOG.info("couponNoList:" + couponNoList);
             JSONArray dataArray = new JSONArray(couponNoList);
             if (dataArray.length() != 0) {
                 int count = dataArray.length();
@@ -484,7 +486,7 @@ public class EpbApi {
                                     + "^couponNo^=^" + couponNo
                                     + "^docId^=^" + docId
                                     + "^docDate^=^" + DATEFORMAT.format(docDate);
-                            stmt = (CallableStatement) conn.prepareCall("EP_TRANSUTL.common_ws_action(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                            stmt = (CallableStatement) conn.prepareCall("call EP_TRANSUTL.common_ws_action(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                             stmt.registerOutParameter(1, java.sql.Types.VARCHAR);
                             stmt.registerOutParameter(2, java.sql.Types.VARCHAR);
                             stmt.setString(3, "eng");
