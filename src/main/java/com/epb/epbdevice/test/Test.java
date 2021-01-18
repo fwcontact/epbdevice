@@ -1,7 +1,5 @@
 package com.epb.epbdevice.test;
 
-import com.epb.epbdevice.Epbdevice;
-import com.epb.epbdevice.beans.PrintPool;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Connection;
@@ -13,6 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.epb.epbdevice.Epbdevice;
+import com.epb.epbdevice.beans.PrintPool;
+
+@SuppressWarnings({ "unused" })
 public class Test {
 //    
 //    public static List<PrintPool> getTestPrintPool() {
@@ -188,142 +190,145 @@ public class Test {
 //        }
 //    }
 //
-    
-    public static List<PrintPool> getTestPrintPool(BigDecimal recKey) {
-        final List<PrintPool> list = new ArrayList<PrintPool>();
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        Connection conn = null;
-        try {
-            String driver = "oracle.jdbc.driver.OracleDriver"; 
+
+	public static List<PrintPool> getTestPrintPool(BigDecimal recKey) {
+		final List<PrintPool> list = new ArrayList<PrintPool>();
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		Connection conn = null;
+		try {
+			String driver = "oracle.jdbc.driver.OracleDriver";
 //            String url = "jdbc:oracle:thin:@192.168.1.11:1521:orcl";
-            String url = "jdbc:oracle:thin:@localhost:1523:XE";
-            String user = "EPBSH";
+			String url = "jdbc:oracle:thin:@localhost:1523:XE";
+			String user = "EPBSH";
 //            String pwd = "EPBSH";
-            String pwd = "EPB9209";
-            String EMPTY = "";
-            Class.forName(driver);
-            System.out.println("driver is ok");
+			String pwd = "EPB9209";
+			String EMPTY = "";
+			Class.forName(driver);
+			System.out.println("driver is ok");
 
-            conn = DriverManager.getConnection(url, user, pwd);
+			conn = DriverManager.getConnection(url, user, pwd);
 
-            System.out.println("conection is ok");
+			System.out.println("conection is ok");
 
-             StringBuilder sb = new StringBuilder();
-                sb.append("SELECT * FROM POS_PRINTER_FILE WHERE REC_KEY_REF = '");
-                sb.append(recKey);
-                sb.append("'ORDER BY PRINT_PORT, LINE_NO, ORDER_NO ASC");
-                pstmt = conn.prepareStatement(sb.toString());
-                rs = pstmt.executeQuery();
-                ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
-                int columnCount = metaData.getColumnCount();
-                PrintPool printPool;
-                while (rs.next()) {
-                    printPool = new PrintPool();
-                    for (int i = 1; i <= columnCount; i++) {
-                        String columnName = metaData.getColumnLabel(i);
-                        Object value = rs.getObject(columnName);
-                        // PRINT_PORT, LINE_NO, ORDER_NO, PRINT_COMMAND, CONST1, CONST2, FORMAT, LENGTH, ALIGN, BREAK_FLG, FILL_BLANK_FLG, VAL
-                        if ("PRINT_PORT".equals(columnName.toUpperCase())) {
-                            printPool.setPrintPort((String) value);
-                        } else if ("LINE_NO".equals(columnName.toUpperCase())) {
-                            printPool.setLineNo(value instanceof BigDecimal ? (BigDecimal) value : new BigDecimal(value + EMPTY));
-                        } else if ("ORDER_NO".equals(columnName.toUpperCase())) {
-                            printPool.setOrderNo(value instanceof BigInteger ? (BigInteger) value 
-                                    : value == null ? null
-                                    : new BigDecimal(value + EMPTY).toBigInteger());
-                        } else if ("PRINT_COMMAND".equals(columnName.toUpperCase())) {
-                            printPool.setPrintCommand((String) value);
-                        } else if ("CONST1".equals(columnName.toUpperCase())) {
-                            printPool.setConst1((String) value);
-                        } else if ("CONST2".equals(columnName.toUpperCase())) {
-                            printPool.setConst2((String) value);
-                        } else if ("FORMAT".equals(columnName.toUpperCase())) {
-                            printPool.setFormat((String) value);
-                        } else if ("LENGTH".equals(columnName.toUpperCase())) {
-                            printPool.setLength(value instanceof BigInteger ? (BigInteger) value 
-                                    : value == null ? null
-                                    : new BigDecimal(value + EMPTY).toBigInteger());
-                        } else if ("ALIGN".equals(columnName.toUpperCase())) {
-                            printPool.setAlign((String) value);
-                        } else if ("BREAK_FLG".equals(columnName.toUpperCase())) {
-                            printPool.setBreakFlg((String) value);
-                        } else if ("FILL_BLANK_FLG".equals(columnName.toUpperCase())) {
-                            printPool.setFillBlankFlg((String) value);
-                        } else if ("VAL".equals(columnName.toUpperCase())) {
-                            //System.out.println((String) value);
-                            System.out.println(rs.getString(columnName));
-                            printPool.setVal((String) value);
-                        }
-                    }
-                    list.add(printPool);
-                }
-            return list;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return list;
-        } finally {
-            if (conn != null) {
-                try {
-                conn.close();
-                } catch (Throwable thr) {
-                    
-                }
-            }
-        }
-    }
-        
-    public static void test() {
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        Connection conn = null;
-        try {
-            String driver = "oracle.jdbc.driver.OracleDriver";
+			StringBuilder sb = new StringBuilder();
+			sb.append("SELECT * FROM POS_PRINTER_FILE WHERE REC_KEY_REF = '");
+			sb.append(recKey);
+			sb.append("'ORDER BY PRINT_PORT, LINE_NO, ORDER_NO ASC");
+			pstmt = conn.prepareStatement(sb.toString());
+			rs = pstmt.executeQuery();
+			ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
+			int columnCount = metaData.getColumnCount();
+			PrintPool printPool;
+			while (rs.next()) {
+				printPool = new PrintPool();
+				for (int i = 1; i <= columnCount; i++) {
+					String columnName = metaData.getColumnLabel(i);
+					Object value = rs.getObject(columnName);
+					// PRINT_PORT, LINE_NO, ORDER_NO, PRINT_COMMAND, CONST1, CONST2, FORMAT, LENGTH,
+					// ALIGN, BREAK_FLG, FILL_BLANK_FLG, VAL
+					if ("PRINT_PORT".equals(columnName.toUpperCase())) {
+						printPool.setPrintPort((String) value);
+					} else if ("LINE_NO".equals(columnName.toUpperCase())) {
+						printPool.setLineNo(
+								value instanceof BigDecimal ? (BigDecimal) value : new BigDecimal(value + EMPTY));
+					} else if ("ORDER_NO".equals(columnName.toUpperCase())) {
+						printPool.setOrderNo(value instanceof BigInteger ? (BigInteger) value
+								: value == null ? null
+										: new BigDecimal(value + EMPTY).toBigInteger());
+					} else if ("PRINT_COMMAND".equals(columnName.toUpperCase())) {
+						printPool.setPrintCommand((String) value);
+					} else if ("CONST1".equals(columnName.toUpperCase())) {
+						printPool.setConst1((String) value);
+					} else if ("CONST2".equals(columnName.toUpperCase())) {
+						printPool.setConst2((String) value);
+					} else if ("FORMAT".equals(columnName.toUpperCase())) {
+						printPool.setFormat((String) value);
+					} else if ("LENGTH".equals(columnName.toUpperCase())) {
+						printPool.setLength(value instanceof BigInteger ? (BigInteger) value
+								: value == null ? null
+										: new BigDecimal(value + EMPTY).toBigInteger());
+					} else if ("ALIGN".equals(columnName.toUpperCase())) {
+						printPool.setAlign((String) value);
+					} else if ("BREAK_FLG".equals(columnName.toUpperCase())) {
+						printPool.setBreakFlg((String) value);
+					} else if ("FILL_BLANK_FLG".equals(columnName.toUpperCase())) {
+						printPool.setFillBlankFlg((String) value);
+					} else if ("VAL".equals(columnName.toUpperCase())) {
+						// System.out.println((String) value);
+						System.out.println(rs.getString(columnName));
+						printPool.setVal((String) value);
+					}
+				}
+				list.add(printPool);
+			}
+			return list;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return list;
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (Throwable thr) {
+
+				}
+			}
+		}
+	}
+
+	public static void test() {
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		Connection conn = null;
+		try {
+			String driver = "oracle.jdbc.driver.OracleDriver";
 //            String url = "jdbc:oracle:thin:@192.168.1.11:1521:orcl";
-            String url = "jdbc:oracle:thin:@localhost:1523:XE";
-            String user = "EPBSH";
+			String url = "jdbc:oracle:thin:@localhost:1523:XE";
+			String user = "EPBSH";
 //            String pwd = "EPBSH";
-            String pwd = "EPB9209";
-            String EMPTY = "";
-            Class.forName(driver);
-            System.out.println("driver is ok");
+			String pwd = "EPB9209";
+			String EMPTY = "";
+			Class.forName(driver);
+			System.out.println("driver is ok");
 
-            conn = DriverManager.getConnection(url, user, pwd);
+			conn = DriverManager.getConnection(url, user, pwd);
 
-            System.out.println("conection is ok");
+			System.out.println("conection is ok");
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("SELECT NAME FROM STKMAS WHERE STK_ID = '");
-            sb.append("STK024");
-            sb.append("'ORDER BY STK_ID ASC");
-            pstmt = conn.prepareStatement(sb.toString());
-            rs = pstmt.executeQuery();
-            ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
-            while (rs.next()) {
-                for (int i = 1; i <= columnCount; i++) {
-                    String columnName = metaData.getColumnLabel(i);
-                    Object value = rs.getObject(columnName);
-                    // PRINT_PORT, LINE_NO, ORDER_NO, PRINT_COMMAND, CONST1, CONST2, FORMAT, LENGTH, ALIGN, BREAK_FLG, FILL_BLANK_FLG, VAL
-                    if ("NAME".equals(columnName.toUpperCase())) {
-                        //System.out.println((String) value);
-                        System.out.println(rs.getString(columnName));
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (Throwable thr) {
-                }
-            }
-        }
-    }
-    
-    public static void main(String args[]) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("SELECT NAME FROM STKMAS WHERE STK_ID = '");
+			sb.append("STK024");
+			sb.append("'ORDER BY STK_ID ASC");
+			pstmt = conn.prepareStatement(sb.toString());
+			rs = pstmt.executeQuery();
+			ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
+			int columnCount = metaData.getColumnCount();
+			while (rs.next()) {
+				for (int i = 1; i <= columnCount; i++) {
+					String columnName = metaData.getColumnLabel(i);
+					Object value = rs.getObject(columnName);
+					// PRINT_PORT, LINE_NO, ORDER_NO, PRINT_COMMAND, CONST1, CONST2, FORMAT, LENGTH,
+					// ALIGN, BREAK_FLG, FILL_BLANK_FLG, VAL
+					if ("NAME".equals(columnName.toUpperCase())) {
+						// System.out.println((String) value);
+						System.out.println(rs.getString(columnName));
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (Throwable thr) {
+				}
+			}
+		}
+	}
+
+	public static void main(String args[]) {
 //        final List<PrintPool> list = getTestPrintPool();
 //        if (list == null || list.isEmpty()) {
 //            return;
@@ -365,8 +370,8 @@ public class Test {
 ////                Epbnetprinter.closeNetPrinter();
 ////            }
 ////        }
-        
-        String printPort = "192.168.1.68";
+
+		String printPort = "192.168.1.68";
 //        BigDecimal recKeyRef = new BigDecimal(1088);
 //        List<PrintPool> printerPrintPoolList = new ArrayList<PrintPool>();
 //        PrintPool printPool;
@@ -446,39 +451,39 @@ public class Test {
 //        printPool.setFillBlankFlg("Y");
 //        printPool.setBreakFlg("Y");
 //        printerPrintPoolList.add(printPool);
-        
+
 //        final List<PrintPool> printerPrintPoolList = getTestPrintPool(BigDecimal.ONE);
-        test();
-        if (1 == 1) {
-            return;
-        }
+		test();
+		if (true) {
+			return;
+		}
 //        Locale.setDefault(Locale.PRC);
 //        final String returnMsg = Epbnetprinter.printPosReceipt(printPort, printerPrintPoolList, printerPrintPoolList.get(0).getVal());
 //        System.out.println("returnMsg:" + returnMsg);
-        
-        Connection conn = null;
-        try {
-            String driver = "oracle.jdbc.driver.OracleDriver";
-            String url = "jdbc:oracle:thin:@192.168.1.11:1521:orcl";
-            String user = "EPBSH";
-            String pwd = "EPBSH";
-            Class.forName(driver);
-            System.out.println("driver is ok");
 
-            conn = DriverManager.getConnection(url, user, pwd);
-            final Map<String, String> map = Epbdevice.printFile(conn, "1", "Admin");
-            for (String key : map.keySet()) {
-                System.out.println("key:" + map.get(key));
-            }
-        } catch (Throwable thr) {
-            System.out.println(thr.getMessage());
-        } finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (Throwable thr2) {
-                }
-            }
-        }
-    }
+		Connection conn = null;
+		try {
+			String driver = "oracle.jdbc.driver.OracleDriver";
+			String url = "jdbc:oracle:thin:@192.168.1.11:1521:orcl";
+			String user = "EPBSH";
+			String pwd = "EPBSH";
+			Class.forName(driver);
+			System.out.println("driver is ok");
+
+			conn = DriverManager.getConnection(url, user, pwd);
+			final Map<String, String> map = Epbdevice.printFile(conn, "1", "Admin");
+			for (String key : map.keySet()) {
+				System.out.println("key:" + map.get(key));
+			}
+		} catch (Throwable thr) {
+			System.out.println(thr.getMessage());
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (Throwable thr2) {
+				}
+			}
+		}
+	}
 }

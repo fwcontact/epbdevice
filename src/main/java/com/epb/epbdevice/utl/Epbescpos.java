@@ -11,7 +11,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+
 import javax.imageio.ImageIO;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 //import org.apache.commons.logging.Log;
@@ -21,16 +23,20 @@ import org.apache.commons.logging.LogFactory;
  *
  * @author liang
  */
+
+@SuppressWarnings({ "unused" })
 public class Epbescpos {
-    
-    private static final Log LOG = LogFactory.getLog(Epbescpos.class);
-    // Feed control sequences,0x0a=10,打印并换行,打印行缓冲器里的内容并向前走纸一行。当行缓冲器为 空时只向前走纸一行。  在页模式下：输出行缓冲器里的内容，光标定位到下一行
-    private static final byte[] CTL_LF          = {0x0a};          // Print and line feed
-    // Line Spacing,0x1b=27,0x33=51
-    private static final byte[] LINE_SPACE_24 = {0x1b,0x33,24}; // Set the line spacing at 24.   27,51,n:设置行间距为n点行,n = 0-255,默认值行间距是30点
-    private static final byte[] LINE_SPACE_30 = {0x1b,0x33,30}; // Set the line spacing at 30.
-    //Image,0x1B=27,0x2A=42
-    private static final byte[] SELECT_BIT_IMAGE_MODE = {0x1B, 0x2A, 33};
+
+	private static final Log LOG = LogFactory.getLog(Epbescpos.class);
+	// Feed control sequences,0x0a=10,打印并换行,打印行缓冲器里的内容并向前走纸一行。当行缓冲器为 空时只向前走纸一行。
+	// 在页模式下：输出行缓冲器里的内容，光标定位到下一行
+	private static final byte[] CTL_LF = { 0x0a }; // Print and line feed
+	// Line Spacing,0x1b=27,0x33=51
+	private static final byte[] LINE_SPACE_24 = { 0x1b, 0x33, 24 }; // Set the line spacing at 24. 27,51,n:设置行间距为n点行,n =
+																	// 0-255,默认值行间距是30点
+	private static final byte[] LINE_SPACE_30 = { 0x1b, 0x33, 30 }; // Set the line spacing at 30.
+	// Image,0x1B=27,0x2A=42
+	private static final byte[] SELECT_BIT_IMAGE_MODE = { 0x1B, 0x2A, 33 };
 //    // Printer hardware
 //    private static final byte[] HW_INIT         = {0x1b,0x40};          // Clear data in buffer and reset modes
 //    // Cash Drawer
@@ -102,369 +108,372 @@ public class Epbescpos {
 //    private static final byte[] PD_P37          = {0x1d,0x7c,0x07}; // Printing Density +37.5%
 //    private static final byte[] PD_P25          = {0x1d,0x7c,0x06}; // Printing Density +25%
 //    private static final byte[] PD_P12          = {0x1d,0x7c,0x05}; // Printing Density +12.5%
-    private static final String SPACE = " ";
-    private static final String TEPDIR_PROPERTY = "java.io.tmpdir"; //NOI18N
-    
-    public static void printImage(FileOutputStream bus, int linePosition, BufferedImage image) {
-        try {
-            Image img = new Image();
-            int[][] pixels = img.getPixelsSlow(image);
-            for (int y = 0; y < pixels.length; y += 24) {
-                for (int i = 0; i < linePosition; i++) {
-                    bus.write(SPACE.getBytes());
-                }
-                bus.write(LINE_SPACE_30);    
-                bus.write(SELECT_BIT_IMAGE_MODE);
-                bus.write(new byte[]{(byte) (0x00ff & pixels[y].length), (byte) ((0xff00 & pixels[y].length) >> 8)});
-                for (int x = 0; x < pixels[y].length; x++) {
-                    bus.write(img.recollectSlice(y, x, pixels));
-                }
-                bus.write(CTL_LF);
-                bus.flush();
-            }
-            bus.flush();
-//            bus.write(CTL_LF);
-        } catch (IOException e) {
-            LOG.error("failed to printImage", e);
-        }
-    }
-    
-    public static void printImage(PrintWriter bus, int linePosition, BufferedImage image) {
-        try {
-            Image img = new Image();
-            int[][] pixels = img.getPixelsSlow(image);
-            for (int y = 0; y < pixels.length; y += 24) {
-                for (int i = 0; i < linePosition; i++) {
-                    bus.println(SPACE.getBytes());
-                }
-                bus.println(LINE_SPACE_30);    
-                bus.println(SELECT_BIT_IMAGE_MODE);
-                bus.println(new byte[]{(byte) (0x00ff & pixels[y].length), (byte) ((0xff00 & pixels[y].length) >> 8)});
-                for (int x = 0; x < pixels[y].length; x++) {
-                    bus.println(img.recollectSlice(y, x, pixels));
-                }
-                bus.println(CTL_LF);
-                bus.flush();
-            }
-            bus.flush();
-//            bus.write(CTL_LF);
-        } catch (Throwable e) {
-            LOG.error("failed to printImage", e);
-        }
-    }
-    
-    public static void printImage(FileOutputStream bus, int linePosition, final String imagePath) {
-        try {
-            File file = new File(imagePath);
-            if (file.exists()) {
-                BufferedImage read = ImageIO.read(file);
-                printImage(bus, linePosition, read);
-            } else {
-//                LOG.debug("image does not exists" + "-->" + imagePath);
-                System.out.println("image does not exists" + "-->" + imagePath);
-            }
-        } catch (IOException ex) {
-            LOG.error("failed to printImage", ex);
-        }
-    }
-    
-    public static void printImage(PrintWriter bus, int linePosition, final String imagePath) {
-        try {
-            File file = new File(imagePath);
-            if (file.exists()) {
-                BufferedImage read = ImageIO.read(file);
-                printImage(bus, linePosition, read);
-            } else {
-//                LOG.debug("image does not exists" + "-->" + imagePath);
-                System.out.println("image does not exists" + "-->" + imagePath);
-            }
-        } catch (IOException ex) {
-            LOG.error("failed to printImage", ex);
-        }
-    }
-    
-    
-    public static void printQRCode(FileOutputStream bus, int linePosition, String qrCode, int size) throws QRCodeException {
-        QRCodeGenerator q = new QRCodeGenerator();
-        printImage(bus, linePosition, q.generate(qrCode, size));
-    }
-    
-    public static void printQRCode(PrintWriter bus, int linePosition, String qrCode, int size) throws QRCodeException {
-        QRCodeGenerator q = new QRCodeGenerator();
-        printImage(bus, linePosition, q.generate(qrCode, size));
-    }
+	private static final String SPACE = " ";
+	private static final String TEPDIR_PROPERTY = "java.io.tmpdir"; // NOI18N
 
-    public static void printQRCode(FileOutputStream bus, int linePosition, String qrCode) throws QRCodeException {
-        try {
-            printQRCode(bus, linePosition, qrCode, 150);
-        } catch (QRCodeException ex) {
-            LOG.error("failed to printQRCode", ex);
-        }
-    }
-    
-    public static void printImage(OutputStream bus, int linePosition, BufferedImage image) {
-        try {
-            Image img = new Image();
-            int[][] pixels = img.getPixelsSlow(image);
-            for (int y = 0; y < pixels.length; y += 24) {
-                for (int i = 0; i < linePosition; i++) {
-                    bus.write(SPACE.getBytes());
-                }
-                bus.write(LINE_SPACE_30);     
-                bus.write(SELECT_BIT_IMAGE_MODE);
-                bus.write(new byte[]{(byte) (0x00ff & pixels[y].length), (byte) ((0xff00 & pixels[y].length) >> 8)});
-                for (int x = 0; x < pixels[y].length; x++) {
-                    bus.write(img.recollectSlice(y, x, pixels));
-                }
-                bus.write(CTL_LF);
-                bus.flush();
-            }
-            bus.flush();
+	public static void printImage(FileOutputStream bus, int linePosition, BufferedImage image) {
+		try {
+			Image img = new Image();
+			int[][] pixels = img.getPixelsSlow(image);
+			for (int y = 0; y < pixels.length; y += 24) {
+				for (int i = 0; i < linePosition; i++) {
+					bus.write(SPACE.getBytes());
+				}
+				bus.write(LINE_SPACE_30);
+				bus.write(SELECT_BIT_IMAGE_MODE);
+				bus.write(new byte[] { (byte) (0x00ff & pixels[y].length), (byte) ((0xff00 & pixels[y].length) >> 8) });
+				for (int x = 0; x < pixels[y].length; x++) {
+					bus.write(img.recollectSlice(y, x, pixels));
+				}
+				bus.write(CTL_LF);
+				bus.flush();
+			}
+			bus.flush();
 //            bus.write(CTL_LF);
-        } catch (IOException e) {
-            LOG.error("failed to printImage", e);
-        }
-    }
-    
-    public static void printQRCode(OutputStream bus, int linePosition, String qrCode, int size) throws QRCodeException {
-        QRCodeGenerator q = new QRCodeGenerator();
-        printImage(bus, linePosition, q.generate(qrCode, size));
-    }
+		} catch (IOException e) {
+			LOG.error("failed to printImage", e);
+		}
+	}
 
-    public static void printQRCode(OutputStream bus, int linePosition, String qrCode) throws QRCodeException {
-        try {
-            printQRCode(bus, linePosition, qrCode, 150);
-        } catch (QRCodeException ex) {
-            LOG.error("failed to printQRCode", ex);
-        }
-    }
-    
-    public static void printImage(OutputStream bus, int linePosition, final String imagePath) {
-        try {
-            File file = new File(imagePath);
-            if (file.exists()) {
-                BufferedImage read = ImageIO.read(file);
-                printImage(bus, linePosition, read);
-            } else {
+	public static void printImage(PrintWriter bus, int linePosition, BufferedImage image) {
+		try {
+			Image img = new Image();
+			int[][] pixels = img.getPixelsSlow(image);
+			for (int y = 0; y < pixels.length; y += 24) {
+				for (int i = 0; i < linePosition; i++) {
+					bus.println(SPACE.getBytes());
+				}
+				bus.println(LINE_SPACE_30);
+				bus.println(SELECT_BIT_IMAGE_MODE);
+				bus.println(
+						new byte[] { (byte) (0x00ff & pixels[y].length), (byte) ((0xff00 & pixels[y].length) >> 8) });
+				for (int x = 0; x < pixels[y].length; x++) {
+					bus.println(img.recollectSlice(y, x, pixels));
+				}
+				bus.println(CTL_LF);
+				bus.flush();
+			}
+			bus.flush();
+//            bus.write(CTL_LF);
+		} catch (Throwable e) {
+			LOG.error("failed to printImage", e);
+		}
+	}
+
+	public static void printImage(FileOutputStream bus, int linePosition, final String imagePath) {
+		try {
+			File file = new File(imagePath);
+			if (file.exists()) {
+				BufferedImage read = ImageIO.read(file);
+				printImage(bus, linePosition, read);
+			} else {
 //                LOG.debug("image does not exists" + "-->" + imagePath);
-                System.out.println("image does not exists" + "-->" + imagePath);
-            }
-        } catch (IOException ex) {
-            LOG.error("failed to printImage", ex);
-        }
-    }
-    
-    
-    
-    // best for 115200 baudrate
-    public static void printImageBaudrate115200(FileOutputStream bus, int linePosition, BufferedImage image) {
-        try {
-            Thread.sleep(100); // sleep 100 ms
-            Image img = new Image();
-            int[][] pixels = img.getPixelsSlow(image);
-            for (int y = 0; y < pixels.length; y += 24) {
-                for (int i = 0; i < linePosition; i++) {
-                    bus.write(SPACE.getBytes());
-                }
-                bus.write(LINE_SPACE_24);    
-                bus.write(SELECT_BIT_IMAGE_MODE);
-//                System.out.println("----");
-                bus.write(new byte[]{(byte) (0x00ff & pixels[y].length), (byte) ((0xff00 & pixels[y].length) >> 8)});
-                for (int x = 0; x < pixels[y].length; x++) {
-                    bus.write(img.recollectSlice(y, x, pixels));
-                }
-                bus.write(CTL_LF);
-//                bus.write(("\r\n").getBytes());
-                bus.flush();
-            }
-            bus.flush();
+				System.out.println("image does not exists" + "-->" + imagePath);
+			}
+		} catch (IOException ex) {
+			LOG.error("failed to printImage", ex);
+		}
+	}
+
+	public static void printImage(PrintWriter bus, int linePosition, final String imagePath) {
+		try {
+			File file = new File(imagePath);
+			if (file.exists()) {
+				BufferedImage read = ImageIO.read(file);
+				printImage(bus, linePosition, read);
+			} else {
+//                LOG.debug("image does not exists" + "-->" + imagePath);
+				System.out.println("image does not exists" + "-->" + imagePath);
+			}
+		} catch (IOException ex) {
+			LOG.error("failed to printImage", ex);
+		}
+	}
+
+	public static void printQRCode(FileOutputStream bus, int linePosition, String qrCode, int size)
+			throws QRCodeException {
+		QRCodeGenerator q = new QRCodeGenerator();
+		printImage(bus, linePosition, q.generate(qrCode, size));
+	}
+
+	public static void printQRCode(PrintWriter bus, int linePosition, String qrCode, int size) throws QRCodeException {
+		QRCodeGenerator q = new QRCodeGenerator();
+		printImage(bus, linePosition, q.generate(qrCode, size));
+	}
+
+	public static void printQRCode(FileOutputStream bus, int linePosition, String qrCode) throws QRCodeException {
+		try {
+			printQRCode(bus, linePosition, qrCode, 150);
+		} catch (QRCodeException ex) {
+			LOG.error("failed to printQRCode", ex);
+		}
+	}
+
+	public static void printImage(OutputStream bus, int linePosition, BufferedImage image) {
+		try {
+			Image img = new Image();
+			int[][] pixels = img.getPixelsSlow(image);
+			for (int y = 0; y < pixels.length; y += 24) {
+				for (int i = 0; i < linePosition; i++) {
+					bus.write(SPACE.getBytes());
+				}
+				bus.write(LINE_SPACE_30);
+				bus.write(SELECT_BIT_IMAGE_MODE);
+				bus.write(new byte[] { (byte) (0x00ff & pixels[y].length), (byte) ((0xff00 & pixels[y].length) >> 8) });
+				for (int x = 0; x < pixels[y].length; x++) {
+					bus.write(img.recollectSlice(y, x, pixels));
+				}
+				bus.write(CTL_LF);
+				bus.flush();
+			}
+			bus.flush();
 //            bus.write(CTL_LF);
-        } catch (IOException | InterruptedException e) {
-            LOG.error("failed to printImageBaudrate115200", e);
-        }
-    }
-    
-    public static void printImageBaudrate115200(PrintWriter bus, int linePosition, BufferedImage image) {
-        try {
-            Thread.sleep(100); // sleep 100 ms
-            Image img = new Image();
-            int[][] pixels = img.getPixelsSlow(image);
-            for (int y = 0; y < pixels.length; y += 24) {
-                for (int i = 0; i < linePosition; i++) {
-                    bus.println(SPACE.getBytes());
-                }
-                bus.println(LINE_SPACE_24);    
-                bus.println(SELECT_BIT_IMAGE_MODE);
+		} catch (IOException e) {
+			LOG.error("failed to printImage", e);
+		}
+	}
+
+	public static void printQRCode(OutputStream bus, int linePosition, String qrCode, int size) throws QRCodeException {
+		QRCodeGenerator q = new QRCodeGenerator();
+		printImage(bus, linePosition, q.generate(qrCode, size));
+	}
+
+	public static void printQRCode(OutputStream bus, int linePosition, String qrCode) throws QRCodeException {
+		try {
+			printQRCode(bus, linePosition, qrCode, 150);
+		} catch (QRCodeException ex) {
+			LOG.error("failed to printQRCode", ex);
+		}
+	}
+
+	public static void printImage(OutputStream bus, int linePosition, final String imagePath) {
+		try {
+			File file = new File(imagePath);
+			if (file.exists()) {
+				BufferedImage read = ImageIO.read(file);
+				printImage(bus, linePosition, read);
+			} else {
+//                LOG.debug("image does not exists" + "-->" + imagePath);
+				System.out.println("image does not exists" + "-->" + imagePath);
+			}
+		} catch (IOException ex) {
+			LOG.error("failed to printImage", ex);
+		}
+	}
+
+	// best for 115200 baudrate
+	public static void printImageBaudrate115200(FileOutputStream bus, int linePosition, BufferedImage image) {
+		try {
+			Thread.sleep(100); // sleep 100 ms
+			Image img = new Image();
+			int[][] pixels = img.getPixelsSlow(image);
+			for (int y = 0; y < pixels.length; y += 24) {
+				for (int i = 0; i < linePosition; i++) {
+					bus.write(SPACE.getBytes());
+				}
+				bus.write(LINE_SPACE_24);
+				bus.write(SELECT_BIT_IMAGE_MODE);
 //                System.out.println("----");
-                bus.println(new byte[]{(byte) (0x00ff & pixels[y].length), (byte) ((0xff00 & pixels[y].length) >> 8)});
-                for (int x = 0; x < pixels[y].length; x++) {
-                    bus.println(img.recollectSlice(y, x, pixels));
-                }
-                bus.println(CTL_LF);
+				bus.write(new byte[] { (byte) (0x00ff & pixels[y].length), (byte) ((0xff00 & pixels[y].length) >> 8) });
+				for (int x = 0; x < pixels[y].length; x++) {
+					bus.write(img.recollectSlice(y, x, pixels));
+				}
+				bus.write(CTL_LF);
 //                bus.write(("\r\n").getBytes());
-                bus.flush();
-            }
-            bus.flush();
+				bus.flush();
+			}
+			bus.flush();
 //            bus.write(CTL_LF);
-        } catch (InterruptedException e) {
-            LOG.error("failed to printImageBaudrate115200", e);
-        }
-    }
-    
-    public static void printQRCodeBaudrate115200(FileOutputStream bus, int linePosition, String qrCode, int size) throws QRCodeException {
-        QRCodeGenerator q = new QRCodeGenerator();
-        BufferedImage bufferedImage = q.generate(qrCode, size);
+		} catch (IOException | InterruptedException e) {
+			LOG.error("failed to printImageBaudrate115200", e);
+		}
+	}
+
+	public static void printImageBaudrate115200(PrintWriter bus, int linePosition, BufferedImage image) {
+		try {
+			Thread.sleep(100); // sleep 100 ms
+			Image img = new Image();
+			int[][] pixels = img.getPixelsSlow(image);
+			for (int y = 0; y < pixels.length; y += 24) {
+				for (int i = 0; i < linePosition; i++) {
+					bus.println(SPACE.getBytes());
+				}
+				bus.println(LINE_SPACE_24);
+				bus.println(SELECT_BIT_IMAGE_MODE);
+//                System.out.println("----");
+				bus.println(
+						new byte[] { (byte) (0x00ff & pixels[y].length), (byte) ((0xff00 & pixels[y].length) >> 8) });
+				for (int x = 0; x < pixels[y].length; x++) {
+					bus.println(img.recollectSlice(y, x, pixels));
+				}
+				bus.println(CTL_LF);
+//                bus.write(("\r\n").getBytes());
+				bus.flush();
+			}
+			bus.flush();
+//            bus.write(CTL_LF);
+		} catch (InterruptedException e) {
+			LOG.error("failed to printImageBaudrate115200", e);
+		}
+	}
+
+	public static void printQRCodeBaudrate115200(FileOutputStream bus, int linePosition, String qrCode, int size)
+			throws QRCodeException {
+		QRCodeGenerator q = new QRCodeGenerator();
+		BufferedImage bufferedImage = q.generate(qrCode, size);
 //        String qrFilePath = generateQR(bufferedImage, size);
-        printImageBaudrate115200(bus, linePosition, bufferedImage);
+		printImageBaudrate115200(bus, linePosition, bufferedImage);
 //        if (qrFilePath != null) {
 //            printImageBaudrate115200(bus, linePosition, qrFilePath);
 //        }        
-    }
-    
-    public static void printQRCodeBaudrate115200(PrintWriter bus, int linePosition, String qrCode, int size) throws QRCodeException {
-        QRCodeGenerator q = new QRCodeGenerator();
-        BufferedImage bufferedImage = q.generate(qrCode, size);
+	}
+
+	public static void printQRCodeBaudrate115200(PrintWriter bus, int linePosition, String qrCode, int size)
+			throws QRCodeException {
+		QRCodeGenerator q = new QRCodeGenerator();
+		BufferedImage bufferedImage = q.generate(qrCode, size);
 //        String qrFilePath = generateQR(bufferedImage, size);
-        printImageBaudrate115200(bus, linePosition, bufferedImage);
+		printImageBaudrate115200(bus, linePosition, bufferedImage);
 //        if (qrFilePath != null) {
 //            printImageBaudrate115200(bus, linePosition, qrFilePath);
 //        }        
-    }
+	}
 
-    public static void printQRCodeBaudrate115200(FileOutputStream bus, int linePosition, String qrCode) throws QRCodeException {
-        try {
-            printQRCodeBaudrate115200(bus, linePosition, qrCode, 150);
-        } catch (QRCodeException ex) {
-            LOG.error("failed to printQRCodeBaudrate115200", ex);
-        }
-    }
-    
-    public static void printQRCodeBaudrate115200(PrintWriter bus, int linePosition, String qrCode) throws QRCodeException {
-        try {
-            printQRCodeBaudrate115200(bus, linePosition, qrCode, 150);
-        } catch (QRCodeException ex) {
-            LOG.error("failed to printQRCodeBaudrate115200", ex);
-        }
-    }
-    
-    public static void printImageBaudrate115200(FileOutputStream bus, int linePosition, final String imagePath) {
-        try {
-            File file = new File(imagePath);
-            if (file.exists()) {
-                BufferedImage read = ImageIO.read(file);
-                printImageBaudrate115200(bus, linePosition, read);
-            } else {
+	public static void printQRCodeBaudrate115200(FileOutputStream bus, int linePosition, String qrCode)
+			throws QRCodeException {
+		try {
+			printQRCodeBaudrate115200(bus, linePosition, qrCode, 150);
+		} catch (QRCodeException ex) {
+			LOG.error("failed to printQRCodeBaudrate115200", ex);
+		}
+	}
+
+	public static void printQRCodeBaudrate115200(PrintWriter bus, int linePosition, String qrCode)
+			throws QRCodeException {
+		try {
+			printQRCodeBaudrate115200(bus, linePosition, qrCode, 150);
+		} catch (QRCodeException ex) {
+			LOG.error("failed to printQRCodeBaudrate115200", ex);
+		}
+	}
+
+	public static void printImageBaudrate115200(FileOutputStream bus, int linePosition, final String imagePath) {
+		try {
+			File file = new File(imagePath);
+			if (file.exists()) {
+				BufferedImage read = ImageIO.read(file);
+				printImageBaudrate115200(bus, linePosition, read);
+			} else {
 //                LOG.debug("image does not exists" + "-->" + imagePath);
-                System.out.println("image does not exists" + "-->" + imagePath);
-            }            
-        } catch (IOException ex) {
-            LOG.error("failed to printImageBaudrate115200", ex);
-        }
-    }
-    
-    public static void printImageBaudrate115200(PrintWriter bus, int linePosition, final String imagePath) {
-        try {
-            File file = new File(imagePath);
-            if (file.exists()) {
-                BufferedImage read = ImageIO.read(file);
-                printImageBaudrate115200(bus, linePosition, read);
-            } else {
+				System.out.println("image does not exists" + "-->" + imagePath);
+			}
+		} catch (IOException ex) {
+			LOG.error("failed to printImageBaudrate115200", ex);
+		}
+	}
+
+	public static void printImageBaudrate115200(PrintWriter bus, int linePosition, final String imagePath) {
+		try {
+			File file = new File(imagePath);
+			if (file.exists()) {
+				BufferedImage read = ImageIO.read(file);
+				printImageBaudrate115200(bus, linePosition, read);
+			} else {
 //                LOG.debug("image does not exists" + "-->" + imagePath);
-                System.out.println("image does not exists" + "-->" + imagePath);
-            }            
-        } catch (IOException ex) {
-            LOG.error("failed to printImageBaudrate115200", ex);
-        }
-    }
-    
-    public static String generateBarcode128(final String barcode) {
-        return generateBarcode128(barcode, 0);
-    }
-    
-    public static String generateBarcode128(final String barcode, final int fontSize) {
-        try {
-            final File reportFile = new File(System.getProperty(TEPDIR_PROPERTY), "report");
-            final String reportPath = reportFile.getPath();
+				System.out.println("image does not exists" + "-->" + imagePath);
+			}
+		} catch (IOException ex) {
+			LOG.error("failed to printImageBaudrate115200", ex);
+		}
+	}
+
+	public static String generateBarcode128(final String barcode) {
+		return generateBarcode128(barcode, 0);
+	}
+
+	public static String generateBarcode128(final String barcode, final int fontSize) {
+		try {
+			final File reportFile = new File(System.getProperty(TEPDIR_PROPERTY), "report");
+			final String reportPath = reportFile.getPath();
 //            final String reportPath = EpbSharedObjects.getApplicationLaunchPath().getPath()
 //                    + System.getProperty("file.separator")  + "report";
-            final String barcode128FilePath =
-                    reportPath + System.getProperty("file.separator") + "barcode"+ barcode + (System.currentTimeMillis()) + ".bmp";
-            File reportFoleder = new File(reportPath);
-            if (!reportFoleder.exists()) {
-                reportFoleder.mkdir();
-            }
-            File barcode128File = new File(barcode128FilePath);
-            if (barcode128File.exists()) {
-                barcode128File.delete();
-            }
-            if (barcode128File.exists()) {
+			final String barcode128FilePath = reportPath + System.getProperty("file.separator") + "barcode" + barcode
+					+ (System.currentTimeMillis()) + ".bmp";
+			File reportFoleder = new File(reportPath);
+			if (!reportFoleder.exists()) {
+				reportFoleder.mkdir();
+			}
+			File barcode128File = new File(barcode128FilePath);
+			if (barcode128File.exists()) {
+				barcode128File.delete();
+			}
+			if (barcode128File.exists()) {
 //                LOG.debug("barcode128File exists");
-                System.out.println("barcode128File exists");
-                return null;
-            }
-            BarcodeGenerator.generate128File(barcode, barcode128FilePath, fontSize);
-            if (barcode128File.exists()) {
-                return barcode128FilePath;
-            }
-            barcode128File = null;
+				System.out.println("barcode128File exists");
+				return null;
+			}
+			BarcodeGenerator.generate128File(barcode, barcode128FilePath, fontSize);
+			if (barcode128File.exists()) {
+				return barcode128FilePath;
+			}
+			barcode128File = null;
 //            LOG.debug("failed to generateBarcode128");
-            System.out.println("failed to generateBarcode128");
-            return null;
-        } catch (Throwable ex) {
-            LOG.error("failed to generateBarcode128", ex);
-            return null;
-        }
-    }
-    
-    public static void resizeImage(String srcImgPath, String distImgPath,
-            int width, int height) throws IOException {
+			System.out.println("failed to generateBarcode128");
+			return null;
+		} catch (Throwable ex) {
+			LOG.error("failed to generateBarcode128", ex);
+			return null;
+		}
+	}
 
-        File srcFile = new File(srcImgPath);
-        java.awt.Image srcImg = ImageIO.read(srcFile);
-        BufferedImage buffImg = null;
-        buffImg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        buffImg.getGraphics().drawImage(
-                srcImg.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH), 0,
-                0, 
-                null);
+	public static void resizeImage(String srcImgPath, String distImgPath,
+			int width, int height) throws IOException {
 
-        ImageIO.write(buffImg, "BMP", new File(distImgPath));
-        srcFile = null;
-    }
-    
-    private static void change() {
-        try {
-            BufferedImage src = ImageIO.read(new File("D:\\SJ_LOGO_xx.bmp")); // 读入源图像
-            int width = src.getWidth(); // 源图宽
-            int height = src.getHeight(); // 源图高
- 
-            java.awt.Image image = src.getScaledInstance((int) (width), (int) (height),
-                    java.awt.Image.SCALE_DEFAULT);
- 
-            BufferedImage tag = new BufferedImage((int) (width),
-                    (int) (height), BufferedImage.TYPE_BYTE_BINARY);
-            Graphics2D g = tag.createGraphics();
- 
-            g.drawImage(image, 0, 0, null);
- 
-            g.dispose();
- 
-            OutputStream out = new FileOutputStream("D:\\SJ_LOGO_xx2.jpg");
-            tag.setRGB(5, 5, 123);
-            ImageIO.write(tag, "JPG", out);
-            out.close();
+		File srcFile = new File(srcImgPath);
+		java.awt.Image srcImg = ImageIO.read(srcFile);
+		BufferedImage buffImg = null;
+		buffImg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		buffImg.getGraphics().drawImage(
+				srcImg.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH), 0,
+				0,
+				null);
 
-        } catch (IOException ex) {
-            LOG.error(ex);
-        }
-    }
-    
+		ImageIO.write(buffImg, "BMP", new File(distImgPath));
+		srcFile = null;
+	}
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        try {
+	private static void change() {
+		try {
+			BufferedImage src = ImageIO.read(new File("D:\\SJ_LOGO_xx.bmp")); // 读入源图像
+			int width = src.getWidth(); // 源图宽
+			int height = src.getHeight(); // 源图高
+
+			java.awt.Image image = src.getScaledInstance((int) (width), (int) (height),
+					java.awt.Image.SCALE_DEFAULT);
+
+			BufferedImage tag = new BufferedImage((int) (width),
+					(int) (height), BufferedImage.TYPE_BYTE_BINARY);
+			Graphics2D g = tag.createGraphics();
+
+			g.drawImage(image, 0, 0, null);
+
+			g.dispose();
+
+			OutputStream out = new FileOutputStream("D:\\SJ_LOGO_xx2.jpg");
+			tag.setRGB(5, 5, 123);
+			ImageIO.write(tag, "JPG", out);
+			out.close();
+
+		} catch (IOException ex) {
+			LOG.error(ex);
+		}
+	}
+
+	/**
+	 * @param args the command line arguments
+	 */
+	public static void main(String[] args) {
+		try {
 //            change();
 ////            resizeImage("D:\\pic\\SJ_LOGO2.bmp", "D:\\pic\\SJ_LOGO3.bmp", 450, 130);
 //            if (1 == 1) {
@@ -485,19 +494,18 @@ public class Epbescpos {
 //            BufferedImage read = ImageIO.read(file);
 //            printImage(ioPrint, 10, read);
 
-            
-            FileOutputStream ioPrint;
-            try {
-                ioPrint = new FileOutputStream("COM4");
-            } catch (Throwable ex) {
-                System.out.println("failed to open port" + ex.getMessage());
-                ioPrint = null;
-            }
-            if (ioPrint == null) {
-                System.out.println("Init print port failed!");
-                return;
-            }
-            System.out.println("----x1----");
+			FileOutputStream ioPrint;
+			try {
+				ioPrint = new FileOutputStream("COM4");
+			} catch (Throwable ex) {
+				System.out.println("failed to open port" + ex.getMessage());
+				ioPrint = null;
+			}
+			if (ioPrint == null) {
+				System.out.println("Init print port failed!");
+				return;
+			}
+			System.out.println("----x1----");
 //            ioPrint.write("------".getBytes());
 //            ioPrint.write("------1".getBytes());
 //            ioPrint.write("------2".getBytes());
@@ -509,15 +517,15 @@ public class Epbescpos {
 //            ioPrint.write("------8".getBytes());
 //            ioPrint.write("------9".getBytes());
 //            ioPrint.write("------10".getBytes());
-            String msg = "2200801321711210075";
+			String msg = "2200801321711210075";
 //            String path = "D:\\barcode.bmp";
 //            generateFile(msg, path);
 //            printImageBaudrate115200(ioPrint, 0, path);
 //            ioPrint.write("------------".getBytes());
-            ioPrint.write(CTL_LF);
-            String path128 = "D:\\barcode128.bmp";
-            BarcodeGenerator.generate128File(msg, path128, 0);
-            printImageBaudrate115200(ioPrint, 2, path128);
+			ioPrint.write(CTL_LF);
+			String path128 = "D:\\barcode128.bmp";
+			BarcodeGenerator.generate128File(msg, path128, 0);
+			printImageBaudrate115200(ioPrint, 2, path128);
 //            ioPrint.write(0x1B);
 //            ioPrint.write(97);
 //            //设置条码居中
@@ -551,8 +559,8 @@ public class Epbescpos {
 //            ioPrint.write("2110033".getBytes());
 //            ioPrint.flush();
 //            System.out.println("----end----");
-        } catch (IOException ex) {
-            System.out.println("test:" + ex);
-        }
-    }
+		} catch (IOException ex) {
+			System.out.println("test:" + ex);
+		}
+	}
 }

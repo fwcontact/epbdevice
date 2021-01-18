@@ -12,7 +12,11 @@ import java.io.Serializable;
  */
 public class CrmPosline implements Serializable{
     
-    private String productNo;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 7617356889682008902L;
+	private String productNo;
     private String saleQty;
     private String saleAmt;
     

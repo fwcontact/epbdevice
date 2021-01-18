@@ -12,7 +12,11 @@ import java.io.Serializable;
  */
 public class CrmCoupon implements Serializable{
     
-    private String couponNo;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 4868404992444486904L;
+	private String couponNo;
     private String disAmt;
     private int paySerialno;
     

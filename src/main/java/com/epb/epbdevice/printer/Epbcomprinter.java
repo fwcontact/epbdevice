@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class Epbcomprinter {
     
     private static final String EMPTY = "";
@@ -16,9 +17,9 @@ public class Epbcomprinter {
     private static final String LPT = "LPT";
     private static final String CUT_PAPER_DEFAULT_CMD = "27,105";
     private static final String OPEN_DRAWER_DEFAULT_CMD = "27,112,0,48,255";
-    private static final String SPACE = " ";
+	private static final String SPACE = " ";
     private static final String COMMAND_QR = "qr";
-    private static final String COMMAND_QR115200 = "qr115200";
+	private static final String COMMAND_QR115200 = "qr115200";
     private static final String COMMA = ",";
     private static final String COMMAND_IMAGE = "pi";
     private static final String COMMAND_IMAGE115200 = "pi115200";
@@ -259,7 +260,7 @@ public class Epbcomprinter {
         }
     }
     
-    private void doPrintPosReceipt(final List<PrintPool> printPoolList) {
+	private void doPrintPosReceipt(final List<PrintPool> printPoolList) {
         try {
             String output;
             int position;
@@ -406,7 +407,7 @@ public class Epbcomprinter {
         }
     }
 
-    private void doPrintText(final String lineText) {
+	private void doPrintText(final String lineText) {
         try {
             if (ioPrint == null) {
                 // do nothing

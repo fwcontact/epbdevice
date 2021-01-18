@@ -14,7 +14,11 @@ import java.util.Date;
  */
 public class CrmPosVipInfo implements Serializable{
     
-    private String vipId;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -4307591540924474082L;
+	private String vipId;
     private String name;
     private String classId;
     private Character gender;

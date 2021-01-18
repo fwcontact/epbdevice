@@ -2,7 +2,12 @@ package com.epb.epbdevice.utl;
 
 public class QRCodeException extends Exception{
 
-    public QRCodeException() {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 4706281335531351575L;
+
+	public QRCodeException() {
         super();
     }
 

@@ -6,16 +6,23 @@
 
 	<groupId>com.epb</groupId>
 	<artifactId>epbdevice</artifactId>
-	<version>1.5.1</version>
+	<version>1.5.2</version>
 	<packaging>jar</packaging>
 
 	<name>epbdevice</name>
 	<description>EPB Device</description>
 
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.3.6.RELEASE</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.8</java.version>
 	</properties>
 
 	<repositories>
@@ -27,6 +34,16 @@
 	</repositories>
 
 	<dependencies>
+		<!-- controlled by starters -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+		</dependency>
+
 		<!-- not controlled by starters -->
 		<dependency>
 			<groupId>com.google.zxing</groupId>
@@ -43,31 +60,6 @@
 			<artifactId>org.json</artifactId>
 			<version>chargebee-1.0</version>
 		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
-			<version>4.5.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpmime</artifactId>
-			<version>4.5.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient-cache</artifactId>
-			<version>4.5.1</version>
-		</dependency>
-		<dependency>
-			<groupId>httpcomponents-httpcore</groupId>
-			<artifactId>httpcore</artifactId>
-			<version>4.0-alpha5</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>2.11.0</version>
-		</dependency>
 
 		<!-- run-times -->
 		<dependency> <!-- controlled by XWiki MAVEN repository -->
@@ -76,11 +68,6 @@
 			<version>12.2.0.1</version>
 			<scope>runtime</scope>
 		</dependency>
-	 <dependency>
-	  <groupId>com.fasterxml.jackson.core</groupId>
-	  <artifactId>jackson-annotations</artifactId>
-	  <version>2.11.0</version>
-	 </dependency>
 	</dependencies>
 
 	<build>
@@ -88,7 +75,6 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<version>2.3.1</version>
 			</plugin>
 		</plugins>
 	</build>

@@ -988,7 +988,8 @@ public class Epbmemberson {
 //        }
 //    }
     
-    private static Map<String, Object> getMemberDiscounts(final String baseurl, final String callAuth, final String token, 
+    @SuppressWarnings("unused")
+	private static Map<String, Object> getMemberDiscounts(final String baseurl, final String callAuth, final String token, 
             final String memberNo, final String locId) {
         final Map<String, Object> returnMap = new HashMap<>();
         try {      

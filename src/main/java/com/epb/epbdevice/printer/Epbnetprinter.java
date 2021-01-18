@@ -17,12 +17,13 @@ import java.util.regex.Pattern;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+@SuppressWarnings("unused")
 public class Epbnetprinter {
     private static final Log LOG = LogFactory.getLog(Epbnetprinter.class);
     private static final String EMPTY = "";
 //    private static final String COM = "COM";
 //    private static final String LPT = "LPT";
-    private static final String CUT_PAPER_DEFAULT_CMD = "27,105";
+	private static final String CUT_PAPER_DEFAULT_CMD = "27,105";
 //    private static final String OPEN_DRAWER_DEFAULT_CMD = "27,112,0,48,255";
 //    private static final byte[] CTL_LF = ("\r\n").getBytes();          // Print and line feed
     private static final String SPACE = " ";

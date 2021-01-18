@@ -17,7 +17,8 @@ public class HttpUtil {
     private static final int MS_TIMEOUT = 10000;
     private static final String UTF8 = "UTF-8";
     private static final String TIMEOUT = "TIMEOUT";
-    private static final String UNKOWN = "Unkown Reason";
+    @SuppressWarnings("unused")
+	private static final String UNKOWN = "Unkown Reason";
     private static final String EMPTY = "";
 
     public static Map<String, String> callHttpMethod(final String callUrl, final String callAuth, final String token, final String httpMethod, final String requestDataJson) {
