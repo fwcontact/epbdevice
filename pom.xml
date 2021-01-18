@@ -6,7 +6,7 @@
 
 	<groupId>com.epb</groupId>
 	<artifactId>epbdevice</artifactId>
-	<version>1.5.2</version>
+	<version>1.5.2b</version>
 	<packaging>jar</packaging>
 
 	<name>epbdevice</name>
