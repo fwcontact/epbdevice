@@ -103,7 +103,7 @@ public class Epbmemberson {
         ResultSet rs = null;
         try {
             // get system setting
-            String sql = "SELECT SET_ID, SET_STRING FROM EP_SYS_SETTING WHERE SET_ID IN ('POSO2OCONT', 'POSO2OURL', 'POSO2OVENDOR', 'POSO2OTOKEN', 'POSO2OAPPKEY', 'POSO2OSVCAUTH', 'POSO2OSECRET', 'DiscFormat')";
+            String sql = "SELECT SET_ID, SET_STRING FROM EP_SYS_SETTING WHERE SET_ID IN ('POSO2OCONT', 'POSO2OURL', 'POSO2OVENDOR', 'POSO2OTOKEN', 'POSO2OAPPKEY', 'POSO2OSECRET', 'DiscFormat')";
 
             pstmt = conn.prepareStatement(sql);
             rs = pstmt.executeQuery();
@@ -143,8 +143,6 @@ public class Epbmemberson {
                         posO2oAppKey = setString;
                 } else if ("POSO2OSECRET".equals(setId)) {
                         posO2oAppSecret = setString;
-                } else if ("POSO2OSVCAUTH".equals(setId)) {
-                	posO2oAuth = setString;
                 }
             }
             
@@ -185,9 +183,7 @@ public class Epbmemberson {
             }
             
             // call memberson API
-            if (posO2oAuth == null || posO2oAuth.length() == 0) {
-            	posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
-            }            
+            posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
             Map<String, Object> retMap = searchVip(conn, opentableRecKey, posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName == null || EMPTY.equals(vipName) ? EMPTY : "%" + vipName + "%", vipPhoneCountryCode, vipPhone, emailAddress);
             if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
@@ -246,7 +242,7 @@ public class Epbmemberson {
         ResultSet rs = null;
         try {
             // get system setting
-            String sql = "SELECT SET_ID, SET_STRING FROM EP_SYS_SETTING WHERE SET_ID IN ('POSO2OCONT', 'POSO2OURL', 'POSO2OVENDOR', 'POSO2OSVCAUTH', 'POSO2OTOKEN', 'POSO2OAPPKEY', 'POSO2OSECRET', 'DiscFormat')";
+            String sql = "SELECT SET_ID, SET_STRING FROM EP_SYS_SETTING WHERE SET_ID IN ('POSO2OCONT', 'POSO2OURL', 'POSO2OVENDOR', 'POSO2OTOKEN', 'POSO2OAPPKEY', 'POSO2OSECRET', 'DiscFormat')";
 
             pstmt = conn.prepareStatement(sql);
             rs = pstmt.executeQuery();
@@ -289,8 +285,6 @@ public class Epbmemberson {
                         posO2oAppSecret = setString;
                 } else if ("DiscFormat".equals(setId)) {
                         discFormat = setString;
-                } else if ("POSO2OSVCAUTH".equals(setId)) {
-                	posO2oAuth = setString;
                 }
             }
             
@@ -402,9 +396,7 @@ public class Epbmemberson {
                 rs.close();
             } else {
                 // call memberson API
-            	if (posO2oAuth == null || posO2oAuth.length() == 0) {
-            		posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
-            	}
+                posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
                 Map<String, Object> retMap = Epbmemberson.getRedeemPointsConversionRate(posO2oUrl, posO2oAuth, posO2oAccessToken, currId);
                 if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                     returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
