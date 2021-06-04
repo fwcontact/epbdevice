@@ -188,6 +188,16 @@ public class Epbmemberson {
             if (posO2oAuth == null || posO2oAuth.length() == 0) {
             	posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
             }
+            if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
+                Map<String, String> mapping = Epbmemberson.getToken(posO2oUrl, posO2oAppKey, posO2oAppSecret, posO2oAuth);
+                if (mapping == null
+                        || mapping.get(Epbmemberson.MSG_ID) == null || !Epbmemberson.RETURN_OK.equals(mapping.get(Epbmemberson.MSG_ID))) {
+                    returnMap.put(MSG_ID, FAIL);
+                    returnMap.put(MSG, "Failed to get CRM token");
+                	return returnMap;
+                }
+                posO2oAccessToken = mapping.get(Epbmemberson.MSG).replaceAll("\"", "");
+        	}
             Map<String, Object> retMap = searchVip(conn, opentableRecKey, posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName == null || EMPTY.equals(vipName) ? EMPTY : "%" + vipName + "%", vipPhoneCountryCode, vipPhone, emailAddress);
             if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
@@ -405,6 +415,16 @@ public class Epbmemberson {
             	if (posO2oAuth == null || posO2oAuth.length() == 0) {
             		posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
             	}
+            	if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
+                    Map<String, String> mapping = Epbmemberson.getToken(posO2oUrl, posO2oAppKey, posO2oAppSecret, posO2oAuth);
+                    if (mapping == null
+                            || mapping.get(Epbmemberson.MSG_ID) == null || !Epbmemberson.RETURN_OK.equals(mapping.get(Epbmemberson.MSG_ID))) {
+                        returnMap.put(MSG_ID, FAIL);
+                        returnMap.put(MSG, "Failed to get CRM token");
+                    	return returnMap;
+                    }
+                    posO2oAccessToken = mapping.get(Epbmemberson.MSG).replaceAll("\"", "");
+            	}
                 Map<String, Object> retMap = Epbmemberson.getRedeemPointsConversionRate(posO2oUrl, posO2oAuth, posO2oAccessToken, currId);
                 if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                     returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
@@ -574,29 +594,29 @@ public class Epbmemberson {
         }
     }
     
-//    private static Map<String, String> getToken(final String baseurl, final String userName, final String userPassword, final String callAuth) {
-//        final Map<String, String> returnMap = new HashMap<>();
-//        try {
-//            String callHttpUrl = baseurl + SLASH + "api/user/authenticate";
-//            JSONObject jsonBody = new JSONObject();
-//            jsonBody.put("UserName", userName);
-//            jsonBody.put("Password", userPassword);
-//            System.out.println(jsonBody.toString());
-//            final Map<String, String> callMap = HttpUtil.callHttpMethod(callHttpUrl, callAuth, null, HttpUtil.POST_METHOD, jsonBody.toString());
-//            if (Epbmemberson.RETURN_OK.equals(callMap.get(MSG_ID))) {
-//                returnMap.put(MSG_ID, RETURN_OK);
-//                returnMap.put(MSG, callMap.get(MSG));
-//            } else {
-//                returnMap.put(MSG_ID, callMap.get(MSG_ID));
-//                returnMap.put(MSG, callMap.get(MSG));
-//            }            
-//            return returnMap;
-//        } catch (JSONException thr) {
-//            System.out.println("error getToken:" + thr.getMessage());
-//            return returnMap;
-//        }
-//    }
-//    
+    private static Map<String, String> getToken(final String baseurl, final String userName, final String userPassword, final String callAuth) {
+        final Map<String, String> returnMap = new HashMap<>();
+        try {
+            String callHttpUrl = baseurl + SLASH + "api/user/authenticate";
+            JSONObject jsonBody = new JSONObject();
+            jsonBody.put("UserName", userName);
+            jsonBody.put("Password", userPassword);
+            System.out.println(jsonBody.toString());
+            final Map<String, String> callMap = HttpUtil.callHttpMethod(callHttpUrl, callAuth, null, HttpUtil.POST_METHOD, jsonBody.toString());
+            if (Epbmemberson.RETURN_OK.equals(callMap.get(MSG_ID))) {
+                returnMap.put(MSG_ID, RETURN_OK);
+                returnMap.put(MSG, callMap.get(MSG));
+            } else {
+                returnMap.put(MSG_ID, callMap.get(MSG_ID));
+                returnMap.put(MSG, callMap.get(MSG));
+            }            
+            return returnMap;
+        } catch (JSONException thr) {
+            System.out.println("error getToken:" + thr.getMessage());
+            return returnMap;
+        }
+    }
+    
 //    private static Map<String, String> getProfile(final String baseurl, final String callAuth, final String token, final String vipID) {
 //        final Map<String, String> returnMap = new HashMap<>();
 //        try {
