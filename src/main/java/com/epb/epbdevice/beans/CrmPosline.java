@@ -19,6 +19,7 @@ public class CrmPosline implements Serializable{
 	private String productNo;
     private String saleQty;
     private String saleAmt;
+    private String lineType;
     
     private static final String EMPTY = ""; 
     
@@ -27,6 +28,7 @@ public class CrmPosline implements Serializable{
         this.productNo = EMPTY;
         this.saleQty = EMPTY;
         this.saleAmt = EMPTY;
+        this.lineType = EMPTY;
     }
 
     public String getProductNo() {
@@ -51,6 +53,14 @@ public class CrmPosline implements Serializable{
 
     public void setSaleAmt(String saleAmt) {
         this.saleAmt = saleAmt;
+    }
+
+    public String getLineType() {
+        return lineType;
+    }
+
+    public void setLineType(String lineType) {
+        this.lineType = lineType;
     }
     
 }

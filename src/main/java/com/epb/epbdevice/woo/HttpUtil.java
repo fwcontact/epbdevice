@@ -3,7 +3,9 @@ package com.epb.epbdevice.woo;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.net.HttpURLConnection;
@@ -12,6 +14,7 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,14 @@ import org.apache.http.util.EntityUtils;
 public class HttpUtil {
 
 	private static final Log LOG = LogFactory.getLog(HttpUtil.class);
+    private static final int MS_TIMEOUT = 10000;
+    private static final String UTF8 = "UTF-8";
+    private static final String EMPTY = "";
+    private static final String MSG_ID = "msgId";
+    private static final String MSG = "msg";
+    private static final String OK = "OK";
+    private static final String FAIL = "Fail";
+    private static final String TIMEOUT = "Timeout";
 
 	/**
 	 * * post map 数据
@@ -80,6 +91,90 @@ public class HttpUtil {
 		}
 		return content;
 	}
+	
+	public static Map<String, String> callHttpPostMethod(String callUrl, String requestDataJson, String charset) {
+        final Map<String, String> returnMapping = new HashMap<String, String>();
+        try {
+            LOG.info("callUrl:" + callUrl);
+            URL url = new URL(callUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            connection.setRequestMethod("POST");
+            connection.setUseCaches(false);
+            connection.setInstanceFollowRedirects(true);
+            connection.setRequestProperty("Content-Type", "application/json;charset=utf-8");
+            connection.setRequestProperty("Accept", "application/json;charset=utf-8");
+            connection.setRequestProperty("Cache-Control", "no-cache");
+            connection.setReadTimeout(MS_TIMEOUT);
+            connection.connect();
+
+            if (requestDataJson != null && requestDataJson.length() != 0) {
+            	LOG.info("requestDataJson:" + requestDataJson);
+                OutputStream out = connection.getOutputStream();
+                out.write(requestDataJson.getBytes(UTF8));
+                out.flush();
+                out.close();
+            }
+
+
+            if (connection.getResponseCode() == 200) {
+                //读取响应
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(connection.getInputStream(), UTF8));
+                String lines;
+                StringBuilder sb = new StringBuilder(EMPTY);
+                while ((lines = reader.readLine()) != null) {
+                    lines = new String(lines.getBytes(UTF8), UTF8);
+                    sb.append(lines);
+                }
+                String jsonReturn = sb.toString();
+                LOG.info("msg:" + sb);
+                reader.close();
+                // 断开连接
+                connection.disconnect();
+                returnMapping.put(MSG_ID, OK);
+                returnMapping.put(MSG, jsonReturn);
+                return returnMapping;
+            } else {
+                BufferedReader in = new BufferedReader(new InputStreamReader(
+                        (InputStream) connection.getErrorStream(), "UTF-8"));//返回从此打开的连接读取的输入流
+                String line = "";
+                String msg = "";
+                while (line != null) {
+                    line = in.readLine();
+                    if (line != null) {
+                        msg = msg + line;
+                    }
+                }
+                in.close();
+                LOG.info("Network Error,ResponseCode=" + connection.getResponseCode() + " msg=" + msg);
+                returnMapping.put(MSG_ID, FAIL);
+                returnMapping.put(MSG, "Network Error,ResponseCode=" + connection.getResponseCode() + " msg=" + msg);
+                return returnMapping;
+            }
+        } catch (java.net.SocketTimeoutException ex) {
+            returnMapping.put(MSG_ID, TIMEOUT);
+            returnMapping.put(MSG, "Timeout");
+            LOG.error("error callHttpPostMethod", ex);
+            return returnMapping;
+        } catch (java.net.UnknownHostException ex) {
+            returnMapping.put(MSG_ID, TIMEOUT);
+            returnMapping.put(MSG, "unkowned");
+            LOG.error("error callHttpPostMethod2", ex);
+            return returnMapping;
+        } catch (java.net.SocketException ex) {
+            returnMapping.put(MSG_ID, TIMEOUT);
+            returnMapping.put(MSG, "can not connect");
+            LOG.error("error callHttpPostMethod3", ex);
+            return returnMapping;
+        } catch (Exception ex) {
+            returnMapping.put(MSG_ID, FAIL);
+            returnMapping.put(MSG, ex.toString());
+            LOG.error("error callHttpPostMethod4", ex);
+            return returnMapping;
+        }
+    }
 
 	// HTTP post请求
 	public static String postForm(String aUrl, String aParam) throws Exception {
