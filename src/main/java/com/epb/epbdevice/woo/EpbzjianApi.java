@@ -242,11 +242,19 @@ public class EpbzjianApi {
 
             String timestamp = getTimestamp();
             String method = "zjian.crm.customer.coupon.check";
+            
+            BigDecimal totalAmt = BigDecimal.ZERO;
+            for (CrmPosline sku : skuList) {
+                if ("S".equals(sku.getLineType())) {
+                    totalAmt = totalAmt.add(new BigDecimal(sku.getSaleAmt()));
+                }
+            }
+            
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("customer_no", vipId);
             jsonObject.put("site_no", shopId);
-            jsonObject.put("sum_sale_price", sumSaleAmt);
-            jsonObject.put("sum_sale_amt", sumSaleAmt);
+            jsonObject.put("sum_sale_price", totalAmt);
+            jsonObject.put("sum_sale_amt", totalAmt);
             jsonObject.put("trade_no", docId);
             jsonObject.put("pay_serial_no", "pay" + docId);
             // sku list
@@ -255,8 +263,8 @@ public class EpbzjianApi {
                 if ("S".equals(sku.getLineType())) {
                     JSONObject json = new JSONObject();
                     json.put("sku_no", sku.getProductNo());
-                    json.put("sale_price", new BigDecimal(sku.getSaleAmt()).abs());
-                    json.put("sale_amt", new BigDecimal(sku.getSaleAmt()).abs());
+                    json.put("sale_price", new BigDecimal(sku.getSaleAmt()));
+                    json.put("sale_amt", new BigDecimal(sku.getSaleAmt()));
                     skuJSONArray.put(json);
                 }
             }
@@ -356,11 +364,19 @@ public class EpbzjianApi {
 
             String timestamp = getTimestamp();
             String method = "zjian.crm.customer.coupons.use";
+            
+            BigDecimal totalAmt = BigDecimal.ZERO;
+            for (CrmPosline sku : skuList) {
+                if ("S".equals(sku.getLineType())) {
+                    totalAmt = totalAmt.add(new BigDecimal(sku.getSaleAmt()));
+                }
+            }
+            
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("customer_no", vipId);
             jsonObject.put("site_no", shopId);
-            jsonObject.put("sum_sale_price", sumSaleAmt);
-            jsonObject.put("sum_sale_amt", sumSaleAmt);
+            jsonObject.put("sum_sale_price", totalAmt);
+            jsonObject.put("sum_sale_amt", totalAmt);
             jsonObject.put("trade_no", docId);
             jsonObject.put("pay_serial_no", "pay" + docId);
             // sku list
@@ -369,8 +385,10 @@ public class EpbzjianApi {
                 if ("S".equals(sku.getLineType())) {
                     JSONObject json = new JSONObject();
                     json.put("sku_no", sku.getProductNo());
-                    json.put("sale_price", sumSaleAmt.abs());
-                    json.put("sale_amt", sumSaleAmt.abs());
+//                    json.put("sale_price", sumSaleAmt.abs());
+//                    json.put("sale_amt", sumSaleAmt.abs());
+                    json.put("sale_price", new BigDecimal(sku.getSaleAmt()));
+                    json.put("sale_amt", new BigDecimal(sku.getSaleAmt()));
                     skuJSONArray.put(json);
                 }
             }
