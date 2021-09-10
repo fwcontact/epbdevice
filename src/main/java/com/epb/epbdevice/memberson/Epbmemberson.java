@@ -843,7 +843,9 @@ public class Epbmemberson {
                             for (int k = 0; k < asCount; k++) {
                                 JSONObject asDataObject = (JSONObject) accountSummariesArray.get(k);
                                 if (asDataObject != null) {
-                                    balance = asDataObject.getDouble(RETURN_BALANCE) + EMPTY;
+                                	if ("C21 Points".equals(asDataObject.getString("PointType"))) {
+                                		balance = asDataObject.getDouble(RETURN_BALANCE) + EMPTY;
+                                	}
                                 }
                             }
                         }
