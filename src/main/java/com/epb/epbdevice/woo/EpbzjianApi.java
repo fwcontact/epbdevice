@@ -5,6 +5,7 @@
 package com.epb.epbdevice.woo;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,7 @@ public class EpbzjianApi {
 //	public static final String RETURN_OK = "000";
 //	public static final String RETURN_SALE_AMT = "sale_amt";
 	public static final String RETURN_DIS_AMT = "sum_disc_amt";
+	public static final String RETURN_COUPON_TYPE = "coupon_type";
 	public static final String RETURN_CODE_UNKOWNREASON = "unkown reaseon";
 	public static final String RETURN_RETURN_API_RET_EMPTY = "FAIL:API return is empty";
 	public static final String PM_ID_ZJIAN = "Daijq";
@@ -228,6 +230,143 @@ public class EpbzjianApi {
      * 
      * @return Map<String, String>
      */
+    public synchronized Map<String, String> checkCoupon(String docId, String shopId, String vipId, BigDecimal sumSaleAmt,  
+            final List<CrmPosline> skuList,
+            final String scanningCoupon) {
+        String sMessage;
+        final Map<String, String> returnMapping = new HashMap<String, String>();
+        try {
+            if (vipId == null || vipId.isEmpty() || vipId.length() < 6) {
+				returnMapping.put(RETURN_CODE, RETURN_CODE_UNKOWNREASON);
+				returnMapping.put(RETURN_DESC, "Invalid VIP ID");
+				return returnMapping;
+            }
+
+            String timestamp = getTimestamp();
+            String method = "zjian.crm.customer.coupon.check";
+            
+            BigDecimal totalAmt = BigDecimal.ZERO;
+            for (CrmPosline sku : skuList) {
+                if ("S".equals(sku.getLineType())) {
+                    totalAmt = totalAmt.add(new BigDecimal(sku.getSaleAmt()));  //saleAmt = listPrice*stkQty
+                }
+            }
+            
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("customer_no", vipId);
+            jsonObject.put("site_no", shopId);
+            jsonObject.put("sum_sale_price", totalAmt);
+            jsonObject.put("sum_sale_amt", totalAmt);
+            jsonObject.put("trade_no", docId);
+            jsonObject.put("pay_serial_no", "pay" + docId);
+            // sku list
+            JSONArray skuJSONArray = new JSONArray();
+            for (CrmPosline sku : skuList) {
+                if ("S".equals(sku.getLineType())) {
+                    JSONObject json = new JSONObject();
+                    json.put("sku_no", sku.getProductNo());
+                    json.put("sale_price", new BigDecimal(sku.getSaleAmt()));
+                    json.put("sale_amt", new BigDecimal(sku.getSaleAmt()));
+                    skuJSONArray.put(json);
+                }
+            }
+            jsonObject.put("sku_list", skuJSONArray);
+            // coupon list
+            JSONArray couponJSONArray = new JSONArray();
+            JSONObject json = new JSONObject();
+            json.put("coupon_no", scanningCoupon);
+            couponJSONArray.put(json);
+            jsonObject.put("coupon_list", couponJSONArray);
+            
+            String requestJson = jsonObject.toString();
+            String fullUrl = getFullUrl(url, method, timestamp, requestJson);
+            Map<String, String> mapping = HttpUtil.callHttpPostMethod(fullUrl, requestJson, UTF8);
+            if (!OK.equals(mapping.get("msgId"))) {
+				returnMapping.put(RETURN_CODE, mapping.get("msgId"));
+				returnMapping.put(RETURN_DESC, mapping.get("msg"));
+				return returnMapping;
+            }
+            String returnStr = mapping.get("msg");
+            if (returnStr == null || EMPTY.equals(returnStr)) {
+                sMessage = RETURN_RETURN_API_RET_EMPTY;
+				sMessage = RETURN_RETURN_API_RET_EMPTY;
+				LOG.info(sMessage);
+				returnMapping.put(RETURN_CODE, RETURN_CODE_UNKOWNREASON);
+				returnMapping.put(RETURN_DESC, sMessage);
+				return returnMapping;
+            }
+            LOG.info(returnStr);
+            JSONObject jsonResult = new JSONObject(returnStr);
+            String result = getString(jsonResult.optString(RETURN_CODE));
+            String reason = getString(jsonResult.optString(RETURN_DESC));
+
+            if (!RETURN_OK.equals(result)) {
+                sMessage = "FAIL:" + result + ":" + reason;
+				LOG.info(sMessage);
+				returnMapping.put(RETURN_CODE, result);
+				returnMapping.put(RETURN_DESC, sMessage);
+				return returnMapping;
+            }
+            JSONObject dataJson = new JSONObject(getString(jsonResult.optString(RETURN_DATA)));
+            String sumDiscAmt = getString(dataJson.optString(RETURN_DIS_AMT));
+            
+            JSONArray couponListJson = new JSONArray(dataJson.opt("couponList") + EMPTY);
+            String couponType = "";
+            if (couponListJson != null && couponListJson.length() > 0) {
+                int count = couponListJson.length();
+                for (int i = 0; i < count; i++) {
+                    JSONObject dataObject = (JSONObject) couponListJson.get(i);
+                    if (dataObject != null) {
+                        if (scanningCoupon.equals(dataObject.optString("coupon_no"))) {
+                            couponType = dataObject.optString("source_type") 
+//                                    + dataObject.optString("source_docno") 
+                                    + new BigInteger(dataObject.opt("active_use_amt") + "");
+                        }
+                    }
+                }                
+            }
+            
+            // return OK
+//            returnJSONObject.put("msgId", OK);
+//            returnJSONObject.put("msg", EMPTY);
+//            JSONObject bodyJSONObject = new JSONObject();
+//            bodyJSONObject.put("sumDiscAmt", sumDiscAmt);
+//            returnJSONObject.put("body", bodyJSONObject.toString());
+//            return returnJSONObject.toString();
+			returnMapping.put(RETURN_CODE, result);
+			returnMapping.put(RETURN_DESC, reason);
+			returnMapping.put(RETURN_DIS_AMT, sumDiscAmt);
+			returnMapping.put(RETURN_COUPON_TYPE, couponType);
+			return returnMapping;
+        } catch (Exception ex) {
+            LOG.error("error checkCoupons", ex);
+            sMessage = "FAIL:" + ex.toString();
+            LOG.info(sMessage);
+            try {
+            	returnMapping.put(RETURN_CODE, RETURN_CODE_UNKOWNREASON);
+            	returnMapping.put(RETURN_DESC, sMessage);
+                return returnMapping;
+            } catch (Throwable thrl) {
+                LOG.error("error checkCoupons2", thrl);
+                returnMapping.put(RETURN_CODE, RETURN_CODE_UNKOWNREASON);
+            	returnMapping.put(RETURN_DESC, thrl.getMessage());
+                return returnMapping;
+            }
+        }
+    }
+	
+	/**
+     * check coupons
+     *
+     * @param docId String, pos doc ID
+     * @param shopId String, shop ID
+     * @param vipId String, VIP ID
+     * @param sumSaleAmt BigDecimal, redeem amount
+     * @param skuList List<SkuList>, the array of pos line
+     * @param couponList List<Coupon>, the array of coupon
+     * 
+     * @return Map<String, String>
+     */
     public synchronized Map<String, String> checkCoupons(String docId, String shopId, String vipId, BigDecimal sumSaleAmt,  
             final List<CrmPosline> skuList,
             final List<CrmCoupon> couponList) {
@@ -246,7 +385,7 @@ public class EpbzjianApi {
             BigDecimal totalAmt = BigDecimal.ZERO;
             for (CrmPosline sku : skuList) {
                 if ("S".equals(sku.getLineType())) {
-                    totalAmt = totalAmt.add(new BigDecimal(sku.getSaleAmt()));
+                    totalAmt = totalAmt.add(new BigDecimal(sku.getSaleAmt()));  //saleAmt = listPrice*stkQty
                 }
             }
             
