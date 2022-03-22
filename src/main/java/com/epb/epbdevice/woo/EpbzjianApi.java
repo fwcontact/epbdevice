@@ -310,7 +310,7 @@ public class EpbzjianApi {
             JSONObject dataJson = new JSONObject(getString(jsonResult.optString(RETURN_DATA)));
             String sumDiscAmt = getString(dataJson.optString(RETURN_DIS_AMT));
             
-            JSONArray couponListJson = new JSONArray(dataJson.opt("couponList") + EMPTY);
+            JSONArray couponListJson = new JSONArray(dataJson.opt("coupon_use_list") + EMPTY);
             String couponType = "";
             if (couponListJson != null && couponListJson.length() > 0) {
                 int count = couponListJson.length();
