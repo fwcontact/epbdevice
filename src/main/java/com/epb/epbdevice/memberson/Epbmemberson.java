@@ -152,12 +152,16 @@ public class Epbmemberson {
             pstmt.close();
             rs.close();
             
-            if ("B".equals(posO2oVendor)) {
-                if (!"Y".equals(posO2oCont)) {
-                    returnMap.put(MSG_ID, FAIL);
-                    returnMap.put(MSG, "API is disable");
-                    return returnMap;
-                }
+            boolean posO2oEnable = true;
+            if (!"Y".equals(posO2oCont)) {
+            	// EPB VIP SEARCH, That is right.
+            	posO2oEnable = false;
+            } else if ("Y".equals(posO2oCont) && "B".equals(posO2oVendor)) {
+//                if (!"Y".equals(posO2oCont)) {
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API is disable");
+//                    return returnMap;
+//                }
                 if (posO2oUrl == null ||posO2oUrl.length() == 0) {
                     returnMap.put(MSG_ID, FAIL);
                     returnMap.put(MSG, "API URL is empty");
@@ -184,21 +188,24 @@ public class Epbmemberson {
                 return returnMap;
             }
             
-            // call memberson API
-            if (posO2oAuth == null || posO2oAuth.length() == 0) {
-            	posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
+            if ("Y".equals(posO2oCont) && "B".equals(posO2oVendor)) {
+            	// call memberson API
+            	if (posO2oAuth == null || posO2oAuth.length() == 0) {
+            		posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
+            	}
+            	if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
+            		Map<String, String> mapping = Epbmemberson.getToken(posO2oUrl, posO2oAppKey, posO2oAppSecret, posO2oAuth);
+            		if (mapping == null
+            				|| mapping.get(Epbmemberson.MSG_ID) == null || !Epbmemberson.RETURN_OK.equals(mapping.get(Epbmemberson.MSG_ID))) {
+            			returnMap.put(MSG_ID, FAIL);
+            			returnMap.put(MSG, "Failed to get CRM token");
+            			return returnMap;
+            		}
+            		posO2oAccessToken = mapping.get(Epbmemberson.MSG).replaceAll("\"", "");
+            	}
             }
-            if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
-                Map<String, String> mapping = Epbmemberson.getToken(posO2oUrl, posO2oAppKey, posO2oAppSecret, posO2oAuth);
-                if (mapping == null
-                        || mapping.get(Epbmemberson.MSG_ID) == null || !Epbmemberson.RETURN_OK.equals(mapping.get(Epbmemberson.MSG_ID))) {
-                    returnMap.put(MSG_ID, FAIL);
-                    returnMap.put(MSG, "Failed to get CRM token");
-                	return returnMap;
-                }
-                posO2oAccessToken = mapping.get(Epbmemberson.MSG).replaceAll("\"", "");
-        	}
-            Map<String, Object> retMap = searchVip(conn, opentableRecKey, posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName == null || EMPTY.equals(vipName) ? EMPTY : "%" + vipName + "%", vipPhoneCountryCode, vipPhone, emailAddress);
+            
+            Map<String, Object> retMap = searchVip(conn, opentableRecKey, posO2oEnable, posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName == null || EMPTY.equals(vipName) ? EMPTY : "%" + vipName + "%", vipPhoneCountryCode, vipPhone, emailAddress);
             if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
                 returnMap.put(MSG, (String) retMap.get(MSG));
@@ -308,12 +315,16 @@ public class Epbmemberson {
             pstmt.close();
             rs.close();
             
-            if ("B".equals(posO2oVendor)) {
-                if (!"Y".equals(posO2oCont)) {
-                    returnMap.put(MSG_ID, FAIL);
-                    returnMap.put(MSG, "API is disable");
-                    return returnMap;
-                }
+            boolean posO2oEnable = true;
+            if (!"Y".equals(posO2oCont)) {
+            	// EPB VIP SEARCH, That is right.
+            	posO2oEnable = false;
+            } else if ("Y".equals(posO2oCont) && "B".equals(posO2oVendor)) {
+//                if (!"Y".equals(posO2oCont)) {
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API is disable");
+//                    return returnMap;
+//                }
                 if (posO2oUrl == null ||posO2oUrl.length() == 0) {
                     returnMap.put(MSG_ID, FAIL);
                     returnMap.put(MSG, "API URL is empty");
@@ -411,79 +422,86 @@ public class Epbmemberson {
                 pstmt.close();
                 rs.close();
             } else {
-                // call memberson API
-            	if (posO2oAuth == null || posO2oAuth.length() == 0) {
-            		posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
-            	}
-            	if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
-                    Map<String, String> mapping = Epbmemberson.getToken(posO2oUrl, posO2oAppKey, posO2oAppSecret, posO2oAuth);
-                    if (mapping == null
-                            || mapping.get(Epbmemberson.MSG_ID) == null || !Epbmemberson.RETURN_OK.equals(mapping.get(Epbmemberson.MSG_ID))) {
-                        returnMap.put(MSG_ID, FAIL);
-                        returnMap.put(MSG, "Failed to get CRM token");
-                    	return returnMap;
+            	if (posO2oEnable) {
+            		// call memberson API
+                	if (posO2oAuth == null || posO2oAuth.length() == 0) {
+                		posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
+                	}
+                	if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
+                        Map<String, String> mapping = Epbmemberson.getToken(posO2oUrl, posO2oAppKey, posO2oAppSecret, posO2oAuth);
+                        if (mapping == null
+                                || mapping.get(Epbmemberson.MSG_ID) == null || !Epbmemberson.RETURN_OK.equals(mapping.get(Epbmemberson.MSG_ID))) {
+                            returnMap.put(MSG_ID, FAIL);
+                            returnMap.put(MSG, "Failed to get CRM token");
+                        	return returnMap;
+                        }
+                        posO2oAccessToken = mapping.get(Epbmemberson.MSG).replaceAll("\"", "");
+                	}
+                    Map<String, Object> retMap = Epbmemberson.getRedeemPointsConversionRate(posO2oUrl, posO2oAuth, posO2oAccessToken, currId);
+                    if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
+                        returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
+                        returnMap.put(MSG, (String) retMap.get(MSG));
+                        return returnMap;
                     }
-                    posO2oAccessToken = mapping.get(Epbmemberson.MSG).replaceAll("\"", "");
-            	}
-                Map<String, Object> retMap = Epbmemberson.getRedeemPointsConversionRate(posO2oUrl, posO2oAuth, posO2oAccessToken, currId);
-                if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
-                    returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
-                    returnMap.put(MSG, (String) retMap.get(MSG));
-                    return returnMap;
-                }
-//            BigDecimal posO2oRedeemRatio = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
-                fromRate = retMap.containsKey(Epbmemberson.RETURN_FROM_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_FROM_RATE) : null;
-                toRate = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
+//                BigDecimal posO2oRedeemRatio = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
+                    fromRate = retMap.containsKey(Epbmemberson.RETURN_FROM_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_FROM_RATE) : null;
+                    toRate = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
 
-//            Map<String, String> customerMap = (Map<String, String>) retMap.get(Epbmemberson.RETURN_CUSTOMER_MAP);
-                retMap = getVipSummary(posO2oUrl, posO2oAuth, posO2oAccessToken, customerNumber);
-                if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
-                    returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
-                    returnMap.put(MSG, (String) retMap.get(MSG));
-                    return returnMap;
-                }
-//            String classId = (String) retMap.get(Epbmemberson.RETURN_TIER);
-                type = getSmoothType((String) retMap.get(Epbmemberson.RETURN_TYPE));
-//            System.out.println("type:" + type);
-//            String classId = EMPTY;
-                if (type != null && type.length() != 0) {
-                    // free mem
-                    pstmt.close();
-                    rs.close();
-                    sql = "SELECT REMARK, NAME FROM VIP_SELFMAS1 WHERE SELF1_ID = ?";
-                    pstmt = conn.prepareStatement(sql);
-                    pstmt.setObject(1, type);
-//                pstmt.setObject(2, orgId);
-                    rs = pstmt.executeQuery();
-                    metaData = (ResultSetMetaData) rs.getMetaData();
-                    columnCount = metaData.getColumnCount();
-                    while (rs.next()) {
-                        for (int i = 1; i <= columnCount; i++) {
-                            String columnName = metaData.getColumnLabel(i);
-                            Object value = rs.getObject(columnName);
-                            if ("REMARK".equals(columnName.toUpperCase())) {
-                                classId = (String) value;
-                            } else if ("NAME".equals(columnName.toUpperCase())) {
-                                epbTypeId = (String) value;
+//                Map<String, String> customerMap = (Map<String, String>) retMap.get(Epbmemberson.RETURN_CUSTOMER_MAP);
+                    retMap = getVipSummary(posO2oUrl, posO2oAuth, posO2oAccessToken, customerNumber);
+                    if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
+                        returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
+                        returnMap.put(MSG, (String) retMap.get(MSG));
+                        return returnMap;
+                    }
+//                String classId = (String) retMap.get(Epbmemberson.RETURN_TIER);
+                    type = getSmoothType((String) retMap.get(Epbmemberson.RETURN_TYPE));
+//                System.out.println("type:" + type);
+//                String classId = EMPTY;
+                    if (type != null && type.length() != 0) {
+                        // free mem
+                        pstmt.close();
+                        rs.close();
+                        sql = "SELECT REMARK, NAME FROM VIP_SELFMAS1 WHERE SELF1_ID = ?";
+                        pstmt = conn.prepareStatement(sql);
+                        pstmt.setObject(1, type);
+//                    pstmt.setObject(2, orgId);
+                        rs = pstmt.executeQuery();
+                        metaData = (ResultSetMetaData) rs.getMetaData();
+                        columnCount = metaData.getColumnCount();
+                        while (rs.next()) {
+                            for (int i = 1; i <= columnCount; i++) {
+                                String columnName = metaData.getColumnLabel(i);
+                                Object value = rs.getObject(columnName);
+                                if ("REMARK".equals(columnName.toUpperCase())) {
+                                    classId = (String) value;
+                                } else if ("NAME".equals(columnName.toUpperCase())) {
+                                    epbTypeId = (String) value;
+                                }
                             }
                         }
-                    }
-                    // free mem
-                    pstmt.close();
-                    rs.close();
-                }                
-//            System.out.println("classId:" + classId);
-                cumPts = retMap.get(Epbmemberson.RETURN_BALANCE) == null || EMPTY.equals(retMap.get(Epbmemberson.RETURN_BALANCE))
-                        ? BigDecimal.ZERO
-                        : new BigDecimal((String) retMap.get(Epbmemberson.RETURN_BALANCE));
-                memberNo = (String) retMap.get(Epbmemberson.RETURN_MEMBER_NO);
-                customizeNo = (String) retMap.get(Epbmemberson.RETURN_CUSTOMIZE_NO);
-//            retMap = getMemberDiscounts(posO2oUrl, posO2oAuth, posO2oAccessToken, memberNo, shopId);
-//            if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
-//                returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
-//                returnMap.put(MSG, (String) retMap.get(MSG));
-//                return returnMap;
-//            }
+                        // free mem
+                        pstmt.close();
+                        rs.close();
+                    }                
+//                System.out.println("classId:" + classId);
+                    cumPts = retMap.get(Epbmemberson.RETURN_BALANCE) == null || EMPTY.equals(retMap.get(Epbmemberson.RETURN_BALANCE))
+                            ? BigDecimal.ZERO
+                            : new BigDecimal((String) retMap.get(Epbmemberson.RETURN_BALANCE));
+                    memberNo = (String) retMap.get(Epbmemberson.RETURN_MEMBER_NO);
+                    customizeNo = (String) retMap.get(Epbmemberson.RETURN_CUSTOMIZE_NO);
+//                retMap = getMemberDiscounts(posO2oUrl, posO2oAuth, posO2oAccessToken, memberNo, shopId);
+//                if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
+//                    returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
+//                    returnMap.put(MSG, (String) retMap.get(MSG));
+//                    return returnMap;
+//                }
+            	} else {
+            		// error
+            		returnMap.put(MSG_ID, FAIL);   
+                    returnMap.put(MSG, "API is disable");
+                    return returnMap;
+            	}                
             }
             //get vip Discount
             // get parameter
@@ -654,46 +672,50 @@ public class Epbmemberson {
 //    }
     
     // Search Profile:{baseurl}/api/profile/search 
-    private static Map<String, Object> searchVip(final Connection conn, final BigDecimal opentableRecKey, final String baseurl, final String callAuth, final String token,
+    private static Map<String, Object> searchVip(final Connection conn, final BigDecimal opentableRecKey, final boolean posO2oEnable, final String baseurl, final String callAuth, final String token,
             final String customerNumber, final String cardNumber, final String nric, final String name,
             final String mobileNumberCountryCode, final String mobileNumber, final String emailAddress) {
         final Map<String, Object> returnMap = new HashMap<>();
         try {
-            String callHttpUrl = baseurl + SLASH + "api/profile/search";
             JSONArray rtnDataArray = new JSONArray();
-            JSONObject jsonBody = new JSONObject();
-            jsonBody.put("CustomerNumber", customerNumber == null ? EMPTY : customerNumber);
-            jsonBody.put("IsCustomerNumberWildcardSearch", (customerNumber != null && !EMPTY.equals(customerNumber)));
-            jsonBody.put("CardNumber", cardNumber == null ? EMPTY : cardNumber);
-            jsonBody.put("IsCardNumberWildcardSearch", (cardNumber != null && !EMPTY.equals(cardNumber)));
-            jsonBody.put("Nric", nric == null ? EMPTY : nric);
-            jsonBody.put("IsNricWildcardSearch", (nric != null && !EMPTY.equals(nric)));
-            jsonBody.put("Name", name == null ? EMPTY : name);
-            jsonBody.put("IsNameWildcardSearch", (name != null && !EMPTY.equals(name)));
-            jsonBody.put("MobileNumberCountryCode", mobileNumberCountryCode == null ? EMPTY : mobileNumberCountryCode);
-            jsonBody.put("MobileNumber", mobileNumber == null ? EMPTY : mobileNumber);
-            jsonBody.put("IsMobileNumberWildcardSearch", (mobileNumber != null && !EMPTY.equals(mobileNumber)));
-            jsonBody.put("EmailAddress", emailAddress == null ? EMPTY : emailAddress);
-            jsonBody.put("IsEmailAddressWildcardSearch", (emailAddress != null && !EMPTY.equals(emailAddress)));
-//            System.out.println(jsonBody.toString());
-            Map<String, String> callMap = HttpUtil.callHttpMethod(callHttpUrl, callAuth, token, HttpUtil.POST_METHOD, jsonBody.toString());
-            if (RETURN_OK.equals(callMap.get(MSG_ID))) {
-//                returnMap.put(MSG_ID, RETURN_OK);
-//                returnMap.put(MSG, callMap.get(MSG));
-                JSONArray dataArray = new JSONArray(callMap.get(MSG));
-                if (dataArray.length() > 0) {
-                    int count = dataArray.length();
-                    for (int i = 0; i < count; i++) {
-                        JSONObject dataObject = (JSONObject) dataArray.get(i);
-                        dataObject.put(RETURN_CUSTOMER_SOURCE, "MEMBERSON");
-                        rtnDataArray.put(dataObject);
+            Map<String, String> callMap = new HashMap<String, String>();
+        	if (posO2oEnable) {
+        		String callHttpUrl = baseurl + SLASH + "api/profile/search";
+                JSONObject jsonBody = new JSONObject();
+                jsonBody.put("CustomerNumber", customerNumber == null ? EMPTY : customerNumber);
+                jsonBody.put("IsCustomerNumberWildcardSearch", (customerNumber != null && !EMPTY.equals(customerNumber)));
+                jsonBody.put("CardNumber", cardNumber == null ? EMPTY : cardNumber);
+                jsonBody.put("IsCardNumberWildcardSearch", (cardNumber != null && !EMPTY.equals(cardNumber)));
+                jsonBody.put("Nric", nric == null ? EMPTY : nric);
+                jsonBody.put("IsNricWildcardSearch", (nric != null && !EMPTY.equals(nric)));
+                jsonBody.put("Name", name == null ? EMPTY : name);
+                jsonBody.put("IsNameWildcardSearch", (name != null && !EMPTY.equals(name)));
+                jsonBody.put("MobileNumberCountryCode", mobileNumberCountryCode == null ? EMPTY : mobileNumberCountryCode);
+                jsonBody.put("MobileNumber", mobileNumber == null ? EMPTY : mobileNumber);
+                jsonBody.put("IsMobileNumberWildcardSearch", (mobileNumber != null && !EMPTY.equals(mobileNumber)));
+                jsonBody.put("EmailAddress", emailAddress == null ? EMPTY : emailAddress);
+                jsonBody.put("IsEmailAddressWildcardSearch", (emailAddress != null && !EMPTY.equals(emailAddress)));
+//                System.out.println(jsonBody.toString());
+                callMap = HttpUtil.callHttpMethod(callHttpUrl, callAuth, token, HttpUtil.POST_METHOD, jsonBody.toString());
+                if (RETURN_OK.equals(callMap.get(MSG_ID))) {
+//                    returnMap.put(MSG_ID, RETURN_OK);
+//                    returnMap.put(MSG, callMap.get(MSG));
+                    JSONArray dataArray = new JSONArray(callMap.get(MSG));
+                    if (dataArray.length() > 0) {
+                        int count = dataArray.length();
+                        for (int i = 0; i < count; i++) {
+                            JSONObject dataObject = (JSONObject) dataArray.get(i);
+                            dataObject.put(RETURN_CUSTOMER_SOURCE, "MEMBERSON");
+                            rtnDataArray.put(dataObject);
+                        }
                     }
+//                } else {
+//                    returnMap.put(MSG_ID, callMap.get(MSG_ID));
+//                    returnMap.put(MSG, callMap.get(MSG));
+//                    return returnMap;
                 }
-//            } else {
-//                returnMap.put(MSG_ID, callMap.get(MSG_ID));
-//                returnMap.put(MSG, callMap.get(MSG));
-//                return returnMap;
-            }
+        	}
+            
             
             List<Map<String, Object>> mapList = getEpbVip(conn, opentableRecKey, customerNumber, name, cardNumber, mobileNumber, emailAddress);
             for (Map<String, Object> map : mapList) {
@@ -1233,7 +1255,7 @@ public class Epbmemberson {
             String token = "b24a3a48-86c6-45c7-b15d-e4560ceed775";//returnMapping.get(HttpUtil.MSG);
 //            getProfile(baseurl, userId, userPasswrod, auth, "123");
 //            getProfile(baseurl, auth, token, "01463571");
-            searchVip(conn, BigDecimal.ZERO, baseurl, auth, token, EMPTY, EMPTY, EMPTY, "%CHEN%", EMPTY, EMPTY, EMPTY);
+            searchVip(conn, BigDecimal.ZERO, true, baseurl, auth, token, EMPTY, EMPTY, EMPTY, "%CHEN%", EMPTY, EMPTY, EMPTY);
 //            getVipSummary(baseurl, auth, token, "01523935");
 ////            final List<PoslineMemberson> poslineMembersonList = new ArrayList<PoslineMemberson>();
 ////            PoslineMemberson poslineMemberson = new PoslineMemberson();
