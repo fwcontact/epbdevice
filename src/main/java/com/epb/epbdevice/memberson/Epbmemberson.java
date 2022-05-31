@@ -737,8 +737,14 @@ public class Epbmemberson {
                 returnMap.put(MSG_ID, RETURN_OK);
                 returnMap.put(MSG, rtnDataArray.toString());
             } else {
-                returnMap.put(MSG_ID, callMap.get(MSG_ID));
-                returnMap.put(MSG, callMap.get(MSG));
+            	if (callMap.containsKey(MSG_ID)
+            			&& callMap.containsKey(MSG)) {
+            		returnMap.put(MSG_ID, callMap.get(MSG_ID));
+                    returnMap.put(MSG, callMap.get(MSG));
+            	} else {
+            		returnMap.put(MSG_ID, FAIL);
+                    returnMap.put(MSG, "VIP not found");
+            	}                
             }
             
             return returnMap;
