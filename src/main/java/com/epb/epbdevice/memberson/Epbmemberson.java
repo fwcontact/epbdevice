@@ -152,16 +152,17 @@ public class Epbmemberson {
             pstmt.close();
             rs.close();
             
-            boolean posO2oEnable = true;
+            boolean membersonEnble = true;
             if (!"Y".equals(posO2oCont)) {
             	// EPB VIP SEARCH, That is right.
-            	posO2oEnable = false;
+            	membersonEnble = false;
             } else if ("Y".equals(posO2oCont) && "B".equals(posO2oVendor)) {
 //                if (!"Y".equals(posO2oCont)) {
 //                    returnMap.put(MSG_ID, FAIL);
 //                    returnMap.put(MSG, "API is disable");
 //                    return returnMap;
 //                }
+            	membersonEnble = true;
                 if (posO2oUrl == null ||posO2oUrl.length() == 0) {
                     returnMap.put(MSG_ID, FAIL);
                     returnMap.put(MSG, "API URL is empty");
@@ -183,6 +184,7 @@ public class Epbmemberson {
                     return returnMap;
                 }
             } else {
+            	membersonEnble = false;
                 returnMap.put(MSG_ID, FAIL);
                 returnMap.put(MSG, "Disable memberson API");
                 return returnMap;
@@ -205,7 +207,7 @@ public class Epbmemberson {
             	}
             }
             
-            Map<String, Object> retMap = searchVip(conn, opentableRecKey, posO2oEnable, posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName == null || EMPTY.equals(vipName) ? EMPTY : "%" + vipName + "%", vipPhoneCountryCode, vipPhone, emailAddress);
+            Map<String, Object> retMap = searchVip(conn, opentableRecKey, membersonEnble, posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName == null || EMPTY.equals(vipName) ? EMPTY : "%" + vipName + "%", vipPhoneCountryCode, vipPhone, emailAddress);
             if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                 returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
                 returnMap.put(MSG, (String) retMap.get(MSG));
@@ -315,16 +317,17 @@ public class Epbmemberson {
             pstmt.close();
             rs.close();
             
-            boolean posO2oEnable = true;
+            boolean membersonEnble = true;
             if (!"Y".equals(posO2oCont)) {
             	// EPB VIP SEARCH, That is right.
-            	posO2oEnable = false;
+            	membersonEnble = false;
             } else if ("Y".equals(posO2oCont) && "B".equals(posO2oVendor)) {
 //                if (!"Y".equals(posO2oCont)) {
 //                    returnMap.put(MSG_ID, FAIL);
 //                    returnMap.put(MSG, "API is disable");
 //                    return returnMap;
 //                }
+            	membersonEnble = true;
                 if (posO2oUrl == null ||posO2oUrl.length() == 0) {
                     returnMap.put(MSG_ID, FAIL);
                     returnMap.put(MSG, "API URL is empty");
@@ -346,6 +349,7 @@ public class Epbmemberson {
                     return returnMap;
                 }
             } else {
+            	membersonEnble = false;
                 returnMap.put(MSG_ID, FAIL);
                 returnMap.put(MSG, "Disable memberson API");
                 return returnMap;
@@ -422,7 +426,7 @@ public class Epbmemberson {
                 pstmt.close();
                 rs.close();
             } else {
-            	if (posO2oEnable) {
+            	if (membersonEnble) {
             		// call memberson API
                 	if (posO2oAuth == null || posO2oAuth.length() == 0) {
                 		posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
@@ -672,14 +676,14 @@ public class Epbmemberson {
 //    }
     
     // Search Profile:{baseurl}/api/profile/search 
-    private static Map<String, Object> searchVip(final Connection conn, final BigDecimal opentableRecKey, final boolean posO2oEnable, final String baseurl, final String callAuth, final String token,
+    private static Map<String, Object> searchVip(final Connection conn, final BigDecimal opentableRecKey, final boolean membersonEnable, final String baseurl, final String callAuth, final String token,
             final String customerNumber, final String cardNumber, final String nric, final String name,
             final String mobileNumberCountryCode, final String mobileNumber, final String emailAddress) {
         final Map<String, Object> returnMap = new HashMap<>();
         try {
             JSONArray rtnDataArray = new JSONArray();
             Map<String, String> callMap = new HashMap<String, String>();
-        	if (posO2oEnable) {
+        	if (membersonEnable) {
         		String callHttpUrl = baseurl + SLASH + "api/profile/search";
                 JSONObject jsonBody = new JSONObject();
                 jsonBody.put("CustomerNumber", customerNumber == null ? EMPTY : customerNumber);
@@ -717,7 +721,7 @@ public class Epbmemberson {
         	}
             
             
-            List<Map<String, Object>> mapList = getEpbVip(conn, opentableRecKey, customerNumber, name, cardNumber, mobileNumber, emailAddress);
+            List<Map<String, Object>> mapList = getEpbVip(conn, opentableRecKey, customerNumber, name, cardNumber, mobileNumber, emailAddress, membersonEnable);
             for (Map<String, Object> map : mapList) {
                 JSONObject dataObject = new JSONObject();
                 dataObject.put(RETURN_CUSTOMER_NUMBER, map.get(RETURN_CUSTOMER_NUMBER));
@@ -1121,7 +1125,7 @@ public class Epbmemberson {
         return type.substring(0, 16);
     }
     
-    private static List<Map<String, Object>> getEpbVip(final Connection conn, final BigDecimal opentableRecKey,final String vipId, final String name, final String cardNo, final String vipPhone, final String email) {
+    private static List<Map<String, Object>> getEpbVip(final Connection conn, final BigDecimal opentableRecKey,final String vipId, final String name, final String cardNo, final String vipPhone, final String email, final boolean memberson) {
         final List<Map<String, Object>> returnMapList = new ArrayList<Map<String, Object>>();
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -1157,7 +1161,8 @@ public class Epbmemberson {
 
 
             // get parameter
-            sql = "SELECT VIP_ID, NAME, VIP_PHONE1, EMAIL_ADDR FROM POS_VIP_MAS "
+            if (memberson) {
+            	sql = "SELECT VIP_ID, NAME, VIP_PHONE1, EMAIL_ADDR FROM POS_VIP_MAS "
                     + " WHERE CLASS_ID IN (SELECT CLASS_ID FROM POS_VIP_CLASS WHERE REMARK LIKE ? AND (ORG_ID IS NULL OR ORG_ID = '' OR ORG_ID = ?)) "
                     + " AND (ORG_ID IS NULL OR ORG_ID = '' OR ORG_ID = ?)"
                     + (vipId == null || vipId.length() == 0 ? EMPTY : " AND LOWER(VIP_ID) = LOWER('" + vipId + "') ")
@@ -1165,10 +1170,21 @@ public class Epbmemberson {
                     + (cardNo == null || cardNo.length() == 0 ? EMPTY : " AND LOWER(CARD_NO) LIKE LOWER('%" + cardNo + "%') ")
                     + (vipPhone == null || vipPhone.length() == 0 ? EMPTY : " AND VIP_PHONE1 = '" + vipPhone + "' ")
                     + (email == null || email.length() == 0 ? EMPTY : " AND LOWER(EMAIL_ADDR) = LOWER('" + email + "') ");
-            pstmt = conn.prepareStatement(sql);
-            pstmt.setObject(1, "CULINA%");
-            pstmt.setObject(2, epbOrgId);
-            pstmt.setObject(3, epbOrgId);
+            	pstmt = conn.prepareStatement(sql);
+            	pstmt.setObject(1, "CULINA%");
+            	pstmt.setObject(2, epbOrgId);
+            	pstmt.setObject(3, epbOrgId);
+            } else {        	
+            	sql = "SELECT VIP_ID, NAME, VIP_PHONE1, EMAIL_ADDR FROM POS_VIP_MAS "
+                        + " WHERE (ORG_ID IS NULL OR ORG_ID = '' OR ORG_ID = ?)"
+                        + (vipId == null || vipId.length() == 0 ? EMPTY : " AND LOWER(VIP_ID) = LOWER('" + vipId + "') ")
+                        + (name == null || name.length() == 0 ? EMPTY : " AND LOWER(NAME) LIKE LOWER('%" + name + "%') ")
+                        + (cardNo == null || cardNo.length() == 0 ? EMPTY : " AND LOWER(CARD_NO) LIKE LOWER('%" + cardNo + "%') ")
+                        + (vipPhone == null || vipPhone.length() == 0 ? EMPTY : " AND VIP_PHONE1 = '" + vipPhone + "' ")
+                        + (email == null || email.length() == 0 ? EMPTY : " AND LOWER(EMAIL_ADDR) = LOWER('" + email + "') ");
+                	pstmt = conn.prepareStatement(sql);
+                	pstmt.setObject(1, epbOrgId);   	
+            }
             rs = pstmt.executeQuery();
             metaData = (ResultSetMetaData) rs.getMetaData();
             columnCount = metaData.getColumnCount();
