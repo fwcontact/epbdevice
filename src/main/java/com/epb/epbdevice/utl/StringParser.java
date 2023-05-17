@@ -77,6 +77,55 @@ public class StringParser {
         }
     }
 
+//    //对齐
+//    //pAlign  = C L R
+//    //暂时一律截断
+//    public static String setStringAlignment(String input, String align, int length, String breakFlg, String emptyFlg) {
+//        try {
+//            String subString = input;
+//            int leftLength = 0;
+//            int rightLength = 0;
+//
+////            int stringLengthChinese = CharToByteConverter.getDefault().convertAll(subString.toCharArray()).length;
+//            int stringLengthChinese = getStringLengthChinese(subString);
+//
+//            //如果字符串够长
+//            if (stringLengthChinese >= length) {
+//                //如果过长，一律截断
+//                subString = splitString(input, length, EMPTY);
+//                //截取后，有可能多一个空格
+////                stringLengthChinese = CharToByteConverter.getDefault().convertAll(subString.toCharArray()).length;
+//                stringLengthChinese = getStringLengthChinese(subString);
+//            }
+//
+//            if (CENTER.equals(align)) {
+//                //如果不够长
+//                //subString = alignCenter(subString, length);
+//                leftLength = (length - stringLengthChinese) / 2;
+//                rightLength = length - leftLength - stringLengthChinese;
+//                if (YES.equals(emptyFlg)) {
+//                    subString = getWhiteString(leftLength) + subString + getWhiteString(rightLength);
+//                }
+//            } else if (LEFT.equals(align)) {
+//                //subString = alignLeft(subString, length);
+//                rightLength = length - stringLengthChinese;
+//                if (YES.equals(emptyFlg)) {
+//                    subString = subString + getWhiteString(rightLength);
+//                }
+//            } else if (RIGHT.equals(align)) {
+//                //subString = alignRight(subString, length);
+//                //如果不够长
+//                leftLength = length - stringLengthChinese;
+//                if (YES.equals(emptyFlg)) {
+//                    subString = getWhiteString(leftLength) + subString;
+//                }
+//            }
+//            return subString;
+//        } catch (Exception ex) {
+//            return input;
+//        }
+//    }
+    
     //对齐
     //pAlign  = C L R
     //暂时一律截断
@@ -87,35 +136,56 @@ public class StringParser {
             int rightLength = 0;
 
 //            int stringLengthChinese = CharToByteConverter.getDefault().convertAll(subString.toCharArray()).length;
-            int stringLengthChinese = getStringLengthChinese(subString);
+            int strlength = input == null ? 0 : input.length();
+            int gbkLength = 0;
+            int utf8Length = 0;            
+            for (int i = 0; i < input.length(); i++) {
+                String str = input.substring(i, i + 1);
+                if (str.getBytes().length == 3) {         // gbk 3 bytes
+                    gbkLength = gbkLength + 1;
+                } else if (str.getBytes().length == 2) {  // utf-8 2 bytes
+                    utf8Length = utf8Length + 1;
+                }
+            }
 
             //如果字符串够长
-            if (stringLengthChinese >= length) {
+            if (strlength + gbkLength*(3-1) + utf8Length*(2-1) >= length) {
                 //如果过长，一律截断
                 subString = splitString(input, length, EMPTY);
-                //截取后，有可能多一个空格
-//                stringLengthChinese = CharToByteConverter.getDefault().convertAll(subString.toCharArray()).length;
-                stringLengthChinese = getStringLengthChinese(subString);
             }
+            
+            strlength = subString == null ? 0 : subString.length();
+            gbkLength = 0;
+            utf8Length = 0;            
+            for (int i = 0; i < subString.length(); i++) {
+                String str = subString.substring(i, i + 1);
+                if (str.getBytes().length == 3) {         // gbk 3 bytes
+                    gbkLength = gbkLength + 1;
+                } else if (str.getBytes().length == 2) {  // utf-8 2 bytes
+                    utf8Length = utf8Length + 1;
+                }
+            }
+            int finalLength = strlength + gbkLength + utf8Length;
 
             if (CENTER.equals(align)) {
                 //如果不够长
                 //subString = alignCenter(subString, length);
-                leftLength = (length - stringLengthChinese) / 2;
-                rightLength = length - leftLength - stringLengthChinese;
+                
+                leftLength = (length - finalLength) / 2;
+                rightLength = length - leftLength - finalLength;
                 if (YES.equals(emptyFlg)) {
                     subString = getWhiteString(leftLength) + subString + getWhiteString(rightLength);
                 }
             } else if (LEFT.equals(align)) {
                 //subString = alignLeft(subString, length);
-                rightLength = length - stringLengthChinese;
+                rightLength = length - finalLength;
                 if (YES.equals(emptyFlg)) {
                     subString = subString + getWhiteString(rightLength);
                 }
             } else if (RIGHT.equals(align)) {
                 //subString = alignRight(subString, length);
                 //如果不够长
-                leftLength = length - stringLengthChinese;
+                leftLength = length - finalLength;
                 if (YES.equals(emptyFlg)) {
                     subString = getWhiteString(leftLength) + subString;
                 }

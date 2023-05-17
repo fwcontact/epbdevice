@@ -6,18 +6,32 @@ package com.epb.epbdevice.woo;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.net.ssl.SSLContext;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-//import com.epb.pst.entity.EpDept;
 import com.epb.epbdevice.beans.CrmCoupon;
 import com.epb.epbdevice.beans.CrmPosVipInfo;
 import com.epb.epbdevice.beans.CrmPosline;
@@ -44,7 +58,7 @@ public class EpbzjianApi {
 			"yyyy-MM-dd HH:mm:ss");
 	public static final java.text.SimpleDateFormat DATEFORMAT = new java.text.SimpleDateFormat("yyyy-MM-dd");
 
-	private static final Log LOG = LogFactory.getLog(HttpUtil.class);
+	private static final Log LOG = LogFactory.getLog(EpbzjianApi.class);
 	private static final String RETURN_DATA = "data";
 	private static final String EMPTY = "";
 	private static final String STRING_NULL = "null";
@@ -54,26 +68,57 @@ public class EpbzjianApi {
 	private static final Character MALE = 'M';
 	private static final Character FEMALE = 'F';
 	private static final String OK = "OK";
+    private static final String FAIL = "Fail";
+    private static final String TIMEOUT = "Timeout";
+	private static final String MSG_ID = "msgId";
+    private static final String MSG = "msg";
 
-	private static String appid;
-	private static String appSecret;
-	private static String accessToken;
-	private static String url;
+//	private static String appid;
+//	private static String appSecret;
+//	private static String accessToken;
+//	private static String url;
+	//system setting
+    private static String clientId;
+    private static String clientCode;
+    private static String clientSecret;
+    private static String cBrandId;
+    private static String accessToken;
+    private static String url;
 
 	// public
 
-	/**
-	 * @param zjAppid      String, system setting:POSO2OAPPKEY
-	 * @param zjAppSecret   String, system setting:POSO2OSECRET
-	 * @param zjAccessToken String, system setting:POSO2OTOKEN
-	 * @param zjUrl         String, system setting:POSO2OURL
-	 */
-	public EpbzjianApi(final String zjAppid, final String zjAppSecret, final String zjAccessToken, final String zjUrl) {
-		appid = zjAppid;
-		appSecret = zjAppSecret;
-		accessToken = zjAccessToken;
-		url = zjUrl;
-	}
+//	/**
+//	 * @param zjAppid      String, system setting:POSO2OAPPKEY
+//	 * @param zjAppSecret   String, system setting:POSO2OSECRET
+//	 * @param zjAccessToken String, system setting:POSO2OTOKEN
+//	 * @param zjUrl         String, system setting:POSO2OURL
+//	 */
+//	public EpbzjianApi(final String zjAppid, final String zjAppSecret, final String zjAccessToken, final String zjUrl) {
+//		appid = zjAppid;
+//		appSecret = zjAppSecret;
+//		accessToken = zjAccessToken;
+//		url = zjUrl;
+//	}
+    
+    // public
+    
+    /**
+     * 
+     * @param zjClientId      String, system setting POSO2OAPPKEY
+     * @param zjClientCode    String, system setting POSO2OSVCAUTH
+     * @param zjClientSecret  String, system setting POSO2OSECRET
+     * @param zjCBrandId      String, system setting POSO2OBRAND
+     * @param zjAccessToken   String, system setting POSO2OTOKEN
+     * @param zjUrl           String, system setting POSO2OURL
+     */
+    public EpbzjianApi(final String zjClientId, final String zjClientCode, final String zjClientSecret, final String zjCBrandId, final String zjAccessToken, final String zjUrl) {
+        clientId = zjClientId;
+        clientCode = zjClientCode;
+        clientSecret = zjClientSecret;
+        cBrandId = zjCBrandId;
+        accessToken = zjAccessToken;
+        url = zjUrl;
+    }  
 
 	/**
 	 * Search VIP by phone no
@@ -165,8 +210,8 @@ public class EpbzjianApi {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("telephone_no", vipPhone1);
             String requestJson = jsonObject.toString();    
-            String fullUrl = getFullUrl(url, method, timestamp, requestJson);
-            Map<String, String> returnMapping = HttpUtil.callHttpPostMethod(fullUrl, requestJson, UTF8);
+            String fullUrl = getFullUrl(url, method);
+            Map<String, String> returnMapping = sendHttpsPost(fullUrl, requestJson, timestamp);
             if (!OK.equals(returnMapping.get("msgId"))) {
             	return null;
             }
@@ -279,8 +324,8 @@ public class EpbzjianApi {
             jsonObject.put("coupon_list", couponJSONArray);
             
             String requestJson = jsonObject.toString();
-            String fullUrl = getFullUrl(url, method, timestamp, requestJson);
-            Map<String, String> mapping = HttpUtil.callHttpPostMethod(fullUrl, requestJson, UTF8);
+            String fullUrl = getFullUrl(url, method);
+            Map<String, String> mapping = sendHttpsPost(fullUrl, requestJson, timestamp);
             if (!OK.equals(mapping.get("msgId"))) {
 				returnMapping.put(RETURN_CODE, mapping.get("msgId"));
 				returnMapping.put(RETURN_DESC, mapping.get("msg"));
@@ -310,7 +355,7 @@ public class EpbzjianApi {
             JSONObject dataJson = new JSONObject(getString(jsonResult.optString(RETURN_DATA)));
             String sumDiscAmt = getString(dataJson.optString(RETURN_DIS_AMT));
             
-            JSONArray couponListJson = new JSONArray(dataJson.opt("coupon_use_list") + EMPTY);
+            JSONArray couponListJson = new JSONArray(dataJson.opt("coupon_list") + EMPTY);
             String couponType = "";
             if (couponListJson != null && couponListJson.length() > 0) {
                 int count = couponListJson.length();
@@ -418,8 +463,8 @@ public class EpbzjianApi {
             jsonObject.put("coupon_list", couponJSONArray);
             
             String requestJson = jsonObject.toString();
-            String fullUrl = getFullUrl(url, method, timestamp, requestJson);
-            Map<String, String> mapping = HttpUtil.callHttpPostMethod(fullUrl, requestJson, UTF8);
+            String fullUrl = getFullUrl(url, method);
+            Map<String, String> mapping = sendHttpsPost(fullUrl, requestJson, timestamp);
             if (!OK.equals(mapping.get("msgId"))) {
 				returnMapping.put(RETURN_CODE, mapping.get("msgId"));
 				returnMapping.put(RETURN_DESC, mapping.get("msg"));
@@ -542,8 +587,8 @@ public class EpbzjianApi {
             jsonObject.put("coupon_list", couponJSONArray);
             
             String requestJson = jsonObject.toString();
-            String fullUrl = getFullUrl(url, method, timestamp, requestJson);
-            Map<String, String> mapping = HttpUtil.callHttpPostMethod(fullUrl, requestJson, UTF8);
+            String fullUrl = getFullUrl(url, method);
+            Map<String, String> mapping = sendHttpsPost(fullUrl, requestJson, timestamp);
             if (!OK.equals(mapping.get("msgId"))) {
             	returnMapping.put(RETURN_CODE, mapping.get("msgId"));
 				returnMapping.put(RETURN_DESC, mapping.get("msg"));
@@ -632,8 +677,8 @@ public class EpbzjianApi {
             jsonObject.put("coupon_list", couponJSONArray);
             
             String requestJson = jsonObject.toString();
-            String fullUrl = getFullUrl(url, method, timestamp, requestJson);
-            Map<String, String> mapping = HttpUtil.callHttpPostMethod(fullUrl, requestJson, UTF8);
+            String fullUrl = getFullUrl(url, method);
+            Map<String, String> mapping = sendHttpsPost(fullUrl, requestJson, timestamp);
             if (!OK.equals(mapping.get("msgId"))) {
                 returnMapping.put(RETURN_CODE, mapping.get("msgId"));
 				returnMapping.put(RETURN_DESC, mapping.get("msg"));
@@ -1130,49 +1175,153 @@ public class EpbzjianApi {
 	// private
 	//
 
-	private static String getFullUrl(String url, String method, String timestamp, String requestJson) {
-        String sign = getSign(accessToken, appid, timestamp, appSecret, requestJson);
-//        String fullUrl = url + method
-//                + "?appid=" + appid
-//                + "&access_token=" + accessToken
-//                + "&timestamp=" + timestamp
-//                + "&sign=" + sign;
-//        return fullUrl;
-        StringBuilder sb = new StringBuilder();
-        sb.append(url);
-        sb.append(method);
-        sb.append("?appid=");
-        sb.append(appid);
-        sb.append("&access_token=");
-        sb.append(accessToken);
-        sb.append("&timestamp=");
-        sb.append(timestamp);
-        sb.append("&sign=");
-        sb.append(sign);
-        return sb.toString();
+	private static String getFullUrl(String url, String method) {
+		return url + method;
+//        String sign = getSign(accessToken, appid, timestamp, appSecret, requestJson);
+////        String fullUrl = url + method
+////                + "?appid=" + appid
+////                + "&access_token=" + accessToken
+////                + "&timestamp=" + timestamp
+////                + "&sign=" + sign;
+////        return fullUrl;
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(url);
+//        sb.append(method);
+//        sb.append("?appid=");
+//        sb.append(appid);
+//        sb.append("&access_token=");
+//        sb.append(accessToken);
+//        sb.append("&timestamp=");
+//        sb.append(timestamp);
+//        sb.append("&sign=");
+//        sb.append(sign);
+//        return sb.toString();
     }
-    
-    private static String getSign(String accessToken, String appid, String timestamp, String secret, String requestJson) {
+	
+	public static Map<String, String> sendHttpsPost(String callUrl, String requestDataJson, String timestamp) {
+        CloseableHttpClient closeableHttpClient = null;
+        CloseableHttpResponse response = null;
+        final Map<String, String> returnMapping = new HashMap<String, String>();
         try {
-            StringBuilder sb = new StringBuilder();
-            sb.append("access_token=");
-            sb.append(accessToken);
-            sb.append("&appid=");
-            sb.append(appid);
-            sb.append("&timestamp=");
-            sb.append(timestamp);
-            sb.append("&");
-            sb.append(requestJson);
-            LOG.info("request json:" + sb.toString());
-            LOG.info("secret:" + secret);
-            String comSign = SignUtil.encryptHmacString(sb.toString(), secret);
-            LOG.info("comSign:" + comSign);
-            return comSign;
-        } catch (Throwable thrl) {
-            LOG.error("error getSign", thrl);
-            return null;
+            String sign = SignUtil.encryptHmacString(SignUtil.splicingUrl(clientId, clientCode, cBrandId, accessToken, timestamp, requestDataJson), clientSecret);          
+            LOG.info("sendHttpsGet URL:" + callUrl);
+            SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
+                @Override
+                public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                    return true;
+                }
+            }).build();
+            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
+//            closeableHttpClient = HttpClients.createDefault();
+            closeableHttpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();//HttpClients.createDefault();
+            
+            RequestConfig config = RequestConfig.custom().setConnectTimeout(60000) //设置连接超时时间
+                    .setSocketTimeout(120000).build();   //设置响应超时时间
+//            HttpGet request = new HttpGet(callUrl);
+            HttpPost request = new HttpPost(callUrl);
+            request.setConfig(config);
+            //request.addHeader("Content-Type", "application/json;charset=UTF-8");    //application/json;charset=UTF-8
+            request.addHeader("clientId", clientId);
+            request.addHeader("clientCode", clientCode);
+            request.addHeader("cBrandId", cBrandId);
+            request.addHeader("accessToken", accessToken);
+            request.addHeader("timestamp", timestamp);
+            request.addHeader("sign", sign);
+            request.addHeader("Content-Type", "application/json;charset=UTF-8");
+            request.addHeader("Accept-Encoding", "gzip, deflate, br");
+//            if (accessToken != null && accessToken.length() != 0) {
+//                request.addHeader("X-Fandratec-Access-Token", accessToken);
+//            }
+//            if (apiKey != null && apiKey.length() != 0) {
+//                request.addHeader("X-Fandratec-Api-Key", apiKey);
+//            }
+            StringEntity entityRequest = new StringEntity(requestDataJson, "UTF-8");
+            request.setEntity(entityRequest);
+            response = closeableHttpClient.execute(request);
+            // Get HttpResponse Status
+            //System.out.println(response.getProtocolVersion());              // HTTP/1.1
+            //System.out.println(response.getStatusLine().getStatusCode());   // 200
+            //System.out.println(response.getStatusLine().getReasonPhrase()); // OK
+            //System.out.println(response.getStatusLine().toString());        // HTTP/1.1 200 OK
+            LOG.info(response.getStatusLine().toString());
+            int statusCode = response.getStatusLine().getStatusCode();
+            String result = "";
+            HttpEntity entityResponse = response.getEntity();
+            if (entityResponse != null) {
+                result = EntityUtils.toString(entityResponse, "UTF-8");
+                LOG.info(result);
+            }
+
+            if (statusCode == 200) {
+                returnMapping.put(MSG_ID, OK);
+                returnMapping.put(MSG, result);
+                return returnMapping;
+            } else {
+            	LOG.info("FAIL:Fail to call API,statusCode=" + statusCode + "\r\n" + result);
+                returnMapping.put(MSG_ID, FAIL);
+                returnMapping.put(MSG, "FAIL:Fail to call API,statusCode=" + statusCode + "\r\n" + result);
+                return returnMapping;
+            }
+//            return result;
+        } catch (Throwable ex) {
+            LOG.error("Failed", ex);
+            returnMapping.put(MSG_ID, FAIL);
+            returnMapping.put(MSG, ex.toString());
+            return returnMapping;
+//            return ex.toString();
+        } finally {
+            realseCloseableHttpResponse(response);
+            realseCloseableHttpClient(closeableHttpClient);
         }
     }
+	
+	public static void realseCloseableHttpResponse(CloseableHttpResponse response) {
+        try
+        {
+            if (response != null)
+            {
+                response.close();
+                response = null;
+            }
+        }catch(Throwable ex)
+        {            
+        }
+    }
+    
+    public static void realseCloseableHttpClient(CloseableHttpClient closeableHttpClient) {
+        try
+        {
+            if (closeableHttpClient != null)
+            {
+                closeableHttpClient.close();
+                closeableHttpClient = null;
+            }
+        }catch(Throwable ex)
+        {            
+        }
+    }
+    
+//    private static String getSign(String accessToken, String appid, String timestamp, String secret, String requestJson) {
+//        try {
+//            StringBuilder sb = new StringBuilder();
+//            sb.append("access_token=");
+//            sb.append(accessToken);
+//            sb.append("&appid=");
+//            sb.append(appid);
+//            sb.append("&timestamp=");
+//            sb.append(timestamp);
+//            sb.append("&");
+//            sb.append(requestJson);
+//            LOG.info("request json:" + sb.toString());
+//            LOG.info("secret:" + secret);
+//            String comSign = SignUtil.encryptHmacString(sb.toString(), secret);
+//            LOG.info("comSign:" + comSign);
+//            return comSign;
+//        } catch (Throwable thrl) {
+//            LOG.error("error getSign", thrl);
+//            return null;
+//        }
+//    }
     
     private static String getTimestamp() {
         long timestamp = System.currentTimeMillis();

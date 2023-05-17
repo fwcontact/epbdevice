@@ -17,6 +17,10 @@ public class SignUtil {
         byte[] bytes1 = msg1.doFinal(data.getBytes("UTF-8"));
         return bytes1;
     }
+    
+    public static String splicingUrl(String clientId, String clientCode, String cBrandId, String accessToken, String timestamp, String jsonParams) {
+        return String.format("https://crm.zjian.net/auth?clientId=%s&clientCode=%s&cBrandId=%s&accessToken=%s&timestamp=%s&jsonParams=%s", clientId, clientCode, cBrandId, accessToken, timestamp, jsonParams);
+    }
 
     public static String encryptHmacString(String data, String secret) throws Exception {
         byte[] hmacByte = encryptHmacByte(data, secret);
