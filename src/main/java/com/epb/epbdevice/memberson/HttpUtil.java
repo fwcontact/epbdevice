@@ -12,6 +12,7 @@ public class HttpUtil {
     
     public static final String POST_METHOD = "POST";
     public static final String GET_METHOD = "GET";
+    public static final String DELETE_METHOD = "DELETE";
 
     private static final Log LOG = LogFactory.getLog(HttpUtil.class);
     private static final int MS_TIMEOUT = 10000;

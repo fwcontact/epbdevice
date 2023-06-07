@@ -13,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -20,6 +21,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
@@ -70,18 +73,22 @@ public class Epbmemberson {
     public static final String RETURN_CUSTOMER_SOURCE = "CustomerSource";
 //    private static final String RETURN_EPB_VIP_CLASS = "classId";
 //    private static final String RETURN_EPB_VIP_DISC = "vipDisc";
+    public static final String RETURN_REFERENCE_NUMBER = "ReferenceNumber";
+    public static final String RETURN_TOKEN = "token";
     
     private static final Log LOG = LogFactory.getLog(Epbmemberson.class);
 //    private static final SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 ////    private static final SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 //    private static final SimpleDateFormat DATEFORMAT2 = new SimpleDateFormat("yyyy-MM-dd 'T'HH:mm:ssZ");
     private static final SimpleDateFormat DATEFORMAT3 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    private static final SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
     
     /**
      * call memberson API, get vip ID, name, mobile
      *
      * @param conn JDBC connection
      * @param opentableRecKey opentable.rec_key, BigDecimal
+     * @param token memberson token, String
      * @param vipId CustomerNumber, String
      * @param cardNumber cardNumber, String
      * @param nric nric, String
@@ -91,7 +98,7 @@ public class Epbmemberson {
      * @param emailAddress emailAddress, String 
      * @return Map<String, String> 
      */
-    public static Map<String, String> getVip(final Connection conn,
+    public static Map<String, String> getVip(final Connection conn, final String token,
             final BigDecimal opentableRecKey,
             final String vipId, final String cardNumber, final String nric, final String vipName,
             final String vipPhoneCountryCode, final String vipPhone, final String emailAddress) {
@@ -114,7 +121,7 @@ public class Epbmemberson {
             String posO2oCont = EMPTY;
             String posO2oVendor = EMPTY;
             String posO2oUrl = EMPTY;
-            String posO2oAccessToken = EMPTY;
+            String posO2oAccessToken = token;
             String posO2oAppKey = EMPTY;
             String posO2oAppSecret = EMPTY;
             String posO2oAuth = EMPTY;
@@ -135,8 +142,8 @@ public class Epbmemberson {
                         posO2oCont = setString;
                 } else if ("POSO2OURL".equals(setId)) {
                         posO2oUrl = setString;
-                } else if ("POSO2OTOKEN".equals(setId)) {
-                        posO2oAccessToken = setString;
+//                } else if ("POSO2OTOKEN".equals(setId)) {
+//                        posO2oAccessToken = setString;
                 } else if ("POSO2OVENDOR".equals(setId)) {
                         posO2oVendor = setString;
                 } else if ("POSO2OAPPKEY".equals(setId)) {
@@ -168,11 +175,11 @@ public class Epbmemberson {
                     returnMap.put(MSG, "API URL is empty");
                     return returnMap;
                 }
-                if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
-                    returnMap.put(MSG_ID, FAIL);
-                    returnMap.put(MSG, "API token is empty");
-                    return returnMap;
-                }
+//                if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API token is empty");
+//                    return returnMap;
+//                }
                 if (posO2oAppKey == null || posO2oAppKey.length() == 0) {
                     returnMap.put(MSG_ID, FAIL);
                     returnMap.put(MSG, "API user is empty");
@@ -195,16 +202,16 @@ public class Epbmemberson {
             	if (posO2oAuth == null || posO2oAuth.length() == 0) {
             		posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
             	}
-            	if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
-            		Map<String, String> mapping = Epbmemberson.getToken(posO2oUrl, posO2oAppKey, posO2oAppSecret, posO2oAuth);
-            		if (mapping == null
-            				|| mapping.get(Epbmemberson.MSG_ID) == null || !Epbmemberson.RETURN_OK.equals(mapping.get(Epbmemberson.MSG_ID))) {
-            			returnMap.put(MSG_ID, FAIL);
-            			returnMap.put(MSG, "Failed to get CRM token");
-            			return returnMap;
-            		}
-            		posO2oAccessToken = mapping.get(Epbmemberson.MSG).replaceAll("\"", "");
-            	}
+//            	if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
+//            		Map<String, String> mapping = Epbmemberson.getToken(posO2oUrl, posO2oAppKey, posO2oAppSecret, posO2oAuth);
+//            		if (mapping == null
+//            				|| mapping.get(Epbmemberson.MSG_ID) == null || !Epbmemberson.RETURN_OK.equals(mapping.get(Epbmemberson.MSG_ID))) {
+//            			returnMap.put(MSG_ID, FAIL);
+//            			returnMap.put(MSG, "Failed to get CRM token");
+//            			return returnMap;
+//            		}
+//            		posO2oAccessToken = mapping.get(Epbmemberson.MSG).replaceAll("\"", "");
+//            	}
             }
             
             Map<String, Object> retMap = searchVip(conn, opentableRecKey, membersonEnble, posO2oUrl, posO2oAuth, posO2oAccessToken, vipId, cardNumber, nric, vipName == null || EMPTY.equals(vipName) ? EMPTY : "%" + vipName + "%", vipPhoneCountryCode, vipPhone, emailAddress);
@@ -245,6 +252,7 @@ public class Epbmemberson {
      * get this value and update to table OPENTABLE
      *
      * @param conn JDBC connection
+     * @param token memberson token, String
      * @param opentableRecKey opentable.rec_key, BigDecimal
      * @param customerSource MEMBERSON OR EPB, String
      * @param customerNumber CustomerNumber, String
@@ -254,7 +262,7 @@ public class Epbmemberson {
      * @param dob dob, String 
      * @return Map<String, String> 
      */
-    public static Map<String, String> updateVipSummary(final Connection conn,
+    public static Map<String, String> updateVipSummary(final Connection conn, final String token,
             final BigDecimal opentableRecKey,
             final String customerSource, final String customerNumber, final String name, String mobileNumber, final String emailAddress, final String dob) {
         final Map<String, String> returnMap = new HashMap<>();
@@ -276,7 +284,7 @@ public class Epbmemberson {
             String posO2oCont = EMPTY;
             String posO2oVendor = EMPTY;
             String posO2oUrl = EMPTY;
-            String posO2oAccessToken = EMPTY;
+            String posO2oAccessToken = token;//EMPTY;
             String posO2oAppKey = EMPTY;
             String posO2oAppSecret = EMPTY;
             String posO2oAuth = EMPTY;
@@ -298,8 +306,8 @@ public class Epbmemberson {
                         posO2oCont = setString;
                 } else if ("POSO2OURL".equals(setId)) {
                         posO2oUrl = setString;
-                } else if ("POSO2OTOKEN".equals(setId)) {
-                        posO2oAccessToken = setString;
+//                } else if ("POSO2OTOKEN".equals(setId)) {
+//                        posO2oAccessToken = setString;
                 } else if ("POSO2OVENDOR".equals(setId)) {
                         posO2oVendor = setString;
                 } else if ("POSO2OAPPKEY".equals(setId)) {
@@ -333,11 +341,11 @@ public class Epbmemberson {
                     returnMap.put(MSG, "API URL is empty");
                     return returnMap;
                 }
-                if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
-                    returnMap.put(MSG_ID, FAIL);
-                    returnMap.put(MSG, "API token is empty");
-                    return returnMap;
-                }
+//                if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API token is empty");
+//                    return returnMap;
+//                }
                 if (posO2oAppKey == null || posO2oAppKey.length() == 0) {
                     returnMap.put(MSG_ID, FAIL);
                     returnMap.put(MSG, "API user is empty");
@@ -431,16 +439,16 @@ public class Epbmemberson {
                 	if (posO2oAuth == null || posO2oAuth.length() == 0) {
                 		posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
                 	}
-                	if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
-                        Map<String, String> mapping = Epbmemberson.getToken(posO2oUrl, posO2oAppKey, posO2oAppSecret, posO2oAuth);
-                        if (mapping == null
-                                || mapping.get(Epbmemberson.MSG_ID) == null || !Epbmemberson.RETURN_OK.equals(mapping.get(Epbmemberson.MSG_ID))) {
-                            returnMap.put(MSG_ID, FAIL);
-                            returnMap.put(MSG, "Failed to get CRM token");
-                        	return returnMap;
-                        }
-                        posO2oAccessToken = mapping.get(Epbmemberson.MSG).replaceAll("\"", "");
-                	}
+//                	if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
+//                        Map<String, String> mapping = Epbmemberson.getToken(posO2oUrl, posO2oAppKey, posO2oAppSecret, posO2oAuth);
+//                        if (mapping == null
+//                                || mapping.get(Epbmemberson.MSG_ID) == null || !Epbmemberson.RETURN_OK.equals(mapping.get(Epbmemberson.MSG_ID))) {
+//                            returnMap.put(MSG_ID, FAIL);
+//                            returnMap.put(MSG, "Failed to get CRM token");
+//                        	return returnMap;
+//                        }
+//                        posO2oAccessToken = mapping.get(Epbmemberson.MSG).replaceAll("\"", "");
+//                	}
                     Map<String, Object> retMap = Epbmemberson.getRedeemPointsConversionRate(posO2oUrl, posO2oAuth, posO2oAccessToken, currId);
                     if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
                         returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
@@ -601,7 +609,556 @@ public class Epbmemberson {
                 LOG.error("error updateVipSummary 2", thr);
             }
         }
+    }   
+    
+    
+    /**
+     * call memberson API, get token
+     *
+     * @param conn JDBC connection
+     * @return Map<String, String> 
+     * response sample: {"msgId": "OK",    	"msg": null,    "token":"ASDASD12312FSDFSWRE"}
+     */
+    public static Map<String, String> getToken(Connection conn) {
+        final Map<String, String> returnMap = new HashMap<>();
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            // get system setting
+            String sql = "SELECT SET_ID, SET_STRING FROM EP_SYS_SETTING WHERE SET_ID IN ('POSO2OCONT', 'POSO2OURL', 'POSO2OVENDOR', 'POSO2OSVCAUTH', 'POSO2OTOKEN', 'POSO2OAPPKEY', 'POSO2OSECRET')";
+
+            pstmt = conn.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+            ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            String setId;
+            String setString;
+            String posO2oCont = EMPTY;
+            String posO2oVendor = EMPTY;
+            String posO2oUrl = EMPTY;
+            String posO2oAccessToken = EMPTY;
+            String posO2oAppKey = EMPTY;
+            String posO2oAppSecret = EMPTY;
+            String posO2oAuth = EMPTY;
+            
+            while (rs.next()) {
+                setId = EMPTY;
+                setString = EMPTY;
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = metaData.getColumnLabel(i);
+                    Object value = rs.getObject(columnName);
+                    if ("SET_ID".equals(columnName.toUpperCase())) {
+                        setId = (String) value;
+                    } else if ("SET_STRING".equals(columnName.toUpperCase())) {
+                        setString = (String) value;
+                    }
+                }
+                if ("POSO2OCONT".equals(setId)) {
+                        posO2oCont = setString;
+                } else if ("POSO2OURL".equals(setId)) {
+                        posO2oUrl = setString;
+//                } else if ("POSO2OTOKEN".equals(setId)) {
+//                        posO2oAccessToken = setString;
+                } else if ("POSO2OVENDOR".equals(setId)) {
+                        posO2oVendor = setString;
+                } else if ("POSO2OAPPKEY".equals(setId)) {
+                        posO2oAppKey = setString;
+                } else if ("POSO2OSECRET".equals(setId)) {
+                        posO2oAppSecret = setString;
+                } else if ("POSO2OSVCAUTH".equals(setId)) {
+                	posO2oAuth = setString;
+                }
+            }
+            
+            // free mem
+            pstmt.close();
+            rs.close();
+            
+            if (!"Y".equals(posO2oCont)) {
+            	// EPB VIP SEARCH, That is right.
+            } else if ("Y".equals(posO2oCont) && "B".equals(posO2oVendor)) {
+                if (posO2oUrl == null ||posO2oUrl.length() == 0) {
+                    returnMap.put(MSG_ID, FAIL);
+                    returnMap.put(MSG, "API URL is empty");
+                    return returnMap;
+                }
+//                if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API token is empty");
+//                    return returnMap;
+//                }
+                if (posO2oAppKey == null || posO2oAppKey.length() == 0) {
+                    returnMap.put(MSG_ID, FAIL);
+                    returnMap.put(MSG, "API user is empty");
+                    return returnMap;
+                }
+                if (posO2oAppSecret == null || posO2oAppSecret.length() == 0) {                    
+                    returnMap.put(MSG_ID, FAIL);
+                    returnMap.put(MSG, "API password is empty");
+                    return returnMap;
+                }
+            } else {
+                returnMap.put(MSG_ID, FAIL);
+                returnMap.put(MSG, "Disable memberson API");
+                return returnMap;
+            }
+            
+            if ("Y".equals(posO2oCont) && "B".equals(posO2oVendor)) {
+            	// call memberson API
+            	if (posO2oAuth == null || posO2oAuth.length() == 0) {
+            		posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
+            	}
+            	Map<String, String> mapping = Epbmemberson.getToken(posO2oUrl, posO2oAppKey, posO2oAppSecret, posO2oAuth);
+        		if (mapping == null
+        				|| mapping.get(Epbmemberson.MSG_ID) == null || !Epbmemberson.RETURN_OK.equals(mapping.get(Epbmemberson.MSG_ID))) {
+        			returnMap.put(MSG_ID, FAIL);
+        			returnMap.put(MSG, "Failed to get CRM token");
+        			return returnMap;
+        		}
+        		posO2oAccessToken = mapping.get(Epbmemberson.MSG).replaceAll("\"", "");
+            }
+            if (posO2oAccessToken != null && posO2oAccessToken.length() != 0) {
+                returnMap.put(MSG_ID, RETURN_OK);
+                returnMap.put(MSG, "");
+                returnMap.put(RETURN_TOKEN, posO2oAccessToken);
+            } else {
+            	returnMap.put(MSG_ID, FAIL);
+    			returnMap.put(MSG, "Failed to get CRM token");
+            }            
+            return returnMap;
+        } catch (Throwable thr) {
+        	returnMap.put(MSG_ID, FAIL);
+			returnMap.put(MSG, "Failed to get CRM token:" + thr.getMessage());
+            System.out.println("Failed to get CRM token:" + thr.getMessage());
+            return returnMap;
+        } finally {
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (SQLException thr) {
+                // DO NOTHING
+                LOG.error("error getToken 2", thr);
+            }
+        }
     }
+    
+    
+//    /**
+//     * call memberson API, void transaction
+//     * document refund call it to reduce vip points(posmas.trans_type = 'E')
+//     *
+//     * @param conn          JDBC connection
+//     * @param orgId         org ID(POSMAS.org_id), String
+//     * @param shopNameLang  shop name lang(POS_SHOP_MAS.shop_name_lang), String
+//     * @param storeId       store_id(POS_SHOP_MAS.store_id), String
+//     * @param refDocId      the original doc ID(POSMAS.ref_doc_id), String
+//     * @param docId         return doc ID(POSMAS.doc_id), String
+//     * @param vipId         vip ID(POSMAS.vip_id), String
+//     * @param classId       class ID(POSMAS.class_id), String
+//     * @param stkList       item stock list(Posline.stk_id), Set<String>
+//     * @return Map<String, String> 
+//     */
+//    public static Map<String, String> voidMembersonTransaction(Connection conn, String orgId, String shopNameLang, String storeId, String refDocId, String docId, String vipId, String classId, Set<String> stkList) {
+//    	final Map<String, String> returnMap = new HashMap<>();
+//    	String errMsg;
+//
+//        PreparedStatement pstmt = null;
+//        ResultSet rs = null;
+//        try {
+//            // get system setting
+//            String sql = "SELECT SET_ID, SET_STRING FROM EP_SYS_SETTING WHERE SET_ID IN ('POSO2OCONT', 'POSO2OURL', 'POSO2OVENDOR', 'POSO2OSVCAUTH', 'POSO2OTOKEN', 'POSO2OAPPKEY', 'POSO2OSECRET')";
+//
+//            pstmt = conn.prepareStatement(sql);
+//            rs = pstmt.executeQuery();
+//            ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
+//            int columnCount = metaData.getColumnCount();
+//            String setId;
+//            String setString;
+//            String posO2oCont = EMPTY;
+//            String posO2oVendor = EMPTY;
+//            String posO2oUrl = EMPTY;
+//            String posO2oAccessToken = EMPTY;
+//            String posO2oAppKey = EMPTY;
+//            String posO2oAppSecret = EMPTY;
+//            String posO2oAuth = EMPTY;
+//            
+//            while (rs.next()) {
+//                setId = EMPTY;
+//                setString = EMPTY;
+//                for (int i = 1; i <= columnCount; i++) {
+//                    String columnName = metaData.getColumnLabel(i);
+//                    Object value = rs.getObject(columnName);
+//                    if ("SET_ID".equals(columnName.toUpperCase())) {
+//                        setId = (String) value;
+//                    } else if ("SET_STRING".equals(columnName.toUpperCase())) {
+//                        setString = (String) value;
+//                    }
+//                }
+//                if ("POSO2OCONT".equals(setId)) {
+//                        posO2oCont = setString;
+//                } else if ("POSO2OURL".equals(setId)) {
+//                        posO2oUrl = setString;
+//                } else if ("POSO2OTOKEN".equals(setId)) {
+//                        posO2oAccessToken = setString;
+//                } else if ("POSO2OVENDOR".equals(setId)) {
+//                        posO2oVendor = setString;
+//                } else if ("POSO2OAPPKEY".equals(setId)) {
+//                        posO2oAppKey = setString;
+//                } else if ("POSO2OSECRET".equals(setId)) {
+//                        posO2oAppSecret = setString;
+//                } else if ("POSO2OSVCAUTH".equals(setId)) {
+//                		posO2oAuth = setString;
+//                }
+//            }
+//            
+//            // free mem
+//            pstmt.close();
+//            rs.close();
+//            
+//            boolean membersonEnble = true;
+//            if (!"Y".equals(posO2oCont)) {
+//            	// EPB VIP SEARCH, That is right.
+//            	membersonEnble = false;
+//            } else if ("Y".equals(posO2oCont) && "B".equals(posO2oVendor)) {
+////                if (!"Y".equals(posO2oCont)) {
+////                    returnMap.put(MSG_ID, FAIL);
+////                    returnMap.put(MSG, "API is disable");
+////                    return returnMap;
+////                }
+//            	membersonEnble = true;
+//                if (posO2oUrl == null ||posO2oUrl.length() == 0) {
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API URL is empty");
+//                    return returnMap;
+//                }
+//                if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API token is empty");
+//                    return returnMap;
+//                }
+//                if (posO2oAppKey == null || posO2oAppKey.length() == 0) {
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API user is empty");
+//                    return returnMap;
+//                }
+//                if (posO2oAppSecret == null || posO2oAppSecret.length() == 0) {                    
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API password is empty");
+//                    return returnMap;
+//                }
+//            } else {
+//            	membersonEnble = false;
+//                returnMap.put(MSG_ID, FAIL);
+//                returnMap.put(MSG, "Disable memberson API");
+//                return returnMap;
+//            }
+//            if (membersonEnble) {
+//                if (vipId == null || vipId.length() == 0) {
+//                	returnMap.put(MSG_ID, RETURN_OK);
+//                	returnMap.put(MSG, EMPTY);
+//                    return returnMap;
+//                }
+//                // check void transaction
+//                    if (refDocId == null || refDocId.length() == 0) {
+//                    	returnMap.put(MSG_ID, RETURN_OK);
+//                    	returnMap.put(MSG, EMPTY);
+//                        return returnMap;
+//                    }
+//                    
+//                    // check items
+//                    for (String stkId : stkList) {                    	
+//                    	sql = "SELECT * FROM STKMAS WHERE STK_ID = ? AND REMARK = 'NOMEMBERSON'";
+//                    	pstmt = conn.prepareStatement(sql);
+//                        pstmt.setObject(1, stkId);
+//                        rs = pstmt.executeQuery();
+//                        metaData = (ResultSetMetaData) rs.getMetaData();
+//                        columnCount = metaData.getColumnCount();
+//                        while (rs.next()) {
+//                        	LOG.info("it is NOMEMBERSON items, no need to add points");
+//                        	returnMap.put(MSG_ID, RETURN_OK);
+//                      		returnMap.put(MSG, EMPTY);
+//                      		return returnMap;
+//                        }
+//                        // free mem
+//                        pstmt.close();
+//                        rs.close();                    	
+//                    }                    
+//                    
+//                    sql = "SELECT * FROM POS_VIP_MAS "
+//                            + "WHERE VIP_ID = ? AND CLASS_ID IN (SELECT CLASS_ID FROM POS_VIP_CLASS WHERE REMARK LIKE 'CULINA%' AND (ORG_ID IS NULL OR ORG_ID = '' OR ORG_ID = ?))";
+//                    pstmt = conn.prepareStatement(sql);
+//                    pstmt.setObject(1, vipId);
+//                    pstmt.setObject(2, orgId);
+//                    rs = pstmt.executeQuery();
+//                    metaData = (ResultSetMetaData) rs.getMetaData();
+//                    columnCount = metaData.getColumnCount();
+//                    while (rs.next()) {
+//                    	LOG.info("Culina VIP, no need to add points");
+//                    	returnMap.put(MSG_ID, RETURN_OK);
+//                  		returnMap.put(MSG, EMPTY);
+//                  		return returnMap;
+//                    }
+//                    // free mem
+//                    pstmt.close();
+//                    rs.close();
+//                    
+//                    sql = "SELECT * FROM POSMAS WHERE DOC_ID = ?";
+//                    pstmt = conn.prepareStatement(sql);
+//                    pstmt.setObject(1, refDocId);
+//                    rs = pstmt.executeQuery();
+//                    metaData = (ResultSetMetaData) rs.getMetaData();
+//                    columnCount = metaData.getColumnCount();
+//                    boolean findSource = false;
+//                    String originalReceiptNo = EMPTY;
+//                    while (rs.next()) {
+//                    	findSource = true;
+//                    	for (int i = 1; i <= columnCount; i++) {
+//                            String columnName = metaData.getColumnLabel(i);
+//                            Object value = rs.getObject(columnName);
+//                            if ("TAX_DOC_BARCODE".equals(columnName.toUpperCase())) {
+//                            	originalReceiptNo = (String) value;
+//                            }
+//                    	}
+//                    }
+//                    // free mem
+//                    pstmt.close();
+//                    rs.close();
+//                    if (!findSource) {
+//                    	errMsg = "source doc ID does not exists." + "-->" + refDocId;
+//                        LOG.info(errMsg);
+//                        returnMap.put(MSG_ID, FAIL);
+//                  		returnMap.put(MSG, errMsg);
+//                  		return returnMap;
+//                    }
+//                    if (originalReceiptNo == null || originalReceiptNo.length() == 0) {
+//                    	errMsg = "Sales transaction is not completed, please wait for a few minutes";
+//                        LOG.info(errMsg);
+//                        returnMap.put(MSG_ID, FAIL);
+//                  		returnMap.put(MSG, errMsg);
+//                  		return returnMap;
+//                    }
+//
+//                    Map<String, String> map = voidTransaction(
+//                            posO2oUrl,
+//                            posO2oAuth,
+//                            posO2oAccessToken,
+//                            orgId,
+//                            shopNameLang == null || shopNameLang.length() == 0 ? storeId : shopNameLang,
+//                            vipId,
+//                            originalReceiptNo);
+//                    if (map.get(Epbmemberson.MSG_ID) != null
+//                            && RETURN_OK.equals(map.get(Epbmemberson.MSG_ID) + "")) {
+//                        LOG.info("Void transaction sucessfully. "
+//                                + "original receipt no is " + originalReceiptNo + ", "
+//                                + "doc ID is " + docId + ", "
+//                                + "return doc ID is " + refDocId);
+//                        returnMap.put(MSG_ID, RETURN_OK);
+//                    	returnMap.put(MSG, EMPTY);
+//                        return returnMap;
+//                    } else {
+//                        returnMap.put(MSG_ID, FAIL);
+//                    	returnMap.put(MSG, map.get(Epbmemberson.MSG) + "");
+//                        return returnMap;
+//                    }
+//            }
+//            returnMap.put(MSG_ID, RETURN_OK);
+//        	returnMap.put(MSG, EMPTY);
+//            return returnMap;
+//        } catch (Throwable ex) {
+//        	returnMap.put(MSG_ID, FAIL);
+//        	returnMap.put(MSG, ex.getMessage());
+//            return returnMap;
+//        }
+//    }
+//    
+//    
+//    /**
+//     * call memberson API, redeem points
+//     * sales document or collection document call it to redeem vip points(posmas.trans_type = 'A' OR 'H')
+//     *
+//     * @param conn          JDBC connection
+//     * @param orgId         org ID(POSMAS.org_id), String
+//     * @param shopNameLang  shop name lang(POS_SHOP_MAS.shop_name_lang), String
+//     * @param storeId       store_id(POS_SHOP_MAS.store_id), String
+//     * @param docId         doc ID(POSMAS.doc_id), String
+//     * @param vipId         vip ID(POSMAS.vip_id), String
+//     * @param classId       class ID(POSMAS.class_id), String
+//     * @param currId        curr ID(POSMAS.curr_id), String
+//     * @param redeemAmt     redeem amount(POSPAY.pay_curr_money or OPENTABLE.VIP_PTS_MONEY), BigDecimal
+//     * @param redeemPoints  redeem points(POSPAY.VIP_PTS_USED or OPENTABLE.VIP_PTS_MONEY/OPENTABLE.PTS_RATIO), BigDecimal
+//     * @return Map<String, String>, if map.get("msgId") is 'OK', means OK and update map.get("ReferenceNumber") to EINV_CODE3, else fail, 
+//     */
+//    public static Map<String, String> redeemMembersonPoints(Connection conn, String orgId, String shopNameLang, String storeId, String docId, String vipId, String classId, String currId, BigDecimal redeemAmt, BigDecimal redeemPoints) {
+//    	final Map<String, String> returnMap = new HashMap<>();
+//    	String errMsg;
+//        PreparedStatement pstmt = null;
+//        ResultSet rs = null;
+//        try {
+//            // get system setting
+//            String sql = "SELECT SET_ID, SET_STRING FROM EP_SYS_SETTING WHERE SET_ID IN ('POSO2OCONT', 'POSO2OURL', 'POSO2OVENDOR', 'POSO2OSVCAUTH', 'POSO2OTOKEN', 'POSO2OAPPKEY', 'POSO2OSECRET')";
+//
+//            pstmt = conn.prepareStatement(sql);
+//            rs = pstmt.executeQuery();
+//            ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
+//            int columnCount = metaData.getColumnCount();
+//            String setId;
+//            String setString;
+//            String posO2oCont = EMPTY;
+//            String posO2oVendor = EMPTY;
+//            String posO2oUrl = EMPTY;
+//            String posO2oAccessToken = EMPTY;
+//            String posO2oAppKey = EMPTY;
+//            String posO2oAppSecret = EMPTY;
+//            String posO2oAuth = EMPTY;
+//            
+//            while (rs.next()) {
+//                setId = EMPTY;
+//                setString = EMPTY;
+//                for (int i = 1; i <= columnCount; i++) {
+//                    String columnName = metaData.getColumnLabel(i);
+//                    Object value = rs.getObject(columnName);
+//                    if ("SET_ID".equals(columnName.toUpperCase())) {
+//                        setId = (String) value;
+//                    } else if ("SET_STRING".equals(columnName.toUpperCase())) {
+//                        setString = (String) value;
+//                    }
+//                }
+//                if ("POSO2OCONT".equals(setId)) {
+//                        posO2oCont = setString;
+//                } else if ("POSO2OURL".equals(setId)) {
+//                        posO2oUrl = setString;
+//                } else if ("POSO2OTOKEN".equals(setId)) {
+//                        posO2oAccessToken = setString;
+//                } else if ("POSO2OVENDOR".equals(setId)) {
+//                        posO2oVendor = setString;
+//                } else if ("POSO2OAPPKEY".equals(setId)) {
+//                        posO2oAppKey = setString;
+//                } else if ("POSO2OSECRET".equals(setId)) {
+//                        posO2oAppSecret = setString;
+//                } else if ("POSO2OSVCAUTH".equals(setId)) {
+//                		posO2oAuth = setString;
+//                }
+//            }
+//            
+//            // free mem
+//            pstmt.close();
+//            rs.close();
+//            
+//            boolean membersonEnble = true;
+//            if (!"Y".equals(posO2oCont)) {
+//            	// EPB VIP SEARCH, That is right.
+//            	membersonEnble = false;
+//            } else if ("Y".equals(posO2oCont) && "B".equals(posO2oVendor)) {
+////                if (!"Y".equals(posO2oCont)) {
+////                    returnMap.put(MSG_ID, FAIL);
+////                    returnMap.put(MSG, "API is disable");
+////                    return returnMap;
+////                }
+//            	membersonEnble = true;
+//                if (posO2oUrl == null ||posO2oUrl.length() == 0) {
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API URL is empty");
+//                    return returnMap;
+//                }
+//                if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API token is empty");
+//                    return returnMap;
+//                }
+//                if (posO2oAppKey == null || posO2oAppKey.length() == 0) {
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API user is empty");
+//                    return returnMap;
+//                }
+//                if (posO2oAppSecret == null || posO2oAppSecret.length() == 0) {                    
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API password is empty");
+//                    return returnMap;
+//                }
+//            } else {
+//            	membersonEnble = false;
+//                returnMap.put(MSG_ID, FAIL);
+//                returnMap.put(MSG, "Disable memberson API");
+//                return returnMap;
+//            }
+//            if (membersonEnble) {
+//                if (vipId == null || vipId.length() == 0) {
+//                	returnMap.put(MSG_ID, RETURN_OK);
+//                	returnMap.put(MSG, EMPTY);
+//                    return returnMap;
+//                }                    
+//                    
+//                    sql = "SELECT * FROM POS_VIP_MAS "
+//                            + "WHERE VIP_ID = ? AND CLASS_ID IN (SELECT CLASS_ID FROM POS_VIP_CLASS WHERE REMARK LIKE 'CULINA%' AND (ORG_ID IS NULL OR ORG_ID = '' OR ORG_ID = ?))";
+//                    pstmt = conn.prepareStatement(sql);
+//                    pstmt.setObject(1, vipId);
+//                    pstmt.setObject(2, orgId);
+//                    rs = pstmt.executeQuery();
+//                    metaData = (ResultSetMetaData) rs.getMetaData();
+//                    columnCount = metaData.getColumnCount();
+//                    while (rs.next()) {
+//                    	LOG.info("Culina VIP, no need to add points");
+//                    	returnMap.put(MSG_ID, RETURN_OK);
+//                  		returnMap.put(MSG, EMPTY);
+//                  		return returnMap;
+//                    }
+//                    // free mem
+//                    pstmt.close();
+//                    rs.close();
+//                    
+//                    String redeemCode;
+//                    if ("01".equals(orgId)) {
+//                        redeemCode = "SG CULINA";
+//                    } else if ("03".equals(orgId)) {
+//                        redeemCode = "SG SN";
+//                    } else {
+//                        redeemCode = "RD001";
+//                    }
+//                    String redeemName = "$" + String.format("#,##0.00", redeemAmt) + currId + " " + redeemCode;
+//                    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+//
+//                    Map<String, String> map = redeemPoints(posO2oUrl,
+//                            posO2oAuth,
+//                            posO2oAccessToken,
+//                            vipId, 
+//                            redeemPoints.longValue(),
+//                            "C21 Points", // hard code 
+//                            timestamp, 
+//                            redeemCode, 
+//                            redeemName, 
+//                            orgId, 
+//                            shopNameLang == null || shopNameLang.length() == 0 ? storeId : shopNameLang, 
+//                            docId);
+//                    		
+//                    if (map.get(Epbmemberson.MSG_ID) != null
+//                            && RETURN_OK.equals(map.get(Epbmemberson.MSG_ID) + "")) {
+//                    	LOG.info("Redeem points sucessfully. "
+//                                + "doc ID is " + docId + ", "
+//                                + "redeem amount is " + redeemAmt + ", "
+//                                + "redeem points is " + redeemPoints);
+//                        returnMap.put(MSG_ID, RETURN_OK);
+//                    	returnMap.put(MSG, EMPTY);
+//                    	returnMap.put(RETURN_REFERENCE_NUMBER, map.get(Epbmemberson.RETURN_REFERENCE_NUMBER));
+//                        return returnMap;
+//                    } else {
+//                        returnMap.put(MSG_ID, FAIL);
+//                    	returnMap.put(MSG, map.get(Epbmemberson.MSG) + "");
+//                        return returnMap;
+//                    }
+//            }
+//            returnMap.put(MSG_ID, RETURN_OK);
+//        	returnMap.put(MSG, EMPTY);
+//            return returnMap;
+//        } catch (Throwable ex) {
+//        	returnMap.put(MSG_ID, FAIL);
+//        	returnMap.put(MSG, ex.getMessage());
+//            return returnMap;
+//        }
+//    }
     
     //
     // private
@@ -1238,6 +1795,105 @@ public class Epbmemberson {
             }
         }
     }
+    
+    //2.15 Void Transaction DELETE /api/member/R80013115M/transaction/c10c713e-0406-e711-814f-88ece2b28796/void-purchase
+    private static Map<String, String> voidTransaction(final String baseurl, final String callAuth, final String token, 
+            final String orgId, final String locId, final String vipId, final String oriReceiptNumber) {
+        final Map<String, String> returnMap = new HashMap<String, String>();
+        try {
+            Map<String, Object> vipMap = getVipSummary(baseurl, callAuth, token, vipId);
+            if (!RETURN_OK.equals(vipMap.get(MSG_ID)) || vipMap.get(RETURN_MEMBER_NO) == null || EMPTY.equals(vipMap.get(RETURN_MEMBER_NO) + EMPTY)) {
+                returnMap.put(MSG_ID, FAIL);
+                returnMap.put(MSG, "Failed to get member no" + "->" + vipId);
+                return returnMap;
+            }            
+            String memberNumber = (String) vipMap.get(RETURN_MEMBER_NO);      
+            
+            String callHttpUrl = baseurl + SLASH + "api/member" + SLASH + memberNumber + SLASH + "transaction" + SLASH + oriReceiptNumber + SLASH + "void-purchase";
+//            System.out.println(jsonBody.toString());
+            Map<String, String> callMap = HttpUtil.callHttpMethod(callHttpUrl, callAuth, token, HttpUtil.DELETE_METHOD, EMPTY);
+            if (RETURN_OK.equals(callMap.get(MSG_ID))) {
+                returnMap.put(MSG_ID, RETURN_OK);
+                returnMap.put(MSG, callMap.get(MSG));
+            } else {
+                returnMap.put(MSG_ID, callMap.get(MSG_ID));
+                returnMap.put(MSG, callMap.get(MSG));
+            }     
+            
+            System.out.println("msgId:" + returnMap.get(MSG_ID));
+            System.out.println("msg:" + returnMap.get(MSG));
+//            HttpUtil.callGetRequest(callHttpUrl, callAuth, token);
+            return returnMap;
+        } catch (Throwable thr) {
+            LOG.error("error updatePoints",  thr);
+            return returnMap;
+        }
+    }
+    
+    private static Map<String, String> redeemPoints(final String baseurl, final String callAuth, final String token, 
+            final String vipId, final long points, final String pointType, final Timestamp transactionDate, final String redemptionCode, final String description, final String orgId, final String locId, final String receiptNumber) {
+        final Map<String, String> returnMap = new HashMap<String, String>();
+        try {                   
+            Map<String, Object> vipMap = getVipSummary(baseurl, callAuth, token, vipId);
+            if (!RETURN_OK.equals(vipMap.get(MSG_ID)) || vipMap.get(RETURN_MEMBER_NO) == null || EMPTY.equals(vipMap.get(RETURN_MEMBER_NO) + EMPTY)) {
+                returnMap.put(MSG_ID, FAIL);
+                returnMap.put(MSG, "Failed to get member no" + "->" + vipId);
+                return returnMap;
+            }
+            String memberNo = (String) vipMap.get(RETURN_MEMBER_NO);      
+            
+            // {"ReceiptNo":"034534599","RedemptionCode":"RD001","MemberNo":"C80006235M","Description":"1 SGD","Amount":100,"PointType":"C21 Points","TransactionDate":"2018-12-07T12:02:00+08:00"}
+            String callHttpUrl = baseurl + SLASH + "api/transaction/redeem-point ";
+            JSONObject jsonBody = new JSONObject();
+            jsonBody.put("MemberNo", memberNo);
+//            jsonBody.put("PointType", "C21 Points");
+            jsonBody.put("PointType", pointType);
+            jsonBody.put("TransactionDate", getDateFormatString(transactionDate));
+//            jsonBody.put("TransactionDate", "2018-12-07T12:02:00+08:00");
+            jsonBody.put("Amount", points);  // Amount is point
+            jsonBody.put("RedemptionCode", redemptionCode);
+            jsonBody.put("Description", description);
+            jsonBody.put("ReceiptNo", receiptNumber + "d"); //can not use doc ID, partial return will be void redeem-point
+            jsonBody.put("Location", locId);
+
+//            System.out.println(jsonBody.toString());
+            Map<String, String> callMap = HttpUtil.callHttpMethod(callHttpUrl, callAuth, token, HttpUtil.POST_METHOD, jsonBody.toString());
+            if (RETURN_OK.equals(callMap.get(MSG_ID))) {
+                returnMap.put(MSG_ID, RETURN_OK);
+                returnMap.put(MSG, callMap.get(MSG));
+//                JSONObject jsonResult = new JSONObject(callMap.get(MSG));
+                JSONArray dataArray = new JSONArray(callMap.get(MSG));
+                if (dataArray != null && dataArray.length() > 0) {
+                    int count = dataArray.length();
+                    for (int i = 0; i < count; i++) {
+                        JSONObject dataObject = (JSONObject) dataArray.get(i);
+                        if (dataObject != null) {
+                            returnMap.put(RETURN_REFERENCE_NUMBER, dataObject.getString(RETURN_REFERENCE_NUMBER)); 
+                            //update POSMAS set EINV_CODE3 = ? where DOC_ID = ?;
+                            //EINV_CODE3=RETURN_REFERENCE_NUMBER
+                        }
+                    }
+                }                            
+            } else {
+                returnMap.put(MSG_ID, callMap.get(MSG_ID));
+                returnMap.put(MSG, callMap.get(MSG));
+            }     
+            
+            System.out.println("msgId:" + returnMap.get(MSG_ID));
+            System.out.println("msg:" + returnMap.get(MSG));
+//            HttpUtil.callGetRequest(callHttpUrl, callAuth, token);
+            return returnMap;
+        } catch (Throwable thr) {
+        	LOG.error("error redeemPoints",  thr);
+            return returnMap;
+        }
+    }
+    
+    private static String getDateFormatString(Date date) {
+        final String now = DATEFORMAT.format(date);
+        return now.substring(0, now.length() - 2) + ":" + now.substring(now.length() - 2);
+    }
+    
 
     public static void main(String[] args) throws Exception {
         try {
