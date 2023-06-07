@@ -87,8 +87,8 @@ public class Epbmemberson {
      * call memberson API, get vip ID, name, mobile
      *
      * @param conn JDBC connection
-     * @param opentableRecKey opentable.rec_key, BigDecimal
      * @param token memberson token, String
+     * @param opentableRecKey opentable.rec_key, BigDecimal
      * @param vipId CustomerNumber, String
      * @param cardNumber cardNumber, String
      * @param nric nric, String
