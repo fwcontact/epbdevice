@@ -263,7 +263,7 @@ public class Epbmemberson {
      * @return Map<String, String> 
      */
     public static Map<String, String> updateVipSummary(final Connection conn, final String token,
-            final BigDecimal opentableRecKey,
+    		final BigDecimal opentableRecKey,
             final String customerSource, final String customerNumber, final String name, String mobileNumber, final String emailAddress, final String dob) {
         final Map<String, String> returnMap = new HashMap<>();
 //        // log version        
@@ -386,10 +386,36 @@ public class Epbmemberson {
                         orgId = (String) value;
                     }
                 }
-            }
+            }            
             // free mem
             pstmt.close();
             rs.close();
+            
+            if (shopId == null || shopId.length() == 0 
+                    || currId == null || currId.length() == 0) {
+            	sql = "SELECT A.SHOP_ID, B.CURR_ID, A.ORG_ID FROM OPENORDER A, EP_ORG B WHERE A.REC_KEY = ? AND A.ORG_ID = B.ORG_ID";
+                pstmt = conn.prepareStatement(sql);
+                pstmt.setObject(1, opentableRecKey);
+                rs = pstmt.executeQuery();
+                metaData = (ResultSetMetaData) rs.getMetaData();
+                columnCount = metaData.getColumnCount();                
+                while (rs.next()) {
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnLabel(i);
+                        Object value = rs.getObject(columnName);
+                        if ("SHOP_ID".equals(columnName.toUpperCase())) {
+                            shopId = (String) value;
+                        } else if ("CURR_ID".equals(columnName.toUpperCase())) {
+                            currId = (String) value;
+                        } else if ("ORG_ID".equals(columnName.toUpperCase())) {
+                            orgId = (String) value;
+                        }
+                    }
+                }            
+                // free mem
+                pstmt.close();
+                rs.close();
+            }
             
             if (shopId == null || shopId.length() == 0 
                     || currId == null || currId.length() == 0) {
@@ -1715,6 +1741,28 @@ public class Epbmemberson {
             // free mem
             pstmt.close();
             rs.close();
+            
+            if (epbOrgId == null || epbOrgId.length() == 0) {
+            	sql = "SELECT ORG_ID FROM OPENORDER WHERE REC_KEY = ?";
+                pstmt = conn.prepareStatement(sql);
+                pstmt.setObject(1, opentableRecKey);
+                rs = pstmt.executeQuery();
+                metaData = (ResultSetMetaData) rs.getMetaData();
+                columnCount = metaData.getColumnCount();
+
+                while (rs.next()) {
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnLabel(i);
+                        Object value = rs.getObject(columnName);
+                        if ("ORG_ID".equals(columnName.toUpperCase())) {
+                            epbOrgId = (String) value;
+                        } 
+                    }
+                }
+                // free mem
+                pstmt.close();
+                rs.close();
+            }
 
 
             // get parameter
