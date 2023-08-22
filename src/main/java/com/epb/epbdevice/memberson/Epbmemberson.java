@@ -590,7 +590,7 @@ public class Epbmemberson {
 //    v_vip_id in varchar2,v_vip_name in varchar2,v_class_id in varchar2,v_vip_disc in varchar2,v_cum_pts in varchar2,
 //    v_pts in varchar2,v_money in varchar2,
 //    v_card_no in varchar2,v_birthday
-            CallableStatement stmt = (CallableStatement ) conn.prepareCall("call EP_BISTRO.update_opentable_vip_info(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            CallableStatement stmt = (CallableStatement ) conn.prepareCall("call EP_BISTRO.update_opentable_vip_info(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
             stmt.registerOutParameter(1, java.sql.Types.VARCHAR);
             stmt.registerOutParameter(2, java.sql.Types.VARCHAR);
             stmt.setString(3, opentableRecKey + EMPTY);
@@ -605,6 +605,7 @@ public class Epbmemberson {
             stmt.setString(12, dob);
             stmt.setString(13, epbTypeId);
             stmt.setString(14, customizeNo);
+            stmt.setString(15, emailAddress);            
             stmt.execute();
             String strRtn = stmt.getString(1);
             String strMsg = stmt.getString(2);
