@@ -965,13 +965,13 @@ public class Epbmemberson {
             CallableStatement stmt = (CallableStatement ) conn.prepareCall("call EP_BISTRO.update_vip_pts(?,?,?,?,?,?,?,?,?,?,?)");
             stmt.registerOutParameter(1, java.sql.Types.VARCHAR);
             stmt.registerOutParameter(2, java.sql.Types.VARCHAR);
-            stmt.setString(3, opentableRecKey + EMPTY);
-            stmt.setString(4, openorderRecKey + EMPTY);
+            stmt.setString(3, opentableRecKey == null ? EMPTY : opentableRecKey + EMPTY);
+            stmt.setString(4, openorderRecKey == null ? EMPTY : openorderRecKey + EMPTY);
             stmt.setString(5, customerNumber);
             stmt.setString(6, classId);
             stmt.setString(7, memberNo);
-            stmt.setString(8, vipDisc + EMPTY);
-            stmt.setString(9, cumPts + EMPTY);
+            stmt.setString(8, vipDisc == null ? EMPTY : vipDisc + EMPTY);
+            stmt.setString(9, cumPts == null ? "0" : cumPts + EMPTY);
             stmt.setString(10, fromRate + EMPTY);
             stmt.setString(11, toRate + EMPTY);         
             stmt.execute();
