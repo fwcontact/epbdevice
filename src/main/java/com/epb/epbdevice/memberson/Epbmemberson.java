@@ -247,6 +247,8 @@ public class Epbmemberson {
         }
     }
     
+    
+    @Deprecated
     /**
      * call memberson API, get vip class, vip discount, points, redeem ratio and so on
      * get this value and update to table OPENTABLE
@@ -636,7 +638,373 @@ public class Epbmemberson {
                 LOG.error("error updateVipSummary 2", thr);
             }
         }
-    }   
+    }  
+    
+    /**
+     * call memberson API, get vip class, vip discount, points, redeem ratio and so on
+     * get this value and update to table OPENTABLE
+     *
+     * @param conn JDBC connection
+     * @param token memberson token, String
+     * @param opentableRecKey opentable.rec_key, BigDecimal
+     * @param openorderRecKey opentable.rec_key, BigDecimal
+     * @param customerSource MEMBERSON OR EPB, String, Default MEMBERSON
+     * @param customerNumber CustomerNumber, String
+     * @return Map<String, String> 
+     */
+    public static Map<String, String> updateVipPoints(final Connection conn, final String token,
+    		final BigDecimal opentableRecKey, final BigDecimal openorderRecKey,
+            final String customerSource, final String customerNumber) {
+        final Map<String, String> returnMap = new HashMap<>();
+//        // log version        
+//        CommonUtility.printVersion();
+        
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            // get system setting
+            String sql = "SELECT SET_ID, SET_STRING FROM EP_SYS_SETTING WHERE SET_ID IN ('POSO2OCONT', 'POSO2OURL', 'POSO2OVENDOR', 'POSO2OSVCAUTH', 'POSO2OTOKEN', 'POSO2OAPPKEY', 'POSO2OSECRET', 'DiscFormat')";
+
+            pstmt = conn.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+            ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            String setId;
+            String setString;
+            String posO2oCont = EMPTY;
+            String posO2oVendor = EMPTY;
+            String posO2oUrl = EMPTY;
+            String posO2oAccessToken = token;//EMPTY;
+            String posO2oAppKey = EMPTY;
+            String posO2oAppSecret = EMPTY;
+            String posO2oAuth = EMPTY;
+            String discFormat = "A";
+            
+            while (rs.next()) {
+                setId = EMPTY;
+                setString = EMPTY;
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = metaData.getColumnLabel(i);
+                    Object value = rs.getObject(columnName);
+                    if ("SET_ID".equals(columnName.toUpperCase())) {
+                        setId = (String) value;
+                    } else if ("SET_STRING".equals(columnName.toUpperCase())) {
+                        setString = (String) value;
+                    }
+                }
+                if ("POSO2OCONT".equals(setId)) {
+                        posO2oCont = setString;
+                } else if ("POSO2OURL".equals(setId)) {
+                        posO2oUrl = setString;
+//                } else if ("POSO2OTOKEN".equals(setId)) {
+//                        posO2oAccessToken = setString;
+                } else if ("POSO2OVENDOR".equals(setId)) {
+                        posO2oVendor = setString;
+                } else if ("POSO2OAPPKEY".equals(setId)) {
+                        posO2oAppKey = setString;
+                } else if ("POSO2OSECRET".equals(setId)) {
+                        posO2oAppSecret = setString;
+                } else if ("POSO2OSVCAUTH".equals(setId)) {
+                		posO2oAuth = setString;
+                } else if ("DiscFormat".equals(setId)) {
+                        discFormat = setString;
+                }
+            }
+            
+            // free mem
+            pstmt.close();
+            rs.close();
+            
+            boolean membersonEnble = true;
+            if (!"Y".equals(posO2oCont)) {
+            	// EPB VIP SEARCH, That is right.
+            	membersonEnble = false;
+            } else if ("Y".equals(posO2oCont) && "B".equals(posO2oVendor)) {
+//                if (!"Y".equals(posO2oCont)) {
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API is disable");
+//                    return returnMap;
+//                }
+            	membersonEnble = true;
+                if (posO2oUrl == null ||posO2oUrl.length() == 0) {
+                    returnMap.put(MSG_ID, FAIL);
+                    returnMap.put(MSG, "API URL is empty");
+                    return returnMap;
+                }
+//                if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
+//                    returnMap.put(MSG_ID, FAIL);
+//                    returnMap.put(MSG, "API token is empty");
+//                    return returnMap;
+//                }
+                if (posO2oAppKey == null || posO2oAppKey.length() == 0) {
+                    returnMap.put(MSG_ID, FAIL);
+                    returnMap.put(MSG, "API user is empty");
+                    return returnMap;
+                }
+                if (posO2oAppSecret == null || posO2oAppSecret.length() == 0) {                    
+                    returnMap.put(MSG_ID, FAIL);
+                    returnMap.put(MSG, "API password is empty");
+                    return returnMap;
+                }
+            } else {
+            	membersonEnble = false;
+                returnMap.put(MSG_ID, FAIL);
+                returnMap.put(MSG, "Disable memberson API");
+                return returnMap;
+            }
+                       
+            // get parameter
+            sql = "SELECT A.SHOP_ID, B.CURR_ID, A.ORG_ID FROM OPENTABLE A, EP_ORG B WHERE A.REC_KEY = ? AND A.ORG_ID = B.ORG_ID";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setObject(1, opentableRecKey);
+            rs = pstmt.executeQuery();
+            metaData = (ResultSetMetaData) rs.getMetaData();
+            columnCount = metaData.getColumnCount();
+            String shopId = EMPTY;
+            String currId = EMPTY;
+            String orgId = EMPTY;
+            
+            while (rs.next()) {
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = metaData.getColumnLabel(i);
+                    Object value = rs.getObject(columnName);
+                    if ("SHOP_ID".equals(columnName.toUpperCase())) {
+                        shopId = (String) value;
+                    } else if ("CURR_ID".equals(columnName.toUpperCase())) {
+                        currId = (String) value;
+                    } else if ("ORG_ID".equals(columnName.toUpperCase())) {
+                        orgId = (String) value;
+                    }
+                }
+            }            
+            // free mem
+            pstmt.close();
+            rs.close();
+            
+            if (shopId == null || shopId.length() == 0 
+                    || currId == null || currId.length() == 0) {
+            	sql = "SELECT A.SHOP_ID, B.CURR_ID, A.ORG_ID FROM OPENORDER A, EP_ORG B WHERE A.REC_KEY = ? AND A.ORG_ID = B.ORG_ID";
+                pstmt = conn.prepareStatement(sql);
+                pstmt.setObject(1, opentableRecKey);
+                rs = pstmt.executeQuery();
+                metaData = (ResultSetMetaData) rs.getMetaData();
+                columnCount = metaData.getColumnCount();                
+                while (rs.next()) {
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnLabel(i);
+                        Object value = rs.getObject(columnName);
+                        if ("SHOP_ID".equals(columnName.toUpperCase())) {
+                            shopId = (String) value;
+                        } else if ("CURR_ID".equals(columnName.toUpperCase())) {
+                            currId = (String) value;
+                        } else if ("ORG_ID".equals(columnName.toUpperCase())) {
+                            orgId = (String) value;
+                        }
+                    }
+                }            
+                // free mem
+                pstmt.close();
+                rs.close();
+            }
+            
+            if (shopId == null || shopId.length() == 0 
+                    || currId == null || currId.length() == 0) {
+                returnMap.put(MSG_ID, FAIL);
+                returnMap.put(MSG, "Invalid shop or currency");
+                return returnMap;
+            }
+            
+            String classId = EMPTY;
+            String epbTypeId = EMPTY;  // browrrow qr code
+            BigDecimal fromRate;
+            BigDecimal toRate;
+            BigDecimal cumPts;
+            String memberNo;
+            String customizeNo;
+            String type;
+            if ("EPB".equals(customerSource == null || customerSource.length() == 0 ? "MEMBERSON" : customerSource)) {
+                type = EMPTY;
+                fromRate = BigDecimal.ONE;
+                toRate = BigDecimal.ONE;
+                cumPts = BigDecimal.ZERO;
+                memberNo = customerNumber;
+                customizeNo = EMPTY;
+                // get parameter
+                sql = "SELECT CLASS_ID FROM POS_VIP_MAS WHERE VIP_ID = ? AND (ORG_ID IS NULL OR ORG_ID = ?)";
+                pstmt = conn.prepareStatement(sql);
+                pstmt.setObject(1, customerNumber);
+                pstmt.setObject(2, orgId);
+                rs = pstmt.executeQuery();
+                metaData = (ResultSetMetaData) rs.getMetaData();
+                columnCount = metaData.getColumnCount();
+                while (rs.next()) {
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnLabel(i);
+                        Object value = rs.getObject(columnName);
+                        if ("CLASS_ID".equals(columnName.toUpperCase())) {
+                            classId = (String) value;
+                        }
+                    }
+                }
+                // free mem
+                pstmt.close();
+                rs.close();
+            } else {
+            	if (membersonEnble) {
+            		// call memberson API
+                	if (posO2oAuth == null || posO2oAuth.length() == 0) {
+                		posO2oAuth = Epbmemberson.getAuth(posO2oAppKey, posO2oAppSecret);
+                	}
+//                	if (posO2oAccessToken == null || posO2oAccessToken.length() == 0) {
+//                        Map<String, String> mapping = Epbmemberson.getToken(posO2oUrl, posO2oAppKey, posO2oAppSecret, posO2oAuth);
+//                        if (mapping == null
+//                                || mapping.get(Epbmemberson.MSG_ID) == null || !Epbmemberson.RETURN_OK.equals(mapping.get(Epbmemberson.MSG_ID))) {
+//                            returnMap.put(MSG_ID, FAIL);
+//                            returnMap.put(MSG, "Failed to get CRM token");
+//                        	return returnMap;
+//                        }
+//                        posO2oAccessToken = mapping.get(Epbmemberson.MSG).replaceAll("\"", "");
+//                	}
+                    Map<String, Object> retMap = Epbmemberson.getRedeemPointsConversionRate(posO2oUrl, posO2oAuth, posO2oAccessToken, currId);
+                    if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
+                        returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
+                        returnMap.put(MSG, (String) retMap.get(MSG));
+                        return returnMap;
+                    }
+//                BigDecimal posO2oRedeemRatio = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
+                    fromRate = retMap.containsKey(Epbmemberson.RETURN_FROM_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_FROM_RATE) : null;
+                    toRate = retMap.containsKey(Epbmemberson.RETURN_TO_RATE) ? (BigDecimal) retMap.get(Epbmemberson.RETURN_TO_RATE) : null;
+
+//                Map<String, String> customerMap = (Map<String, String>) retMap.get(Epbmemberson.RETURN_CUSTOMER_MAP);
+                    retMap = getVipSummary(posO2oUrl, posO2oAuth, posO2oAccessToken, customerNumber);
+                    if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
+                        returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
+                        returnMap.put(MSG, (String) retMap.get(MSG));
+                        return returnMap;
+                    }
+//                String classId = (String) retMap.get(Epbmemberson.RETURN_TIER);
+                    type = getSmoothType((String) retMap.get(Epbmemberson.RETURN_TYPE));
+//                System.out.println("type:" + type);
+//                String classId = EMPTY;
+                    if (type != null && type.length() != 0) {
+                        // free mem
+                        pstmt.close();
+                        rs.close();
+                        sql = "SELECT REMARK, NAME FROM VIP_SELFMAS1 WHERE SELF1_ID = ?";
+                        pstmt = conn.prepareStatement(sql);
+                        pstmt.setObject(1, type);
+//                    pstmt.setObject(2, orgId);
+                        rs = pstmt.executeQuery();
+                        metaData = (ResultSetMetaData) rs.getMetaData();
+                        columnCount = metaData.getColumnCount();
+                        while (rs.next()) {
+                            for (int i = 1; i <= columnCount; i++) {
+                                String columnName = metaData.getColumnLabel(i);
+                                Object value = rs.getObject(columnName);
+                                if ("REMARK".equals(columnName.toUpperCase())) {
+                                    classId = (String) value;
+                                } else if ("NAME".equals(columnName.toUpperCase())) {
+                                    epbTypeId = (String) value;
+                                }
+                            }
+                        }
+                        // free mem
+                        pstmt.close();
+                        rs.close();
+                    }                
+//                System.out.println("classId:" + classId);
+                    cumPts = retMap.get(Epbmemberson.RETURN_BALANCE) == null || EMPTY.equals(retMap.get(Epbmemberson.RETURN_BALANCE))
+                            ? BigDecimal.ZERO
+                            : new BigDecimal((String) retMap.get(Epbmemberson.RETURN_BALANCE));
+                    memberNo = (String) retMap.get(Epbmemberson.RETURN_MEMBER_NO);
+                    customizeNo = (String) retMap.get(Epbmemberson.RETURN_CUSTOMIZE_NO);
+//                retMap = getMemberDiscounts(posO2oUrl, posO2oAuth, posO2oAccessToken, memberNo, shopId);
+//                if (!Epbmemberson.RETURN_OK.equals(retMap.get(MSG_ID))) {
+//                    returnMap.put(MSG_ID, (String) retMap.get(MSG_ID));
+//                    returnMap.put(MSG, (String) retMap.get(MSG));
+//                    return returnMap;
+//                }
+            	} else {
+            		// error
+            		returnMap.put(MSG_ID, FAIL);   
+                    returnMap.put(MSG, "API is disable");
+                    return returnMap;
+            	}                
+            }
+            //get vip Discount
+            // get parameter
+            BigDecimal vipDisc = null;
+            sql = "SELECT VIP_DISC FROM POS_VIP_CLASS WHERE CLASS_ID = ? AND (ORG_ID IS NULL OR ORG_ID = ?)";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setObject(1, classId);
+            pstmt.setObject(2, orgId);
+            rs = pstmt.executeQuery();
+            metaData = (ResultSetMetaData) rs.getMetaData();
+            columnCount = metaData.getColumnCount();
+            while (rs.next()) {
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = metaData.getColumnLabel(i);
+                    Object value = rs.getObject(columnName);
+                    if ("VIP_DISC".equals(columnName.toUpperCase())) {
+                        vipDisc = value == null || (value + EMPTY).length() == 0 ? null : new BigDecimal(value + EMPTY);
+                    }
+                }
+            }
+            // free mem
+            pstmt.close();
+            rs.close();
+            
+            if (vipDisc == null) {
+                vipDisc = "B".equals(discFormat) ? new BigDecimal(100) : BigDecimal.ZERO;
+            }
+
+
+            //调用函数
+//            EP_BISTRO.update_vip_pts(v_err_code out varchar2,v_err_msg out varchar2,v_opentable_rec_key in varchar2,v_openorder_rec_key in varchar2,
+//            v_vip_id in varchar2,v_class_id in varchar2,v_card_no in varchar2,v_vip_disc in varchar2,v_cum_pts in varchar2,v_from_ratio in varchar2,v_to_ratio in varchar2);
+            CallableStatement stmt = (CallableStatement ) conn.prepareCall("call EP_BISTRO.update_vip_pts(?,?,?,?,?,?,?,?,?,?,?)");
+            stmt.registerOutParameter(1, java.sql.Types.VARCHAR);
+            stmt.registerOutParameter(2, java.sql.Types.VARCHAR);
+            stmt.setString(3, opentableRecKey + EMPTY);
+            stmt.setString(4, openorderRecKey + EMPTY);
+            stmt.setString(5, customerNumber);
+            stmt.setString(6, classId);
+            stmt.setString(7, memberNo);
+            stmt.setString(8, vipDisc + EMPTY);
+            stmt.setString(9, cumPts + EMPTY);
+            stmt.setString(10, fromRate + EMPTY);
+            stmt.setString(11, toRate + EMPTY);         
+            stmt.execute();
+            String strRtn = stmt.getString(1);
+            String strMsg = stmt.getString(2);
+            if (!RETURN_OK.equals(strRtn)) {
+                returnMap.put(MSG_ID, FAIL);   
+                returnMap.put(MSG, strMsg);   
+                return returnMap;
+            }
+
+            returnMap.put(MSG_ID, RETURN_OK);            
+            return returnMap;
+        } catch (SQLException thr) {
+            String msg = "error updateVipSummary:" + thr.getMessage();
+            LOG.error(msg, thr);
+            returnMap.put(MSG_ID, FAIL);
+            returnMap.put(MSG, msg);
+            return returnMap;
+        } finally {
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (SQLException thr) {
+                // DO NOTHING
+                LOG.error("error updateVipSummary 2", thr);
+            }
+        }
+    }  
     
     
     /**
