@@ -754,38 +754,39 @@ public class Epbmemberson {
             }
                        
             // get parameter
-            sql = "SELECT A.SHOP_ID, B.CURR_ID, A.ORG_ID FROM OPENTABLE A, EP_ORG B WHERE A.REC_KEY = ? AND A.ORG_ID = B.ORG_ID";
-            pstmt = conn.prepareStatement(sql);
-            pstmt.setObject(1, opentableRecKey);
-            rs = pstmt.executeQuery();
-            metaData = (ResultSetMetaData) rs.getMetaData();
-            columnCount = metaData.getColumnCount();
             String shopId = EMPTY;
             String currId = EMPTY;
             String orgId = EMPTY;
-            
-            while (rs.next()) {
-                for (int i = 1; i <= columnCount; i++) {
-                    String columnName = metaData.getColumnLabel(i);
-                    Object value = rs.getObject(columnName);
-                    if ("SHOP_ID".equals(columnName.toUpperCase())) {
-                        shopId = (String) value;
-                    } else if ("CURR_ID".equals(columnName.toUpperCase())) {
-                        currId = (String) value;
-                    } else if ("ORG_ID".equals(columnName.toUpperCase())) {
-                        orgId = (String) value;
-                    }
-                }
-            }            
-            // free mem
-            pstmt.close();
-            rs.close();
-            
-            if (shopId == null || shopId.length() == 0 
-                    || currId == null || currId.length() == 0) {
-            	sql = "SELECT A.SHOP_ID, B.CURR_ID, A.ORG_ID FROM OPENORDER A, EP_ORG B WHERE A.REC_KEY = ? AND A.ORG_ID = B.ORG_ID";
+            if (opentableRecKey != null) {
+            	sql = "SELECT A.SHOP_ID, B.CURR_ID, A.ORG_ID FROM OPENTABLE A, EP_ORG B WHERE A.REC_KEY = ? AND A.ORG_ID = B.ORG_ID";
                 pstmt = conn.prepareStatement(sql);
                 pstmt.setObject(1, opentableRecKey);
+                rs = pstmt.executeQuery();
+                metaData = (ResultSetMetaData) rs.getMetaData();
+                columnCount = metaData.getColumnCount();
+                
+                while (rs.next()) {
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnLabel(i);
+                        Object value = rs.getObject(columnName);
+                        if ("SHOP_ID".equals(columnName.toUpperCase())) {
+                            shopId = (String) value;
+                        } else if ("CURR_ID".equals(columnName.toUpperCase())) {
+                            currId = (String) value;
+                        } else if ("ORG_ID".equals(columnName.toUpperCase())) {
+                            orgId = (String) value;
+                        }
+                    }
+                }            
+                // free mem
+                pstmt.close();
+                rs.close();
+            }            
+            
+            if (openorderRecKey != null) {
+            	sql = "SELECT A.SHOP_ID, B.CURR_ID, A.ORG_ID FROM OPENORDER A, EP_ORG B WHERE A.REC_KEY = ? AND A.ORG_ID = B.ORG_ID";
+                pstmt = conn.prepareStatement(sql);
+                pstmt.setObject(1, openorderRecKey);
                 rs = pstmt.executeQuery();
                 metaData = (ResultSetMetaData) rs.getMetaData();
                 columnCount = metaData.getColumnCount();                
